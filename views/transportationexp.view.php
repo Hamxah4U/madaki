@@ -467,7 +467,7 @@ if ($totalSurviving > 0) {
                         <td><?= $row_exp['daterecorded'] ?></td>
                         <td><?= $row_exp['timerecorded'] ?></td>
                         <td>
-                            <a href="/delete-exp?id=<?= $row_exp['id'] ?>&tid=<?= $transport_id ?>" class="btn btn-sm btn-danger" onclick="return confirm('Delete this record?')">Delete</a>
+                            <a href="/delete-only-exp?id=<?= $row_exp['id'] ?>&tid=<?= $transport_id ?>" class="btn btn-sm btn-danger" onclick="return confirm('Delete this record?')">Delete</a>
                             <!-- <a href="/edit">Edit</a> -->
                         </td>
                     </tr>
@@ -492,6 +492,7 @@ if ($totalSurviving > 0) {
                         <th>Amount</th>
                         <th>Date</th>
                         <th>Time</th>
+                        <th>Action</th>
                     </tr>
                 </thead>
                  <tbody>
@@ -509,6 +510,10 @@ if ($totalSurviving > 0) {
                         <td><?= number_format($row_exp['amount']) ?></td>
                         <td><?= $row_exp['daterecorded'] ?></td>
                         <td><?= $row_exp['timerecorded'] ?></td>
+                        <td>
+                            <a href="/delete-other-expenses?id=<?= $row_exp['id'] ?>&tid=<?= $transport_id ?>" class="btn btn-sm btn-danger" onclick="return confirm('Delete this record?')">Delete</a>
+                            <!-- <a href="/edit">Edit</a> -->
+                        </td>
                     </tr>
                     <?php endforeach ?>
                     </tbody>
