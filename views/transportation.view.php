@@ -29,7 +29,7 @@
 						<div class="row mb-4">
 								<div class="col-md-12 col-lg-12">
 										<div class="table-responsive">
-                      <table class="table table-bordered text-nowrap" width="50%">
+                      <table class="table table-bordered text-nowrap" width="50%" id="driverTable">
                         <thead>
                           <tr>
                             <th>#</th>
@@ -70,3 +70,11 @@
 <?php
     require 'partials/footer.php';
 ?>
+
+<script>   
+  $(document).ready(function(){
+      $('#driverTabl').DataTable({
+          pageLength: 20
+      });
+  });
+</script>

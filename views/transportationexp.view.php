@@ -182,52 +182,53 @@
 
 			<div class="container-fluid">
             <div class="table-responsive">
-			<form action="" method="POST">
-              <input type="hidden" name="edit_id" value="<?= $editData['id'] ?? '' ?>">            
-              <table class="table table-bordered text-nowrap" id="peopleTable">  
-                  <thead>
-                      <tr>
-                          <th>#</th>
-                          <th>Full Name</th>
-                          <th>No. of Animal</th>
-                          <th>Death</th>
-                          <th>Surviving</th>
-                          <!-- <th>Amount</th> -->
-                          <th>1st</th>
-                          <th>2nd</th>
-                          <th>3rd</th>
-                          <th>Total</th>
-                          <th>Action</th>
-                      </tr>
-                  </thead>
-                  <tbody id="tableBody">
-                    <tr>
-                        <td>1</td>
-                        <td><input type="text" name="fullname[]" class="form-control" value="<?= $editData['fullname'] ?? '' ?>"></td>
-                        <td><input type="number" name="total_animal[]" style="width: 66px;" value="<?= $editData['total_animal'] ?? '' ?>" class="form-control"></td>
-                        <td><input type="number" name="death_animal[]" style="width: 66px;" value="<?= $editData['death_animal'] ?? '' ?>" class="form-control"></td>
-                        <td><input type="number" name="surviving_animal[]" style="width: 66px;" value="<?= $editData['surviving_animal'] ?? '' ?>" class="form-control"></td>
-                        <!-- <td><input type="number" name="amount[]" value="<?php // $editData['amount'] ?? '' ?>" class="form-control"></td> -->
-                        <td><input type="number" name="first_payment[]" style="width: 85px;" value="<?= $editData['first_payment'] ?? '' ?>" class="form-control"></td>
-                        <td><input type="number" name="second_payment[]" style="width: 85px;" value="<?= $editData['second_payment'] ?? '' ?>" class="form-control"></td>
-                        <td><input type="number" name="third_payment[]" style="width: 85px;" value="<?= $editData['third_payment'] ?? '' ?>" class="form-control"></td>
-                        <td><input type="number" name="total[]" style="width: 86px;" value="<?= $editData['total'] ?? '' ?>" class="form-control"></td>
-                        <td><button style="width: 32px;" type="button" class="btn btn-danger removeRow">X</button></td>
-                    </tr>
-                  </tbody>
-              </table>
+            <div class="form-area no-print">
+                <form action="" method="POST">
+                <input type="hidden" name="edit_id" value="<?= $editData['id'] ?? '' ?>">            
+                <table class="table table-striped text-nowrap" id="peopleTable">  
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Full Name</th>
+                            <th>No. of Animal</th>
+                            <th>Death</th>
+                            <th>Surviving</th>
+                            <!-- <th>Amount</th> -->
+                            <th>1st</th>
+                            <th>2nd</th>
+                            <th>3rd</th>
+                            <th>Total</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <tr>
+                            <td>1</td>
+                            <td><input type="text" name="fullname[]" class="form-control" value="<?= $editData['fullname'] ?? '' ?>"></td>
+                            <td><input type="number" name="total_animal[]" style="width: 66px;" value="<?= $editData['total_animal'] ?? '' ?>" class="form-control"></td>
+                            <td><input type="number" name="death_animal[]" style="width: 66px;" value="<?= $editData['death_animal'] ?? '' ?>" class="form-control"></td>
+                            <td><input type="number" name="surviving_animal[]" style="width: 66px;" value="<?= $editData['surviving_animal'] ?? '' ?>" class="form-control"></td>
+                            <!-- <td><input type="number" name="amount[]" value="<?php // $editData['amount'] ?? '' ?>" class="form-control"></td> -->
+                            <td><input type="number" name="first_payment[]" style="width: 85px;" value="<?= $editData['first_payment'] ?? '' ?>" class="form-control"></td>
+                            <td><input type="number" name="second_payment[]" style="width: 85px;" value="<?= $editData['second_payment'] ?? '' ?>" class="form-control"></td>
+                            <td><input type="number" name="third_payment[]" style="width: 85px;" value="<?= $editData['third_payment'] ?? '' ?>" class="form-control"></td>
+                            <td><input type="number" name="total[]" style="width: 86px;" value="<?= $editData['total'] ?? '' ?>" class="form-control"></td>
+                            <td><button style="width: 32px;" type="button" class="btn btn-danger removeRow">X</button></td>
+                        </tr>
+                    </tbody>
+                </table>
 
-              <?php if (!$editMode): ?>
-                <button type="button" class="btn btn-success" id="addRow">Add Person</button>
-                <br><br>
-              <?php endif; ?>
-              
-              <button type="submit" name="save"
-                class="btn <?= $editMode ? 'btn-info' : 'btn-primary' ?>">
-                <?= $editMode ? 'Update' : 'Submit' ?>
-              </button>
-            </form>
-              
+                <?php if (!$editMode): ?>
+                    <button type="button" class="btn btn-success" id="addRow">Add Person</button>
+                    <br><br>
+                <?php endif; ?>
+                
+                <button type="submit" name="save"
+                    class="btn <?= $editMode ? 'btn-info' : 'btn-primary' ?>">
+                    <?= $editMode ? 'Update' : 'Submit' ?>
+                </button>
+                </form>
+            </div>
             <div class="mb-3">
                 <br>
                 <button class="btn btn-secondary" onclick="printDiv('printArea')">
@@ -278,7 +279,7 @@ if ($totalSurviving > 0) {
     $costPerAnimal = $driverInfo['driver_amount'] / $totalSurviving;
 }
 ?>
-  <div class="print-container" id="printArea">
+<div class="print-container" id="printArea">
 
     <!-- Header -->
     <div class="print-header">
@@ -317,7 +318,7 @@ if ($totalSurviving > 0) {
         </tr>
         <tr>
             <th>Deposits</th>
-            <td colspan="3">
+            <td colspan="5">
                 <div class="d-flex justify-content-between">
                     <span><strong>1st:</strong> ₦<?= number_format($driverInfo['first_payment'] ?? 0) ?></span>
                     <span><strong>2nd:</strong> ₦<?= number_format($driverInfo['second_payment'] ?? 0) ?></span>
@@ -328,7 +329,6 @@ if ($totalSurviving > 0) {
         </tr>
 
     </table>
-
 
     <!-- Records Table -->
     <table class="table table-bordered text-nowrap">
@@ -431,7 +431,7 @@ if ($totalSurviving > 0) {
                 <td><?= number_format($totalSecond) ?></td>
                 <td><?= number_format($totalThird) ?></td>
                 <td><?= number_format($totalPaid) ?></td>
-                <td class="no-print"></td>
+                <td colspan="2"></td>
                 <td class="no-print"></td>
             </tr>
         </tfoot>
@@ -448,7 +448,7 @@ if ($totalSurviving > 0) {
                         <th>Amount</th>
                         <th>Date</th>
                         <th>Time</th>
-                        <th>Action</th>
+                        <th class="no-print">Action</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -466,7 +466,7 @@ if ($totalSurviving > 0) {
                         <td><?= number_format($row_exp['amount']) ?></td>
                         <td><?= $row_exp['daterecorded'] ?></td>
                         <td><?= $row_exp['timerecorded'] ?></td>
-                        <td>
+                        <td class="no-print">
                             <a href="/delete-only-exp?id=<?= $row_exp['id'] ?>&tid=<?= $transport_id ?>" class="btn btn-sm btn-danger" onclick="return confirm('Delete this record?')">Delete</a>
                             <!-- <a href="/edit">Edit</a> -->
                         </td>
@@ -492,7 +492,7 @@ if ($totalSurviving > 0) {
                         <th>Amount</th>
                         <th>Date</th>
                         <th>Time</th>
-                        <th>Action</th>
+                        <th class="no-print">Action</th>   
                     </tr>
                 </thead>
                  <tbody>
@@ -510,8 +510,8 @@ if ($totalSurviving > 0) {
                         <td><?= number_format($row_exp['amount']) ?></td>
                         <td><?= $row_exp['daterecorded'] ?></td>
                         <td><?= $row_exp['timerecorded'] ?></td>
-                        <td>
-                            <a href="/delete-other-expenses?id=<?= $row_exp['id'] ?>&tid=<?= $transport_id ?>" class="btn btn-sm btn-danger" onclick="return confirm('Delete this record?')">Delete</a>
+                        <td class="no-print">
+                            <a href="/delete-other-expenses?id=<?= $row_exp['id'] ?>&tid=<?= $transport_id ?>" class="btn btn-sm btn-danger no-print" onclick="return confirm('Delete this record?')">Delete</a>
                             <!-- <a href="/edit">Edit</a> -->
                         </td>
                     </tr>
@@ -520,7 +520,7 @@ if ($totalSurviving > 0) {
                     <tfoot>
                     <tr style="background:#f1f1f1; font-weight:bold;">
                         <td colspan="2">Total</td>
-                        <th colspan="3">₦<?= number_format($exponly) ?></th>
+                        <th colspan="4">₦<?= number_format($exponly) ?></th>
                     </tr>
                 </tfoot>
             </table>
@@ -538,7 +538,7 @@ if ($totalSurviving > 0) {
                             <th>Comment</th>
                             <th>Date</th>
                             <th>Time</th>
-                            <th>Action</th>
+                            <th class="no-print">Action</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -553,7 +553,7 @@ if ($totalSurviving > 0) {
                             <td><?= $row_comment['reason'] ?></td>
                             <td><?= date('d M Y', strtotime($row_comment['daterecorded'])) ?></td>
                             <td><?= date('h:i A', strtotime($row_comment['timerecorded'])) ?></td>
-                            <td>
+                            <td class="no-print">
                                  <a href="/delete-comment?id=<?= $row_comment['id'] ?>&tid=<?= $transport_id ?>"
                                     class="btn btn-sm btn-danger"
                                     onclick="return confirm('Delete this record?')">
@@ -568,7 +568,7 @@ if ($totalSurviving > 0) {
         </div>
     </div>
 
-  </div>
+</div>
 
 
 
@@ -984,35 +984,35 @@ if ($totalSurviving > 0) {
 
 
 <script>
-let rowCount = 1;
+    let rowCount = 1;
 
-document.getElementById('addRow').addEventListener('click', function () {
-    rowCount++;
-     // <td><input type="number" name="amount[]" class="form-control"></td>
+    document.getElementById('addRow').addEventListener('click', function () {
+        rowCount++;
+        // <td><input type="number" name="amount[]" class="form-control"></td>
 
-    let row = `
-    <tr>
-        <td>${rowCount}</td>
-        <td><input type="text" name="fullname[]" class="form-control"></td>        
-        <td><input type="number" style="width: 66px;" name="total_animal[]" class="form-control"></td>
-        <td><input type="number" style="width: 66px;" name="death_animal[]" class="form-control"></td>
-        <td><input type="number" style="width: 66px;" name="surviving_animal[]" class="form-control"></td>
-       
-        <td><input type="number" name="first_payment[]" style="width: 85px;" class="form-control"></td>
-        <td><input type="number" name="second_payment[]" style="width: 85px;" class="form-control"></td>
-        <td><input type="number" name="third_payment[]" style="width: 85px;" class="form-control"></td>
-        <td><input type="number" name="total[]" class="form-control" style="width: 86px;"></td>
-        <td><button type="button" style="width: 32px;" class="btn btn-danger removeRow">X</button></td>
-    </tr>`;
-    document.getElementById('tableBody').insertAdjacentHTML('beforeend', row);
-});
+        let row = `
+        <tr>
+            <td>${rowCount}</td>
+            <td><input type="text" name="fullname[]" class="form-control"></td>        
+            <td><input type="number" style="width: 66px;" name="total_animal[]" class="form-control"></td>
+            <td><input type="number" style="width: 66px;" name="death_animal[]" class="form-control"></td>
+            <td><input type="number" style="width: 66px;" name="surviving_animal[]" class="form-control"></td>
+        
+            <td><input type="number" name="first_payment[]" style="width: 85px;" class="form-control"></td>
+            <td><input type="number" name="second_payment[]" style="width: 85px;" class="form-control"></td>
+            <td><input type="number" name="third_payment[]" style="width: 85px;" class="form-control"></td>
+            <td><input type="number" name="total[]" class="form-control" style="width: 86px;"></td>
+            <td><button type="button" style="width: 32px;" class="btn btn-danger removeRow">X</button></td>
+        </tr>`;
+        document.getElementById('tableBody').insertAdjacentHTML('beforeend', row);
+    });
 
-// Remove row
-document.addEventListener('click', function(e){
-    if(e.target.classList.contains('removeRow')){
-        e.target.closest('tr').remove();
-    }
-});
+    // Remove row
+    document.addEventListener('click', function(e){
+        if(e.target.classList.contains('removeRow')){
+            e.target.closest('tr').remove();
+        }
+    });
 </script>
 
 <script>
@@ -1039,29 +1039,65 @@ document.addEventListener('input', function(e) {
 </script>
 
 <script>
-  function printDiv() {
-    var content = document.getElementById('printArea').innerHTML;
-    var win = window.open('', '', 'width=900,height=650');
+    function printDiv() {
+        var content = document.getElementById('printArea').innerHTML;
+        var win = window.open('', '', 'width=900,height=650');
 
-    win.document.write(`
-        <html>
-        <head>
-            <title>Print Transportation Record</title>
-            <style>
-                body { padding: 20px; font-size: 12px; }
-                .no-print { display:none; }
-                .overpaid { background:#f8d7da; }
-            </style>
-        </head>
-        <body>
-            ${content}
-        </body>
-        </html>
-    `);
+        win.document.write(`
+            <html>
+            <head>
+                <title><?= $driverInfo['driver_name'] ?>>Transportation Record</title>
+                <style>
+                    @page { size: A4; margin: 10mm; }
 
-    win.document.close();
-    win.print();
-  }
+                    body {
+                        font-family: Arial, sans-serif;
+                        font-size: 12px;
+                        padding: 10px;
+                    }
+
+                    table {
+                        width: 100%;
+                        border-collapse: collapse;
+                        margin-bottom: 10px;
+                    }
+
+                    th, td {
+                        border: 1px solid #000;
+                        padding: 5px;
+                        text-align: left;
+                    }
+
+                    th {
+                        background: #f2f2f2;
+                        text-align: center;
+                    }
+
+                    .print-header {
+                        text-align: center;
+                        margin-bottom: 10px;
+                    }
+
+                    .print-header h3 {
+                        margin: 0;
+                        font-size: 18px;
+                    }
+
+                    .no-print { display:none; }
+                    .overpaid { background:#f8d7da; }
+                    .table-success { background:#d4edda; }
+                </style>
+            </head>
+            <body>
+                ${content}
+            </body>
+            </html>
+        `);
+
+        win.document.close();
+        win.focus();
+        win.print();
+    }
 </script>
 
 

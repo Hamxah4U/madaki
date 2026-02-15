@@ -42,91 +42,118 @@
 <link rel="stylesheet" href="../../css/select2-bootstrap4.min.css">
 
 <script src="../../css/ckeditor.js"></script>
-
 <style>
-    .ck-editor__editable {
-        min-height: 300px; /* rows="10" */
+    /* General Table Style */
+    #peopleTable{
+        border-collapse: separate;
+    }
+    #peopleTable th,
+    #peopleTable td {
+        border: none !important;
+    }
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
     }
 
-    .diary-content p {
-        margin-bottom: 6px;
+    .table th,
+    .table td {
+        border: 1px solid #000;
+        padding: 5px;
     }
 
-    .diary-content {
-        line-height: 1.6;
-        font-size: 0.95rem;
-    }
-
-    #yearSelector {
-    width: auto;
-    min-width: 120px;
-    cursor: pointer;
-	}
-
-    .container-fluid{
-        max-height: 200px;
-    }
-</style>
-
-<style>
-@media print {
-    body {
-        margin: 0;
-        padding: 10mm;
-        font-size: 12px;
-    }
-
-    .no-print {
-        display: none !important;
+    .table th {
+        background: #f2f2f2;
+        text-align: center;
     }
 
     .print-container {
-        width: 100%;
+        max-width: 1000px;
+        margin: auto;
     }
 
-    table {
-        page-break-inside: auto;
+    /* Header */
+    .print-header {
+        text-align: center;
+        margin-bottom: 10px;
     }
 
-    tr {
-        page-break-inside: avoid;
-        page-break-after: auto;
+    .print-header h3 {
+        margin: 0;
+        font-size: 18px;
+        font-weight: bold;
     }
 
-    thead {
-        display: table-header-group;
+    .print-header small {
+        font-size: 14px;
     }
 
-    tfoot {
-        display: table-footer-group;
+    /* Highlight rows */
+    .overpaid {
+        background-color: #f8d7da !important;
     }
-}
 
-.print-header {
-    text-align: center;
-    margin-bottom: 10px;
-}
+    .table-success {
+        background-color: #d4edda !important;
+    }
 
-.print-header h3 {
-    margin: 0;
-    font-weight: bold;
-}
+    .table-danger {
+        background-color: #f8d7da !important;
+    }
 
-.print-header small {
-    font-size: 12px;
-}
+    /* PRINT SETTINGS */
+    @media print {
 
-.table th, .table td {
-    vertical-align: middle;
-}
+        @page {
+            size: A4;
+            margin: 10mm;
+        }
 
-.overpaid {
-    background-color: #f8d7da !important; /* light red */
-}
+        body {
+            font-size: 14px;
+            margin: 0;
+            padding: 0;
+        }
 
-.table-warning {
-    background-color: #fff3cd !important;
-}
+        .no-print {
+            display: none !important;
+        }
+
+        .print-container {
+            width: 100%;
+        }
+
+        table {
+            page-break-inside: auto;
+        }
+
+        tr {
+            page-break-inside: avoid;
+            page-break-after: auto;
+        }
+
+        thead {
+            display: table-header-group;
+        }
+
+        tfoot {
+            display: table-footer-group;
+        }
+
+        .row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .col-sm-6 {
+            width: 50%;
+        }
+
+        .col-sm-12 {
+            width: 100%;
+        }
+    }
 </style>
 
 
