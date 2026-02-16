@@ -1070,11 +1070,11 @@ document.addEventListener('input', function(e) {
 
                     th {
                         background: #f2f2f2;
-                        text-align: center;
+                        /*text-align: center;*/
                     }
 
                     .print-header {
-                        text-align: center;
+                        /*text-align: center;*/
                         margin-bottom: 10px;
                     }
 
