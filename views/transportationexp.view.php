@@ -155,8 +155,8 @@
         }
         
       }
-
-      echo "<script>location.href='?id=".$transport_id."';</script>";
+        echo "<script>alert('Saved successfully');</script>";
+        echo "<script>location.href='?id=".$transport_id."';</script>";
     }
 
 ?>
@@ -242,6 +242,8 @@
                 <button type="button" data-target="#modelUnit" data-toggle="modal" class="btn btn-primary"><strong>Other Expenses</strong></button>  
                 <button type="button" data-target="#modelComment" data-toggle="modal" class="btn btn-primary"><strong>Comments</strong></button>  
                 <button type="button" data-target="#modelotherComment" data-toggle="modal" class="btn btn-primary"><strong>Other Comments</strong></button>              
+                <button type="button" data-target="#modeldiary" data-toggle="modal" class="btn btn-primary"><strong>Diary</strong></button>              
+
             </div>
 
     <?php
@@ -277,7 +279,6 @@
         }
     ?>
     <div class="print-container" id="printArea">
-
         <!-- Header -->
         <div class="print-header">
             <h3>BASHIR MADAKI TRANSPORTATION RECORD</h3>
@@ -603,6 +604,45 @@
                 </div>
             </div>
         </div>
+
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="table table-responsive">
+                    <table class="table table-bordered text-nowrap">
+                        <thead>
+                            <tr><strong>Diary</strong></tr>
+                            <tr>
+                                <th>#</th>
+                                <th>Diary Note</th>
+                                <th>Date</th>
+                                <th>Time</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        <?php
+                            $diary = $db->conn->prepare("SELECT * FROM `expenses` WHERE `status` = 'diary' AND driver_id = :id");
+                            $diary->execute(['id' => $transport_id]);
+                            $row_diarys = $diary->fetchALL();
+                            foreach($row_diarys AS $index => $row_diary) : 
+                               
+                        ?>
+                        <tr>
+                            <td><?= $index + 1 ?></td>
+                            <td><?= $row_diary['reason'] ?></td>
+                            <td><?= $row_diary['daterecorded'] ?></td>
+                            <td><?= $row_diary['timerecorded'] ?></td>
+                            <td class="no-print">
+                                <a href="/delete-other-expenses?id=<?= $row_diary['id'] ?>&tid=<?= $transport_id ?>" class="btn btn-sm btn-danger no-print" onclick="return confirm('Delete this record?')">Delete</a>
+                                <!-- <a href="/edit">Edit</a> -->
+                            </td>
+                        </tr>
+                        <?php endforeach ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </div>
            
         </div>   
@@ -612,31 +652,71 @@
 
     <!-- Receipt Modal -->
     <div class="modal fade" id="receiptModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
+        <div class="modal-dialog">
+            <div class="modal-content">
 
-        <div class="modal-header">
-        <h5 class="modal-title">Payment Receipt</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
-
-            <div class="modal-body" id="receiptContent">
-                Loading...
+            <div class="modal-header">
+            <h5 class="modal-title">Payment Receipt</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
 
-            <div class="modal-footer">
-                    <button onclick="printReceipt()" class="btn btn-primary">Print</button>
-                    <button onclick="shareWhatsApp()" class="btn btn-success">WhatsApp</button>
-                    <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button class="btn btn-success" id="whatsappPdfBtn">
-                        WhatsApp PDF <span id="phoneLabel"></span>
-                    </button>
+                <div class="modal-body" id="receiptContent">
+                    Loading...
                 </div>
-            </div>
+
+                <div class="modal-footer">
+                        <button onclick="printReceipt()" class="btn btn-primary">Print</button>
+                        <button onclick="shareWhatsApp()" class="btn btn-success">WhatsApp</button>
+                        <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button class="btn btn-success" id="whatsappPdfBtn">
+                            WhatsApp PDF <span id="phoneLabel"></span>
+                        </button>
+                    </div>
+                </div>
         </div>
     </div>
 
     <!-- Modal -->
+
+    <div class="modal fade" id="modeldiary" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">
+                        <i class="fas fa-comment"></i> Add Diary
+                    </h5>
+                    <button type="button" class="close text-white" data-dismiss="modal">
+                        <span>&times;</span>
+                    </button>
+                </div>
+
+                <div class="modal-body">
+                    <form id="diarForm">
+                        
+                        <div class="form-group">
+                            <label><strong>Diary</strong></label>
+                            <textarea name="comment" class="form-control" rows="4" required></textarea>
+                            <small class="text-danger" id="errorComment"></small>
+                        </div>
+
+                        <input type="hidden" name="transport_id" value="<?= $transport_id ?? '' ?>">
+                    
+                        <div class="modal-footer p-0 pt-3">
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-save"></i> Save Diary
+                            </button>
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                                Close
+                            </button>
+                        </div>
+
+                    </form>
+                </div>
+
+            </div>
+        </div>
+    </div>
 
     <div class="modal fade" id="modelotherComment" tabindex="-1">
         <div class="modal-dialog">
@@ -779,13 +859,49 @@
         </div>
     </div>
 
-<?php
-    require 'partials/footer.php';    
-?>
+    <?php require 'partials/footer.php'; ?>
 
 <script>
     // comment form submission commentForm othercommentForm
      $(document).ready(function(){
+        // diary
+        $('#diarForm').on('submit', function(e){
+			e.preventDefault();
+			$.ajax({
+				url: 'model/add_diary.php', 
+				dataType: 'JSON',
+				data: $(this).serialize(),
+				type: 'POST',
+				success: function(response){
+                    if(response.status){
+                        const Toast = Swal.mixin({
+                            toast: true,
+                            position: "top-end",
+                            showConfirmButton: false,
+                            timer: 2000
+                        });
+
+                         Toast.fire({
+                            icon: "success",
+                            title: response.success.message
+                        }).then(() => {
+                            location.reload(); // refresh page
+                        });
+
+                        $('#modeldiary').modal('hide');
+                        resetForm();
+                    }else{
+                        // alert('Failed to add expense. Please check your input.');
+                        $('#errorReason').text(response.errors.reason || '');
+                    }
+                }
+                ,
+				error: function(xhr, status, error){
+					alert('Error__:' + xhr + status + error);
+				}
+			});
+		});
+
         // other comment
 		$('#othercommentForm').on('submit', function(e){
 			e.preventDefault();
