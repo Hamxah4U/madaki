@@ -11,22 +11,28 @@
 
     $transport_id = (int)$_GET['id'];
 
-    // $stmt = $db->conn->prepare("SELECT * FROM transportation_expenses WHERE transportation_id = :id");
-    // $stmt = $db->conn->prepare("SELECT * FROM transportation_expenses
-    //     JOIN transportation ON transportation.id = transportation_expenses.transportation_id 
-    //     WHERE transportation_id = :id");
     $stmt = $db->conn->prepare("SELECT te.*, t.amount_per_animal FROM transportation_expenses te JOIN transportation t ON t.id = te.transportation_id WHERE transportation_id = :id");
     $stmt->execute(['id' => $transport_id]);
     $records = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 
     //fetch transportation table
+    // $transport_id = (int)$_GET['id'];
+    //  $stmt = $db->conn->prepare("SELECT t.agent AS agent_id, t.balance, t.first_payment, t.second_payment, t.third_payment, yan_waju, amount_per_animal, t.driver_name, t.bossno, t.driver_amount FROM transportation_expenses te
+    //     JOIN transportation t ON t.id = te.transportation_id 
+    //     WHERE transportation_id = :id LIMIT 1");
+    // $stmt->execute(['id' => $transport_id]);
+    // $driverInfo = $stmt->fetch(PDO::FETCH_ASSOC);
+
     $transport_id = (int)$_GET['id'];
-    $stmt = $db->conn->prepare("SELECT t.balance, t.first_payment, t.second_payment, t.third_payment, yan_waju, amount_per_animal, t.driver_name, t.bossno, t.driver_amount FROM transportation_expenses te
-        JOIN transportation t ON t.id = te.transportation_id 
+    $stmt = $db->conn->prepare("SELECT u.Fullname AS agentname, u.Phone AS agentphone, t.agent, t.deliverydate, t.balance, t.first_payment, t.second_payment, t.third_payment, yan_waju, amount_per_animal, t.driver_name, t.bossno, t.driver_amount FROM transportation_expenses te
+        LEFT JOIN transportation t ON t.id = te.transportation_id
+        LEFT JOIN users_tbl u ON u.userID = t.agent 
         WHERE transportation_id = :id LIMIT 1");
     $stmt->execute(['id' => $transport_id]);
     $driverInfo = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+     //agentphone
 
     //total exp
     
@@ -155,8 +161,8 @@
         }
         
       }
-        echo "<script>alert('Saved successfully');</script>";
-        echo "<script>location.href='?id=".$transport_id."';</script>";
+
+      echo "<script>location.href='?id=".$transport_id."';</script>";
     }
 
 ?>
@@ -243,7 +249,6 @@
                 <button type="button" data-target="#modelComment" data-toggle="modal" class="btn btn-primary"><strong>Comments</strong></button>  
                 <button type="button" data-target="#modelotherComment" data-toggle="modal" class="btn btn-primary"><strong>Other Comments</strong></button>              
                 <button type="button" data-target="#modeldiary" data-toggle="modal" class="btn btn-primary"><strong>Diary</strong></button>              
-
             </div>
 
     <?php
@@ -279,6 +284,7 @@
         }
     ?>
     <div class="print-container" id="printArea">
+
         <!-- Header -->
         <div class="print-header">
             <h3>BASHIR MADAKI TRANSPORTATION RECORD</h3>
@@ -324,6 +330,14 @@
                         <span><strong>Remaining Bal.</strong> ₦<?= number_format($driverInfo['balance'] ?? 0) ?></span>
                     </div>
                 </td>
+            </tr>
+            <tr>
+                <th>Agent</th>
+                <td><?= $driverInfo['agentname'] ?? '' ?></td>
+                <th>Delivery Date</th>
+                <td><?= $driverInfo['deliverydate'] ?? '' ?></td>
+                <th>Agent Phone</th>
+                <td><?= $driverInfo['agentphone'] ?? '' ?></td>
             </tr>
 
         </table>
@@ -643,6 +657,7 @@
                 </div>
             </div>
         </div>
+
     </div>
            
         </div>   
@@ -652,33 +667,32 @@
 
     <!-- Receipt Modal -->
     <div class="modal fade" id="receiptModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
+    <div class="modal-dialog">
+        <div class="modal-content">
 
-            <div class="modal-header">
-            <h5 class="modal-title">Payment Receipt</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        <div class="modal-header">
+        <h5 class="modal-title">Payment Receipt</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+
+            <div class="modal-body" id="receiptContent">
+                Loading...
             </div>
 
-                <div class="modal-body" id="receiptContent">
-                    Loading...
+            <div class="modal-footer">
+                    <button onclick="printReceipt()" class="btn btn-primary">Print</button>
+                    <button onclick="shareWhatsApp()" class="btn btn-success">WhatsApp</button>
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button class="btn btn-success" id="whatsappPdfBtn">
+                        WhatsApp PDF <span id="phoneLabel"></span>
+                    </button>
                 </div>
-
-                <div class="modal-footer">
-                        <button onclick="printReceipt()" class="btn btn-primary">Print</button>
-                        <button onclick="shareWhatsApp()" class="btn btn-success">WhatsApp</button>
-                        <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        <button class="btn btn-success" id="whatsappPdfBtn">
-                            WhatsApp PDF <span id="phoneLabel"></span>
-                        </button>
-                    </div>
-                </div>
+            </div>
         </div>
     </div>
 
     <!-- Modal -->
-
-    <div class="modal fade" id="modeldiary" tabindex="-1">
+     <div class="modal fade" id="modeldiary" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
                 
@@ -859,7 +873,9 @@
         </div>
     </div>
 
-    <?php require 'partials/footer.php'; ?>
+<?php
+    require 'partials/footer.php';    
+?>
 
 <script>
     // comment form submission commentForm othercommentForm
@@ -901,7 +917,6 @@
 				}
 			});
 		});
-
         // other comment
 		$('#othercommentForm').on('submit', function(e){
 			e.preventDefault();
@@ -1322,6 +1337,3 @@ document.addEventListener('input', function(e) {
         win.print();
     }
 </script>
-
-
-

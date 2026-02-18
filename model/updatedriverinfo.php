@@ -8,9 +8,13 @@ if(isset($_POST['driverID'])){
   $driver_amount = $_POST['driver_amount'];
   $amount_per_animal = $_POST['amount_per_animal'];
   $yan_waju = $_POST['yan_waju'];
-
-  $stmt = $db->conn->prepare('UPDATE transportation SET first_payment = :first_payment, second_payment = :second_payment, third_payment = :third_payment, driver_name = :driver_name, bossno = :bossno, driver_amount = :driver_amount, amount_per_animal = :amount_per_animal, yan_waju = :yan_waju WHERE id = :id');
+  $deliverydate = $_POST['deliverydate'];
+  $agent = $_POST['deliverydate'];
+  $deliverydate = $_POST['deliverydate'];
+  $stmt = $db->conn->prepare('UPDATE transportation SET deliverydate = :deliverydate, agent = :agent, first_payment = :first_payment, second_payment = :second_payment, third_payment = :third_payment, driver_name = :driver_name, bossno = :bossno, driver_amount = :driver_amount, amount_per_animal = :amount_per_animal, yan_waju = :yan_waju WHERE id = :id');
   $result = $stmt->execute([
+    ':deliverydate' => $_POST['deliverydate'],
+    ':agent' => $_POST['agent'],
     ':first_payment' => $_POST['first_payment'],
     ':second_payment' => $_POST['second_payment'],
     ':third_payment' => $_POST['third_payment'],

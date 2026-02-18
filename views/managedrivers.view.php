@@ -84,14 +84,31 @@
             </div>
 
             <div class="form-row">
-              <div class="form-group col-md-12">
+              <div class="form-group col-md-4">
                 <label><strong>Yan Waju:</strong></label>
-                <textarea name="yan_waju" id="" class="form-control"></textarea>
+                <input type="text" name="yan_waju" id="" class="form-control">
+                <!-- <textarea name="yan_waju" id="" class="form-control"></textarea> -->
                 <small class="text-danger" id="errorYanWaju"></small>
               </div>
+
+              <div class="form-group col-md-4">
+                <label for=""><strong>Agent:</strong></label>
+                <select name="agent" id="" class="form-control">
+                  <option value="">--select--</option>
+                  <?php
+                  $stmt = $db->conn->prepare("SELECT * FROM `users_tbl` where `Role` = 'Agent'");
+                  $stmt->execute();
+                  $rows = $stmt->fetchAll();
+                  foreach($rows as $row): ?>
+                    <option value="<?= $row['userID'] ?>"><?= $row['Fullname'] ?></option>
+                  <?php endforeach ?>
+                </select>
+              </div>
+              <div class="form-group col-md-4">
+                <label for=""><strong>Delivery Date:</strong></label>
+                <input type="date" name="deliverydate" id="" class="form-control">
+              </div>
             </div>
-
-
 
             <button type="submit" class="btn btn-primary mb-3"><strong>Add</strong></button>
           </form>

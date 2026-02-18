@@ -34,25 +34,32 @@
                           <tr>
                             <th>#</th>
                             <th>Driver Name</th>
+                            <th>Agent</th>
+                            <th>Yan waju</th>
+                            <th>Delivery Date</th>
                             <th>Driver Cost (₦)</th>
-                            <th>Transport Cost per Animal (₦)</th>
-                            <th>Date</th>
+                            <th>Cost per Animal (₦)</th>
+                            <!-- <th>Date</th> -->
                             <th>Action</th>
                           </tr>
                         </thead>
                         <tbody>
                         <?php
-                        $stmt = $db->query('SELECT * FROM transportation ORDER BY `id` DESC');
+                        $stmt = $db->query('SELECT * FROM transportation LEFT JOIN users_tbl u ON `agent` = u.userID ORDER BY `id` DESC');
                         $drivers = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         foreach($drivers as $index => $driver):
                         ?>
                         <tr>
-                            <td><?= $index + 1 ?></td>
-                            
-                            <td><?= $driver['driver_name'] ?></td>
+                            <td><?= $index + 1 ?></td>                            
+                            <td>
+                                <?= $driver['driver_name'] ?><br/>
+                            </td>
+                            <td><?= $driver['Fullname'] ?></td>
+                            <td><?= $driver['yan_waju'] ?></td>
+                            <td><?= $driver['deliverydate'] ?></td>
                             <td><?= number_format($driver['driver_amount']) ?></td>
                             <td><?=number_format( $driver['amount_per_animal']) ?></td>
-                            <td><?= $driver['date_record'] ?></td>
+                            <!-- <td><?php // $driver['date_record'] ?></td> -->
                             <td>
                                 <a href="/transportationexp?id=<?= $driver['id'] ?>" class="btn btn-primary">View</a> |
                                 <a href="/edittransportation?id=<?= $driver['id'] ?>" class="btn btn-info">Edit</a> 

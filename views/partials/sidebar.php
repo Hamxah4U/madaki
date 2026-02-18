@@ -40,132 +40,17 @@
                        <i class="fas fa-fw fa-id-card"></i>
                         <strong>Manage Driver </strong></a>
                 </li>
-
-                <!-- <li class="nav-item active">
-                    <a class="nav-link" href="/animal">
-                        <i class="fas fa-shopping-cart"></i>
-                       <strong>Animal</strong></a>
-                </li> -->
-
-                <!-- <li class="nav-item active">
-                    <a class="nav-link" href="/individualrecord">
-                        <i class="fas fa-warehouse"></i>
-                       <strong>Individual Record</strong></a>
-                </li> -->
-
-
-                <!-- <li class="nav-item active">
-                    <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseTwo"
-                        aria-expanded="true" aria-controls="collapseTwo">
-                        <i class="fas fa-hand-holding-usd"></i><strong>Agents</strong>
-                        <span></span>
-                    </a>
-                    
-
-                    <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordionSidebar">
-                        <div class="bg-white py-2 collapse-inner rounded">
-                          
-                            <a class="collapse-item" href="/viewcreditors"><strong>Agent Account</strong></a>
-                        </div>
-                    </div>
-                </li> -->
+              
 
                 <li class="nav-item active">
                     <a class="nav-link" href="/transportation">
                         <i class="fas fa-truck"></i>
                        <strong>Transportation</strong>
                     </a>
-                </li>
-
-                <!-- <li class="nav-item active">
-                    <a class="nav-link" href="/finance">
-                        <i class="fas fa-wallet me-2"></i>
-                         <strong>Expenses</strong>
-                    </a>
-                </li>
- -->
-
-                <!-- <li class="nav-item active">
-                    <a class="nav-link" href="/unit">
-                    <i class="fas fa-fw fa-paw"></i>
-                    <strong>Manage Animal</strong></a>
-                </li> -->
-
-                <!-- <li class="nav-item active">
-                    <a class="nav-link" href="/product">
-                    <i class="fas fa-shopping-cart"></i>
-                    Manage Product</a>
-                </li> -->
-                
-                <!-- <li class="nav-item active">
-                    <a class="nav-link" href="/supply">
-                    <i class="fas fa-truck"></i>
-                    <strong>Manage Supply</strong></a>
-                </li> -->
-
-                <!-- <li class="nav-item active">
-                    <a class="nav-link" href="/inventoryreport">
-                    <i class="fas fa-search"></i>
-                    <strong>Inventory Report</strong></a>
-                </li>
-
-                
-
-                <li class="nav-item active">
-                    <a class="nav-link" href="report">
-                        <i class="fas fa-file-invoice-dollar"></i>
-                        <strong>Sales Reports</strong>
-                    </a>
-                </li>
-
-
-                <li class="nav-item active">
-                    <a class="nav-link" href="/chart">
-                        <i class="fas fa-chart-line"></i>
-                        <strong>Sales Analytics</strong>
-                    </a>
-                </li> -->
-
+                </li>         
 
             <?php else: ?>
-                <!-- <li class="nav-item active">
-                    <a class="nav-link" href="/billing">
-                        <i class="fas fa-money-bill"></i>
-                       <strong>Retailes</strong></a>
-                </li>
-
-                <li class="nav-item active">
-                    <a class="nav-link" href="/servicebilling">
-                        <i class="fas fa-file-invoice-dollar"></i>
-                       <strong>Wholesales</strong></a>
-                </li>
-
-                <li class="nav-item active">
-                    <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseTwo"
-                        aria-expanded="true" aria-controls="collapseTwo">
-                        <i class="fas fa-hand-holding-usd"></i><strong>Creditors</strong>
-                        <span></span>
-                    </a>
-                    <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordionSidebar">
-                        <div class="bg-white py-2 collapse-inner rounded">
-                            <a class="collapse-item" href="/viewcreditors"><strong>View Creditors</strong></a>
-                        </div>
-                    </div>
-                </li>  -->
-
-               
-                <!-- <li class="nav-item active">
-                    <a class="nav-link" href="/finance">
-                        <i class="fas fa-money-bill"></i>
-                         <strong>Expenses</strong>
-                    </a>
-                </li>
-
-                <li class="nav-item active">
-                    <a class="nav-link" href="/inventoryreport">
-                    <i class="fas fa-search"></i>
-                    <strong>Inventory Report</strong></a>
-                </li> -->
+            
               
 
             <?php endif; ?>

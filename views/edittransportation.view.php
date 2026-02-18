@@ -93,11 +93,30 @@
               </div>
             </div>
 
-            <div class="form-row">
-              <div class="form-group col-md-12">
+             <div class="form-row">
+              <div class="form-group col-md-4">
                 <label><strong>Yan Waju:</strong></label>
-                <textarea name="yan_waju" id="" class="form-control"><?= $driver['yan_waju'] ?></textarea>
-                <small class="text-danger" id="errorDriverAmount"></small>
+                <input type="text" name="yan_waju" id="" class="form-control" value="<?= $driver['yan_waju'] ?>">
+                <!-- <textarea name="yan_waju" id="" class="form-control"></textarea> -->
+                <small class="text-danger" id="errorYanWaju"></small>
+              </div>
+
+              <div class="form-group col-md-4">
+                <label for=""><strong>Agent:</strong></label>
+                <select name="agent" id="" class="form-control">
+                  <option value="">--select--</option>
+                  <?php
+                  $stmt = $db->conn->prepare("SELECT * FROM `users_tbl` where `Role` = 'Agent'");
+                  $stmt->execute();
+                  $rows = $stmt->fetchAll();
+                  foreach($rows as $row): ?>
+                    <option value="<?= $row['userID'] ?>" <?= ($row['userID'] == $driver['agent']) ? 'selected' : '' ?>><?= $row['Fullname'] ?></option>
+                  <?php endforeach ?>
+                </select>
+              </div>
+              <div class="form-group col-md-4">
+                <label for=""><strong>Delivery Date:</strong></label>
+                <input type="date" name="deliverydate" id="" class="form-control" value="<?= $driver['deliverydate'] ?>">
               </div>
             </div>
 
@@ -137,7 +156,9 @@
 						Toast.fire({
 							icon: "info",
 							title: 'Driver info updated successfully!',
-						});
+						}).thenn(() => {
+              location.reload();
+            });
 
             $('.text-danger').text('');
 						$('#addTransaction')[0].reset();
