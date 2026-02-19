@@ -90,14 +90,14 @@
 </script>
 
 <script>
-document.querySelectorAll(".clickable-row").forEach(row => {
-    row.addEventListener("click", function(e) {
-        // Prevent click if user clicks on button or link
-        if (e.target.tagName.toLowerCase() === 'a' || e.target.tagName.toLowerCase() === 'button') {
-            return;
-        }
-        window.location = this.dataset.href;
+    document.querySelectorAll(".clickable-row").forEach(row => {
+        row.addEventListener("click", function(e) {
+            // Prevent click if user clicks on button or link
+            if (e.target.tagName.toLowerCase() === 'a' || e.target.tagName.toLowerCase() === 'button') {
+                return;
+            }
+            window.location = this.dataset.href;
+        });
     });
-});
 </script>
 

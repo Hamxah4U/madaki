@@ -1,1 +1,0 @@
-<?php require 'views/paycredit.view.php' ?>

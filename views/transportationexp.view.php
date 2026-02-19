@@ -215,7 +215,7 @@
                         <tbody id="tableBody">
                             <tr>
                                 <td>1</td>
-                                <td><input type="text" name="fullname[]" class="form-control" value="<?= $editData['fullname'] ?? '' ?>" <?= $ro ?>></td>
+                                <td><input type="text" name="fullname[]" class="form-control" value="<?= $editData['fullname'] ?? '' ?>" <?= $ro ?> required></td>
                                 <td><input type="number" name="total_animal[]" style="width: 66px;" value="<?= $editData['total_animal'] ?? '' ?>" class="form-control" <?= $ro ?>></td>
                                 <td><input type="number" name="death_animal[]" style="width: 66px;" value="<?= $editData['death_animal'] ?? '' ?>" class="form-control"></td>
                                 <td><input type="number" name="surviving_animal[]" style="width: 66px;" value="<?= $editData['surviving_animal'] ?? '' ?>" class="form-control" <?= $ro ?>></td>
@@ -1253,7 +1253,7 @@
         let row = `
         <tr>
             <td>${rowCount}</td>
-            <td><input type="text" name="fullname[]" class="form-control"></td>        
+            <td><input type="text" name="fullname[]" class="form-control" required></td>        
             <td><input type="number" style="width: 66px;" name="total_animal[]" class="form-control"></td>
             <td><input type="number" style="width: 66px;" name="death_animal[]" class="form-control"></td>
             <td><input type="number" style="width: 66px;" name="surviving_animal[]" class="form-control"></td>
