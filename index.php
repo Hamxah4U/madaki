@@ -25,7 +25,8 @@ if(!isset($_SESSION['userID']) &&
   $uri != '/edittransportation' &&
   $uri != '/delete-comment' &&
   $uri != '/delete-only-exp' &&
-  $uri != '/delete-other-expenses'
+  $uri != '/delete-other-expenses' &&
+  $uri != '/agent-transportation'
   
   ) {
   header('Location: /');
@@ -53,6 +54,8 @@ $routes = [
     '/delete-comment' => 'controllers/deletecomment.php',
     '/delete-only-exp' => 'controllers/deleteonlyexp.php',
     '/delete-other-expenses' => 'controllers/deleteotherexpenses.php',
+    '/agent-transportation' => 'controllers/agenttransportation.php',
+    
 
 
 

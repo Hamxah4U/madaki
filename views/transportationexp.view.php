@@ -73,6 +73,10 @@
         }
     }
 
+        $isAgent = ($_SESSION['role'] == 'Agent');
+        $ro = ($_SESSION['role'] == 'Agent') ? 'readonly' : ''; 
+
+
 ?>
 
 <?php
@@ -189,51 +193,66 @@
 			<div class="container-fluid">
             <div class="table-responsive">
             <div class="form-area no-print">
-                <form action="" method="POST">
-                <input type="hidden" name="edit_id" value="<?= $editData['id'] ?? '' ?>">            
-                <table class="table table-striped text-nowrap" id="peopleTable">  
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>Full Name</th>
-                            <th>No. of Animal</th>
-                            <th>Death</th>
-                            <th>Surviving</th>
-                            <!-- <th>Amount</th> -->
-                            <th>1st</th>
-                            <th>2nd</th>
-                            <th>3rd</th>
-                            <th>Total</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tableBody">
-                        <tr>
-                            <td>1</td>
-                            <td><input type="text" name="fullname[]" class="form-control" value="<?= $editData['fullname'] ?? '' ?>"></td>
-                            <td><input type="number" name="total_animal[]" style="width: 66px;" value="<?= $editData['total_animal'] ?? '' ?>" class="form-control"></td>
-                            <td><input type="number" name="death_animal[]" style="width: 66px;" value="<?= $editData['death_animal'] ?? '' ?>" class="form-control"></td>
-                            <td><input type="number" name="surviving_animal[]" style="width: 66px;" value="<?= $editData['surviving_animal'] ?? '' ?>" class="form-control"></td>
-                            <!-- <td><input type="number" name="amount[]" value="<?php // $editData['amount'] ?? '' ?>" class="form-control"></td> -->
-                            <td><input type="number" name="first_payment[]" style="width: 85px;" value="<?= $editData['first_payment'] ?? '' ?>" class="form-control"></td>
-                            <td><input type="number" name="second_payment[]" style="width: 85px;" value="<?= $editData['second_payment'] ?? '' ?>" class="form-control"></td>
-                            <td><input type="number" name="third_payment[]" style="width: 85px;" value="<?= $editData['third_payment'] ?? '' ?>" class="form-control"></td>
-                            <td><input type="number" name="total[]" style="width: 86px;" value="<?= $editData['total'] ?? '' ?>" class="form-control"></td>
-                            <td><button style="width: 32px;" type="button" class="btn btn-danger removeRow">X</button></td>
-                        </tr>
-                    </tbody>
-                </table>
-
-                <?php if (!$editMode): ?>
-                    <button type="button" class="btn btn-success" id="addRow">Add Person</button>
-                    <br><br>
-                <?php endif; ?>
                 
-                <button type="submit" name="save"
-                    class="btn <?= $editMode ? 'btn-info' : 'btn-primary' ?>">
-                    <?= $editMode ? 'Update' : 'Submit' ?>
-                </button>
+                <form action="" method="POST">
+                    <input type="hidden" name="edit_id" value="<?= $editData['id'] ?? '' ?>">            
+                    <table class="table table-striped text-nowrap" id="peopleTable">  
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Full Name</th>
+                                <th>No. of Animal</th>
+                                <th>Death</th>
+                                <th>Surviving</th>
+                                <!-- <th>Amount</th> -->
+                                <th>1st</th>
+                                <th>2nd</th>
+                                <th>3rd</th>
+                                <th>Total</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody">
+                            <tr>
+                                <td>1</td>
+                                <td><input type="text" name="fullname[]" class="form-control" value="<?= $editData['fullname'] ?? '' ?>" <?= $ro ?>></td>
+                                <td><input type="number" name="total_animal[]" style="width: 66px;" value="<?= $editData['total_animal'] ?? '' ?>" class="form-control" <?= $ro ?>></td>
+                                <td><input type="number" name="death_animal[]" style="width: 66px;" value="<?= $editData['death_animal'] ?? '' ?>" class="form-control"></td>
+                                <td><input type="number" name="surviving_animal[]" style="width: 66px;" value="<?= $editData['surviving_animal'] ?? '' ?>" class="form-control" <?= $ro ?>></td>
+                                <!-- <td><input type="number" name="amount[]" value="<?php // $editData['amount'] ?? '' ?>" class="form-control"></td> -->
+                                <td><input type="number" name="first_payment[]" style="width: 85px;" value="<?= $editData['first_payment'] ?? '' ?>" class="form-control"></td>
+                                <td><input type="number" name="second_payment[]" style="width: 85px;" value="<?= $editData['second_payment'] ?? '' ?>" class="form-control"></td>
+                                <td><input type="number" name="third_payment[]" style="width: 85px;" value="<?= $editData['third_payment'] ?? '' ?>" class="form-control"></td>
+                                <td><input type="number" name="total[]" style="width: 86px;" value="<?= $editData['total'] ?? '' ?>" class="form-control" <?= $ro ?>></td>
+                                <td><button style="width: 32px;" type="button" class="btn btn-danger removeRow">X</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <?php if ($_SESSION['role'] == 'Admin'): ?>
+
+                        <!-- Admin can add -->
+                        <?php if (!$editMode): ?>
+                            <button type="button" class="btn btn-success" id="addRow">Add Person</button>
+                            <br><br>
+                        <?php endif; ?>
+
+                        <!-- Admin can submit or update -->
+                        <button type="submit" name="save"
+                            class="btn <?= $editMode ? 'btn-info' : 'btn-primary' ?>">
+                            <?= $editMode ? 'Update' : 'Submit' ?>
+                        </button>
+
+                    <?php elseif ($_SESSION['role'] == 'Agent' && $editMode): ?>
+
+                        <!-- Agent can ONLY update when editing -->
+                        <button type="submit" name="save" class="btn btn-info">
+                            Update
+                        </button>
+
+                    <?php endif; ?>
+
                 </form>
+                
             </div>
             <div class="mb-3">
                 <br>
@@ -421,11 +440,14 @@
                             Receipt
                         </button>
                         <a href="?id=<?= $transport_id ?>&edit=<?= $row['id'] ?>" class="btn btn-sm btn-primary">Edit </a>
-                        <a href="/delete-exp?id=<?= $row['id'] ?>&tid=<?= $transport_id ?>"
-                        class="btn btn-sm btn-danger"
-                        onclick="return confirm('Delete this record?')">
-                        Delete
-                        </a>
+
+                        <?php if ($_SESSION['role'] == 'Admin'): ?>
+                            <a href="/delete-exp?id=<?= $row['id'] ?>&tid=<?= $transport_id ?>"
+                            class="btn btn-sm btn-danger"
+                            onclick="return confirm('Delete this record?')">
+                            Delete
+                            </a>
+                        <?php endif; ?>
                     </td>
                 </tr>
             <?php endforeach; ?>

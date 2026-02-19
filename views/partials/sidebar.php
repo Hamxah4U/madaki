@@ -50,9 +50,25 @@
                 </li>         
 
             <?php else: ?>
-            
+                <li class="nav-item active">
+                     <a class="nav-link" href="#" onclick="denyAccess(); return false;">
+                        <i class="fas fa-fw fa-user"></i>
+                        <strong>Manage Users </strong></a>
+                </li>
+
+                <li class="nav-item active">
+                     <a class="nav-link" href="#" onclick="denyAccess(); return false;">
+                       <i class="fas fa-fw fa-id-card"></i>
+                        <strong>Manage Driver </strong></a>
+                </li>
               
 
+                <li class="nav-item active">
+                    <a class="nav-link" href="/agent-transportation">
+                        <i class="fas fa-truck"></i>
+                       <strong>Transportation</strong>
+                    </a>
+                </li>     
             <?php endif; ?>
 
             <hr class="sidebar-divider my-0">
@@ -71,3 +87,15 @@
 
             <!-- Sidebar Message -->
 </ul>
+
+<script>
+    function denyAccess() {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Access Denied',
+            text: 'You do not have permission to access this section.',
+            timer: 2500,
+            showConfirmButton: false
+        });
+    }
+</script>

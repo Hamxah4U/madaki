@@ -24,13 +24,14 @@
             ?>
             <!-- Begin Page Content -->
 
-					<div class="container-fluid">                     
+					<div class="container-fluid">            
+           
 						<div class="row mb-4">
-							<div class="col-md-12 col-lg-12">
-								<div class="table-responsive">
-                      <table class="table table-bordered text-nowrap" width="100%" id="driverTable">
+								<div class="col-md-12 col-lg-12">
+										<div class="table-responsive">
+                      <table class="table table-bordered text-nowrap" width="50%" id="driverTable">
                         <thead>
-                        <tr>
+                          <tr>
                             <th>#</th>
                             <th>Driver Name</th>
                             <th>Agent</th>
@@ -44,7 +45,10 @@
                         </thead>
                         <tbody>
                         <?php
-                        $stmt = $db->query('SELECT * FROM transportation LEFT JOIN users_tbl u ON `agent` = u.userID ORDER BY `id` DESC');
+                        $stmt = $db->query('SELECT * FROM transportation
+                          LEFT JOIN users_tbl u ON `agent` = u.userID 
+                          WHERE u.userID = ' . $_SESSION['userID'] . '
+                          ORDER BY `id` DESC');
                         $drivers = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         foreach($drivers as $index => $driver):
                         ?>
@@ -60,8 +64,8 @@
                             <td><?=number_format( $driver['amount_per_animal']) ?></td>
                             <!-- <td><?php // $driver['date_record'] ?></td> -->
                             <td>
-                                <a href="/transportationexp?id=<?= $driver['id'] ?>" class="btn btn-primary">View</a> |
-                                <a href="/edittransportation?id=<?= $driver['id'] ?>" class="btn btn-info">Edit</a> 
+                                <a href="/transportationexp?id=<?= $driver['id'] ?>" class="btn btn-primary">View</a> 
+                                <!-- <a href="/edittransportation?id=<?php // $driver['id'] ?>" class="btn btn-info">Edit</a>  -->
                             </td>
                         </tr>
                         <?php endforeach ?>
@@ -79,12 +83,11 @@
 
 <script>   
   $(document).ready(function(){
-      $('#driverTable').DataTable({
+      $('#driverTabl').DataTable({
           pageLength: 20
       });
   });
 </script>
-
 
 <script>
 document.querySelectorAll(".clickable-row").forEach(row => {
