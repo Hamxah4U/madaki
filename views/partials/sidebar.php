@@ -47,7 +47,14 @@
                         <i class="fas fa-truck"></i>
                        <strong>Transportation</strong>
                     </a>
-                </li>         
+                </li>   
+                
+                <li class="nav-item active">
+                    <a class="nav-link" href="/market">
+                        <i class="fas fa-warehouse"></i>
+                       <strong>Manage Market</strong>
+                    </a>
+                </li>   
 
             <?php else: ?>
                 <li class="nav-item active">

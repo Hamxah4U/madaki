@@ -51,8 +51,6 @@
     
     $subGrandTotal =  ($grandTotal) - (($expenses_other['total_other_exp'] ?? 0));
     
-    //$driverInfo['driver_amount'] + $expenses['total_exp'] ?? 0 + $otherExpenses['total_other_exp'] ?? 0;
-    //edit info 
     $editMode = false;
     $editData = null;
 
@@ -116,57 +114,90 @@
 
     if (isset($_POST['save'])) {
       // UPDATE (single row edit)
-      if (!empty($_POST['edit_id'])) {
+        if (!empty($_POST['edit_id'])) {
 
-          $stmt = $db->conn->prepare(" UPDATE transportation_expenses SET
-            fullname = :fullname,
-            total_animal = :total_animal,
-            death_animal = :death_animal,
-            first_payment = :first_payment,
-            second_payment = :second_payment,
-            third_payment = :third_payment
-            WHERE id = :id
-          ");
+            $stmt = $db->conn->prepare(" UPDATE transportation_expenses SET
+                fullname = :fullname,
+                total_animal = :total_animal,
+                death_animal = :death_animal,
+                first_payment = :first_payment,
+                second_payment = :second_payment,
+                third_payment = :third_payment
+                WHERE id = :id
+            ");
 
-          $stmt->execute([
-              'fullname' => $_POST['fullname'][0],
-              'total_animal' => $_POST['total_animal'][0],
-              'death_animal' => $_POST['death_animal'][0],
-              'first_payment' => $_POST['first_payment'][0],
+            $stmt->execute([
+                'fullname' => $_POST['fullname'][0],
+                'total_animal' => $_POST['total_animal'][0],
+                'death_animal' => $_POST['death_animal'][0],
+                'first_payment' => $_POST['first_payment'][0],
                 'second_payment' => $_POST['second_payment'][0],
                 'third_payment' => $_POST['third_payment'][0],
-              
-              'id'       => $_POST['edit_id']
-            //   'total_animal' => $_POST['total_animal'][0]
-          ]);
-
-      } else {
-
-          $stmt = $db->conn->prepare("
-            INSERT INTO transportation_expenses 
-            (total_animal, transportation_id, fullname, death_animal, first_payment, second_payment, third_payment)
-            VALUES 
-            (:total_animal, :tid, :fullname, :death, :first, :second, :third)
-        ");
-        
-                foreach ($_POST['fullname'] as $key => $name) {
-        
-            if (empty($name)) continue;
-        
-            $stmt->execute([
-                'total_animal' => $_POST['total_animal'][$key] ?? 0,
-                'tid'          => $transport_id,
-                'fullname'     => $name,
-                'death'        => $_POST['death_animal'][$key] ?? 0,
-                'first'        => $_POST['first_payment'][$key] ?? 0,
-                'second'       => $_POST['second_payment'][$key] ?? 0,
-                'third'        => $_POST['third_payment'][$key] ?? 0
+                'id'       => $_POST['edit_id']
             ]);
-        }
-        
-      }
 
-      echo "<script>location.href='?id=".$transport_id."';</script>";
+        }else{
+
+            $stmt = $db->conn->prepare("
+                INSERT INTO transportation_expenses 
+                (total_animal, transportation_id, fullname, death_animal, first_payment, second_payment, third_payment)
+                VALUES 
+                (:total_animal, :tid, :fullname, :death, :first, :second, :third)
+            ");
+            
+            foreach ($_POST['fullname'] as $key => $name) {
+                if (empty($name)) continue; 
+                if(empty(trim($_POST['fullname'][$key]))){
+                    $errors['fullname'] = 'Fullname is required';
+                } 
+                
+                if($transport_id && !empty(trim($_POST['fullname'][$key]))){
+                    // Check for duplicates
+                    $checkStmt = $db->conn->prepare("SELECT COUNT(*) FROM transportation_expenses WHERE transportation_id = :tid AND fullname = :fullname");
+                    $checkStmt->execute(['tid' => $transport_id, 'fullname' => trim($_POST['fullname'][$key])]);
+                    $count = $checkStmt->fetchColumn();
+
+                    if ($count > 0) {
+                        echo "<script>alert(' " . trim($_POST['fullname'][$key]) . ". already exists.');</script>";
+                        continue; // Skip this record
+                    }
+                }
+                $stmt->execute([
+                    'total_animal' => $_POST['total_animal'][$key] ?? null,
+                    'tid'          => $transport_id,
+                    'fullname'     => $name,
+                    'death'        => $_POST['death_animal'][$key] ?? null,
+                    'first'        => $_POST['first_payment'][$key] ?? null,
+                    'second'       => $_POST['second_payment'][$key] ?? null,
+                    'third'        => $_POST['third_payment'][$key] ?? null
+                ]);
+            }
+        
+        }
+        echo "
+            <script>
+            document.addEventListener('DOMContentLoaded', function(){
+                const Toast = Swal.mixin({
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 2000
+                });
+
+                Toast.fire({
+                    icon: 'success',
+                    title: 'Record saved successfully'
+                });
+
+                // Redirect after alert
+                setTimeout(function(){
+                    window.location.href='?id=".$transport_id."';
+                }, 2000);
+            });
+            </script>
+            ";
+
+        echo "<script>location.href='?id=".$transport_id."';</script>";
     }
 
 ?>

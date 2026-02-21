@@ -8,12 +8,8 @@ if(!isset($_SESSION['userID']) &&
   $uri != '/resetpassword' && 
   $uri != '/currentcapital' && 
   $uri != '/view-store' &&
-  $uri != '/chart' && 
-  $uri != '/diary' &&
   $uri != '/wallet' &&
 
-  $uri != '/individualrecord' &&
-  $uri != '/individualrecords' && 
   $uri != '/transportation' &&
   $uri != '/transportation.view' &&
   $uri != '/delete-exp' &&
@@ -26,7 +22,9 @@ if(!isset($_SESSION['userID']) &&
   $uri != '/delete-comment' &&
   $uri != '/delete-only-exp' &&
   $uri != '/delete-other-expenses' &&
-  $uri != '/agent-transportation'
+  $uri != '/agent-transportation' &&
+  $uri != '/market' &&
+  $uri != '/view-market' 
   
   ) {
   header('Location: /');
@@ -37,8 +35,7 @@ $routes = [
   '/' => 'controllers/index.php',
   '/users' => 'controllers/users.php',
   '/animal' => 'controllers/animal.php',
-  '/individualrecord' => 'controllers/individualrecord.php',
-  '/individualrecords' => 'controllers/individualrecord2.php',
+  
 
   // transportation
     '/transportation' => 'controllers/transportation.php',
@@ -55,6 +52,8 @@ $routes = [
     '/delete-only-exp' => 'controllers/deleteonlyexp.php',
     '/delete-other-expenses' => 'controllers/deleteotherexpenses.php',
     '/agent-transportation' => 'controllers/agenttransportation.php',
+    '/market' => 'controllers/market.php',
+    '/view-market' => 'controllers/viewmarket.php',
     
 
 

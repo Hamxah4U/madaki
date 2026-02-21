@@ -4,14 +4,7 @@
 			<i class="fa fa-bars"></i>
 	</button>
 	<?php
-		$stmt = $db->conn->prepare("SELECT SUM(COALESCE(`Quantity` * `Pprice`)) AS `current_capital` FROM `supply_tbl` GROUP BY `Department`, `ProductName`, `ExpiryDate`,`SupplyDate`");
-		$stmt->execute();
-		$capitals = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-		$totalCapital = 0;
-		foreach($capitals as $index => $capital){
-			$totalCapital += $capital['current_capital'];
-		}
+		
 	?>
 
 	<!-- <?php //if($_SESSION['role'] == 'Admin'):?>  
@@ -80,7 +73,7 @@
 									Settings
 							</a>
 
-							<a class="dropdown-item" href="/currentcapital">
+							<a class="dropdown-item" href="#">
 									
 									<i class="fas fa-money-bill-wave fa-sm fa-fw mr-2 text-gray-400"></i>
 									Current Capital
