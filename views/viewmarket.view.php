@@ -71,7 +71,7 @@
                             </tr>
                         </tbody>
                     </table>
-                    <button type="button" class="btn btn-success" id="addRow">Add Person</button>
+                    <button type="button" class="btn btn-success" id="addRow">Add Animal</button>
                     <br><br>
                         <!-- Admin can submit or update -->
                     <button type="submit" name="save"

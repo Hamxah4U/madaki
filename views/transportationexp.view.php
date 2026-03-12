@@ -301,417 +301,426 @@
                 <button type="button" data-target="#modeldiary" data-toggle="modal" class="btn btn-primary"><strong>Diary</strong></button>              
             </div>
 
-    <?php
-        $currentEditId = $_GET['edit'] ?? null;
+        <?php
+            $currentEditId = $_GET['edit'] ?? null;
 
-        /* ===============================
-        STEP 1: Calculate totals first
-        =================================*/
-        $totalDeath = 0;
-        $totalSurviving = 0;
-        $totalFirst = 0;
-        $totalSecond = 0;
-        $totalThird = 0;
-        $totalPaid = 0;
-        $total_animal = 0;
+            /* ===============================
+            STEP 1: Calculate totals first
+            =================================*/
+            $totalDeath = 0;
+            $totalSurviving = 0;
+            $totalFirst = 0;
+            $totalSecond = 0;
+            $totalThird = 0;
+            $totalPaid = 0;
+            $total_animal = 0;
+            $total_remain_bal = 0;
+            $total_exp_amount = 0;
 
-        foreach ($records as $row) {
-            $totalDeath += (int)$row['death_animal'];
-            $totalSurviving += (int)$row['surviving_animal'];
-            $totalFirst += (float)$row['first_payment'];
-            $totalSecond += (float)$row['second_payment'];
-            $totalThird += (float)$row['third_payment'];
-            $totalPaid += (float)$row['total'];
-            $total_animal += (int)$row['total_animal'];
-        }
+            foreach ($records as $row) {
+                $totalDeath += (int)$row['death_animal'];
+                $totalSurviving += (int)$row['surviving_animal'];
+                $totalFirst += (float)$row['first_payment'];
+                $totalSecond += (float)$row['second_payment'];
+                $totalThird += (float)$row['third_payment'];
+                $totalPaid += (float)$row['total'];
+                $total_animal += (int)$row['total_animal'];
+                $total_remain_bal += ((float)$row['amount_per_animal'] * (int)$row['surviving_animal']) - (float)$row['total'];
+                // $total_exp_amount += $row[]
+            }
 
-        /* ===============================
-        STEP 2: Cost per animal
-        =================================*/
-        $costPerAnimal = 0;
-        if ($totalSurviving > 0) {
-            $costPerAnimal = $driverInfo['driver_amount'] / $totalSurviving;
-        }
-    ?>
-    <div class="print-container" id="printArea">
+            /* ===============================
+            STEP 2: Cost per animal
+            =================================*/
+            $costPerAnimal = 0;
+            if ($totalSurviving > 0) {
+                $costPerAnimal = $driverInfo['driver_amount'] / $totalSurviving;
+            }
+        ?>
+        <div class="print-container" id="printArea">
 
-        <!-- Header -->
-        <div class="print-header">
-            <h3>BASHIR MADAKI TRANSPORTATION RECORD</h3>
-            <small><?= date('d M Y') ?></small>
-        </div>
-
-        <!-- Driver Info -->
-        <table class="table table-bordered text-nowrap mb-3">
-            <tr>
-                <th>Driver</th>
-                <td><?= !empty($driverInfo['driver_name']) ? $driverInfo['driver_name'] : '' ?></td>
-                <th>Yan waju</th>
-                <td><?= !empty($driverInfo['yan_waju']) ? $driverInfo['yan_waju'] : '' ?></td>
-                <!-- <th>Motor No.</th> -->
-                <!-- <td><?php // !empty($driverInfo['bossno']) ? $driverInfo['bossno'] : 'N/A' ?></td> -->
-                <th>General Grand Total </th>
-                <td>&#8358;<?= number_format($grandTotal) ?></td>
-            </tr>
-            <tr>
-                <th>Total Transportation Cost</th>
-                <td>&#8358;<?= !empty($driverInfo['driver_amount']) ? number_format($driverInfo['driver_amount']) : '0.00' ?></td>
-                <th>Cost Per Animal</th>
-                <td>&#8358;<?= !empty($driverInfo['amount_per_animal']) ? number_format($driverInfo['amount_per_animal']) : '0.00' ?></td>
-                
-                <th>Expenses</th>
-                <td>&#8358;<?= number_format($expenses_other['total_other_exp'] ?? 0) ?></td>
-            </tr>
-            <tr>
-                <th>Total Surviving Animals</th>
-                <td><?= $totalSurviving ?></td>
-                <th>Total Death</th>
-                <td><?= number_format($totalDeath) ?></td>
-                <th>Expected Return</th>
-                <td>&#8358;<?= number_format($subGrandTotal) ?></td>
-            </tr>
-            <tr>
-                <th>Deposits</th>
-                <td colspan="5">
-                    <div class="d-flex justify-content-between">
-                        <span><strong>1st:</strong> ₦<?= number_format($driverInfo['first_payment'] ?? 0) ?></span>
-                        <span><strong>2nd:</strong> ₦<?= number_format($driverInfo['second_payment'] ?? 0) ?></span>
-                        <span><strong>3rd:</strong> ₦<?= number_format($driverInfo['third_payment'] ?? 0) ?></span>
-                        <span><strong>Remaining Bal.</strong> ₦<?= number_format($driverInfo['balance'] ?? 0) ?></span>
-                    </div>
-                </td>
-            </tr>
-            <tr>
-                <th>Agent</th>
-                <td><?= $driverInfo['agentname'] ?? '' ?></td>
-                <th>Delivery Date</th>
-                <td><?= $driverInfo['deliverydate'] ?? '' ?></td>
-                <th>Agent Phone</th>
-                <td><?= $driverInfo['agentphone'] ?? '' ?></td>
-            </tr>
-
-        </table>
-
-        <!-- Records Table -->
-        <table class="table table-bordered text-nowrap">
-            <thead>
-                <tr>
-                    <th>#</th>
-                    <th>Name</th>
-                    <th>Total Animal</th>
-                    <th>Death</th>
-                    <th>Surviving</th>
-                    <th>Expected Amount</th>
-                    <th>1st</th>
-                    <th>2nd</th>
-                    <th>3rd</th>
-                    <th>Total Paid</th>
-                    <th>Balance</th>
-                    <th class="no-print">Action</th>
-                </tr>
-            </thead>
-
-            <tbody>
-            <?php foreach ($records as $i => $row): 
-            
-                // Expected payment for this person
-                $expectedAmount = $row['amount_per_animal'] * $row['surviving_animal']; //$costPerAnimal
-
-                // Overpayment check
-                $isOverpaid = $row['total'] > $expectedAmount;
-
-                // ramaining balance
-                $balance = round($expectedAmount - $row['total']);
-
-                // Row classes
-                $rowClass = '';
-                if ($currentEditId == $row['id']) {
-                    $rowClass = 'table-danger';
-                }elseif($balance == 0) {
-                    $rowClass = 'table-success';
-                }elseif($isOverpaid){
-                    $rowClass = 'overpaid';
-                }
-                // elseif ($isOverpaid) {
-                //     $rowClass = 'overpaid';
-                // }
-            ?>
-                <tr class="<?= $rowClass ?>">
-                    <td><?= $i + 1 ?></td>
-                    <td><?= $row['fullname'] ?></td>
-                    <td><?= $row['total_animal'] ?></td>
-                    <td><?= $row['death_animal'] ?></td>
-                    <td><?= $row['surviving_animal'] ?></td>
-                    <td><strong><?= number_format($expectedAmount) ?></strong></td>
-                    <td><?= number_format($row['first_payment']) ?></td>
-                    <td><?= number_format($row['second_payment']) ?></td>
-                    <td><?= number_format($row['third_payment']) ?></td>
-                    <td><strong><?= number_format($row['total']) ?></strong></td>
-                    <td>
-                        <?php if($balance > 0): ?>
-                            <span class="text-warning">
-                                <?= number_format($balance) ?> Remaining
-                            </span>
-                        <?php elseif($balance < 0): ?>
-                            <span class="text-success">
-                                <?= number_format(abs($balance)) ?> Over
-                            </span>
-                        <?php elseif($balance == 0): ?>
-                            <span class="text-primary">Cleared</span>
-                        <?php endif; ?>
-                    </td>
-                    <td class="no-print">                    
-                        <button 
-                            class="btn btn-sm btn-info receiptBtn"
-                            data-id="<?= $row['id'] ?>"
-                            data-phone="<?= $row['phone'] ?>"
-                            data-tid="<?= $transport_id ?>"
-                            data-bs-toggle="modal"
-                            data-bs-target="#receiptModal">
-                            Receipt
-                        </button>
-                        <a href="?id=<?= $transport_id ?>&edit=<?= $row['id'] ?>" class="btn btn-sm btn-primary">Edit </a>
-
-                        <?php if ($_SESSION['role'] == 'Admin'): ?>
-                            <a href="/delete-exp?id=<?= $row['id'] ?>&tid=<?= $transport_id ?>"
-                            class="btn btn-sm btn-danger"
-                            onclick="return confirm('Delete this record?')">
-                            Delete
-                            </a>
-                        <?php endif; ?>
-                    </td>
-                </tr>
-            <?php endforeach; ?>
-            </tbody>
-
-            <!-- Footer Totals -->
-            <tfoot>
-                <tr style="background:#f1f1f1; font-weight:bold;">
-                    <td colspan="2">TOTAL</td>
-                    <td><?= $total_animal ?></td>
-                    <td><?= $totalDeath ?></td>
-                    <td><?= $totalSurviving ?></td>
-                    <td>&#8358;<?= !empty($driverInfo['driver_amount']) ? number_format($driverInfo['driver_amount']) : '0.00' ?></td>
-                    <td><?= number_format($totalFirst) ?></td>
-                    <td><?= number_format($totalSecond) ?></td>
-                    <td><?= number_format($totalThird) ?></td>
-                    <td><?= number_format($totalPaid) ?></td>
-                    <td colspan="2"></td>
-                    <td class="no-print"></td>
-                </tr>
-            </tfoot>
-        </table>
-
-        <div class="row">
-            <div class="col-sm-6">
-                <table class="table table-bordered text-nowrap">
-                    <thead>
-                        <tr><strong>Expenses</strong></tr>
-                        <tr>
-                            <th>#</th>
-                            <th>Reason</th>
-                            <th>Amount</th>
-                            <th>Date</th>
-                            <th>Time</th>
-                            <th class="no-print">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php
-                            $exponly = 0;
-                            $exp = $db->conn->prepare("SELECT * FROM `expenses` WHERE `status` = 'exp' AND driver_id = :id");
-                            $exp->execute(['id' => $transport_id]);
-                            $row_exps = $exp->fetchALL();
-                            foreach($row_exps AS $index => $row_exp) : 
-                                $exponly  += $row_exp['amount'];
-                        ?>
-                        <tr>
-                            <td><?= $index + 1 ?></td>
-                            <td><?= $row_exp['reason'] ?></td>
-                            <td><?= number_format($row_exp['amount']) ?></td>
-                            <td><?= $row_exp['daterecorded'] ?></td>
-                            <td><?= $row_exp['timerecorded'] ?></td>
-                            <td class="no-print">
-                                <a href="/delete-only-exp?id=<?= $row_exp['id'] ?>&tid=<?= $transport_id ?>" class="btn btn-sm btn-danger" onclick="return confirm('Delete this record?')">Delete</a>
-                                <!-- <a href="/edit">Edit</a> -->
-                            </td>
-                        </tr>
-                        <?php endforeach ?>
-                    </tbody>
-                    <tfoot>
-                        <tr style="background:#f1f1f1; font-weight:bold;">
-                            <td colspan="2">Total</td>
-                            <th colspan="5">₦<?= number_format($exponly) ?></th>
-                        </tr>
-                    </tfoot>
-                </table>
+            <!-- Header -->
+            <div class="print-header">
+                <h3>BASHIR MADAKI TRANSPORTATION RECORD</h3>
+                <small><?= date('d M Y') ?></small>
             </div>
-        
-            <div class="col-sm-6">
-                <table class="table table-bordered text-nowrap">
-                    <thead>
-                        <tr><strong>Other Expenses</strong></tr>
-                        <tr>
-                            <th>#</th>
-                            <th>Reason</th>
-                            <th>Amount</th>
-                            <th>Date</th>
-                            <th>Time</th>
-                            <th class="no-print">Action</th>   
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php
-                            $exponly = 0;
-                            $exp = $db->conn->prepare("SELECT * FROM `expenses` WHERE `status` = 'other_exp' AND driver_id = :id");
-                            $exp->execute(['id' => $transport_id]);
-                            $row_exps = $exp->fetchALL();
-                            foreach($row_exps AS $index => $row_exp) : 
-                                $exponly  += $row_exp['amount'];
-                        ?>
-                        <tr>
-                            <td><?= $index + 1 ?></td>
-                            <td><?= $row_exp['reason'] ?></td>
-                            <td><?= number_format($row_exp['amount']) ?></td>
-                            <td><?= $row_exp['daterecorded'] ?></td>
-                            <td><?= $row_exp['timerecorded'] ?></td>
-                            <td class="no-print">
-                                <a href="/delete-other-expenses?id=<?= $row_exp['id'] ?>&tid=<?= $transport_id ?>" class="btn btn-sm btn-danger no-print" onclick="return confirm('Delete this record?')">Delete</a>
-                                <!-- <a href="/edit">Edit</a> -->
-                            </td>
-                        </tr>
-                        <?php endforeach ?>
+
+            <!-- Driver Info -->
+            <table class="table table-bordered text-nowrap mb-3">
+                <tr>
+                    <th>Driver</th>
+                    <td><?= !empty($driverInfo['driver_name']) ? $driverInfo['driver_name'] : '' ?></td>
+                    <th>Yan waju</th>
+                    <td><?= !empty($driverInfo['yan_waju']) ? $driverInfo['yan_waju'] : '' ?></td>
+                    <!-- <th>Motor No.</th> -->
+                    <!-- <td><?php // !empty($driverInfo['bossno']) ? $driverInfo['bossno'] : 'N/A' ?></td> -->
+                    <th>General Grand Total </th>
+                    <td>&#8358;<?= number_format($grandTotal) ?></td>
+                </tr>
+                <tr>
+                    <th>Total Transportation Cost</th>
+                    <td>&#8358;<?= !empty($driverInfo['driver_amount']) ? number_format($driverInfo['driver_amount']) : '0.00' ?></td>
+                    <th>Cost Per Animal</th>
+                    <td>&#8358;<?= !empty($driverInfo['amount_per_animal']) ? number_format($driverInfo['amount_per_animal']) : '0.00' ?></td>
+                    
+                    <th>Expenses</th>
+                    <td>&#8358;<?= number_format($expenses_other['total_other_exp'] ?? 0) ?></td>
+                </tr>
+                <tr>
+                    <th>Total Surviving Animals</th>
+                    <td><?= $totalSurviving ?></td>
+                    <th>Total Death</th>
+                    <td><?= number_format($totalDeath) ?></td>
+                    <th>Expected Return</th>
+                    <td>&#8358;<?= number_format($subGrandTotal) ?></td>
+                </tr>
+                <tr>
+                    <th>Deposits</th>
+                    <td colspan="5">
+                        <div class="d-flex justify-content-between">
+                            <span><strong>1st:</strong> ₦<?= number_format($driverInfo['first_payment'] ?? 0) ?></span>
+                            <span><strong>2nd:</strong> ₦<?= number_format($driverInfo['second_payment'] ?? 0) ?></span>
+                            <span><strong>3rd:</strong> ₦<?= number_format($driverInfo['third_payment'] ?? 0) ?></span>
+                            <span><strong>Remaining Bal.</strong> ₦<?= number_format($driverInfo['balance'] ?? 0) ?></span>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <th>Agent</th>
+                    <td><?= $driverInfo['agentname'] ?? '' ?></td>
+                    <th>Delivery Date</th>
+                    <td><?= $driverInfo['deliverydate'] ?? '' ?></td>
+                    <th>Agent Phone</th>
+                    <td><?= $driverInfo['agentphone'] ?? '' ?></td>
+                </tr>
+
+            </table>
+
+            <!-- Records Table -->
+            <table class="table table-bordered text-nowrap">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Name</th>
+                        <th>Total Animal</th>
+                        <th>Death</th>
+                        <th>Surviving</th>
+                        <th>Expected Amount</th>
+                        <th>1st</th>
+                        <th>2nd</th>
+                        <th>3rd</th>
+                        <th>Total Paid</th>
+                        <th>Balance</th>
+                        <th class="no-print">Action</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                <?php 
+                    $totalExpectedAmount = 0;
+                    $balance = 0;
+                    $newBal = 0;
+                    foreach ($records as $i => $row): 
+                
+                    // Expected payment for this person
+                    $expectedAmount = $row['amount_per_animal'] * $row['surviving_animal']; //$costPerAnimal
+                    $totalExpectedAmount += $expectedAmount;  
+
+                    // Overpayment check
+                    $isOverpaid = $row['total'] > $expectedAmount;
+
+                    // ramaining balance
+                    $balance = round($expectedAmount - $row['total']);
+                    $newBal += $balance;
+                    // Row classes
+                    $rowClass = '';
+                    if ($currentEditId == $row['id']) {
+                        $rowClass = 'table-danger';
+                    }elseif($balance == 0) {
+                        $rowClass = 'table-success';
+                    }elseif($isOverpaid){
+                        $rowClass = 'overpaid';
+                    }
+                    // elseif ($isOverpaid) {
+                    //     $rowClass = 'overpaid';
+                    // }
+                ?>
+                    <tr class="<?= $rowClass ?>">
+                        <td><?= $i + 1 ?></td>
+                        <td><?= $row['fullname'] ?></td>
+                        <td><?= $row['total_animal'] ?></td>
+                        <td><?= $row['death_animal'] ?></td>
+                        <td><?= $row['surviving_animal'] ?></td>
+                        <td><strong><?= number_format($expectedAmount) ?></strong></td>
+                        <td><?= number_format($row['first_payment']) ?></td>
+                        <td><?= number_format($row['second_payment']) ?></td>
+                        <td><?= number_format($row['third_payment']) ?></td>
+                        <td><strong><?= number_format($row['total']) ?></strong></td>
+                        <td>
+                            <?php if($balance > 0): ?>
+                                <span class="text-warning">
+                                    <?= number_format($balance) ?> Remaining
+                                </span>
+                            <?php elseif($balance < 0): ?>
+                                <span class="text-success">
+                                    <?= number_format(abs($balance)) ?> Over
+                                </span>
+                            <?php elseif($balance == 0): ?>
+                                <span class="text-primary">Cleared</span>
+                            <?php endif; ?>
+                        </td>
+                        <td class="no-print">                    
+                            <button 
+                                class="btn btn-sm btn-info receiptBtn"
+                                data-id="<?= $row['id'] ?>"
+                                data-phone="<?= $row['phone'] ?>"
+                                data-tid="<?= $transport_id ?>"
+                                data-bs-toggle="modal"
+                                data-bs-target="#receiptModal">
+                                Receipt
+                            </button>
+                            <a href="?id=<?= $transport_id ?>&edit=<?= $row['id'] ?>" class="btn btn-sm btn-primary">Edit </a>
+
+                            <?php if ($_SESSION['role'] == 'Admin'): ?>
+                                <a href="/delete-exp?id=<?= $row['id'] ?>&tid=<?= $transport_id ?>"
+                                class="btn btn-sm btn-danger"
+                                onclick="return confirm('Delete this record?')">
+                                Delete
+                                </a>
+                            <?php endif; ?>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+                </tbody>
+
+                <!-- Footer Totals -->
+                <tfoot>
+                    <tr style="background:#f1f1f1; font-weight:bold;">
+                        <td colspan="2">TOTAL</td>
+                        <td><?= $total_animal ?></td>
+                        <td><?= $totalDeath ?></td>
+                        <td><?= $totalSurviving ?></td>
+                        <td>₦<?= isset($totalExpectedAmount) ? number_format($totalExpectedAmount, 2) : '0.00' ?></td>
+                        <td>₦<?= number_format($totalFirst) ?></td>
+                        <td>₦<?= number_format($totalSecond) ?></td>
+                        <td>₦<?= number_format($totalThird) ?></td>
+                        <td>₦<?= number_format($totalPaid) ?></td>
+                         <td colspan="1">₦<?= number_format($newBal) ?></td>
+                        <td class="no-print"></td>
+                    </tr>
+                </tfoot>
+            </table>
+
+            <div class="row">
+                <div class="col-sm-6">
+                    <table class="table table-bordered text-nowrap">
+                        <thead>
+                            <tr><strong>Expenses</strong></tr>
+                            <tr>
+                                <th>#</th>
+                                <th>Reason</th>
+                                <th>Amount</th>
+                                <th>Date</th>
+                                <th>Time</th>
+                                <th class="no-print">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php
+                                $exponly = 0;
+                                $exp = $db->conn->prepare("SELECT * FROM `expenses` WHERE `status` = 'exp' AND driver_id = :id");
+                                $exp->execute(['id' => $transport_id]);
+                                $row_exps = $exp->fetchALL();
+                                foreach($row_exps AS $index => $row_exp) : 
+                                    $exponly  += $row_exp['amount'];
+                            ?>
+                            <tr>
+                                <td><?= $index + 1 ?></td>
+                                <td><?= $row_exp['reason'] ?></td>
+                                <td><?= number_format($row_exp['amount']) ?></td>
+                                <td><?= $row_exp['daterecorded'] ?></td>
+                                <td><?= $row_exp['timerecorded'] ?></td>
+                                <td class="no-print">
+                                    <a href="/delete-only-exp?id=<?= $row_exp['id'] ?>&tid=<?= $transport_id ?>" class="btn btn-sm btn-danger" onclick="return confirm('Delete this record?')">Delete</a>
+                                    <!-- <a href="/edit">Edit</a> -->
+                                </td>
+                            </tr>
+                            <?php endforeach ?>
                         </tbody>
                         <tfoot>
-                        <tr style="background:#f1f1f1; font-weight:bold;">
-                            <td colspan="2">Total</td>
-                            <th colspan="4">₦<?= number_format($exponly) ?></th>
-                        </tr>
-                    </tfoot>
-                </table>
-            </div>
-        </div>
-
-        <div class="row">
-            <div class="col-sm-6">
-                <div class="table-responsive">
+                            <tr style="background:#f1f1f1; font-weight:bold;">
+                                <td colspan="2">Total</td>
+                                <th colspan="5">₦<?= number_format($exponly) ?></th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            
+                <div class="col-sm-6">
                     <table class="table table-bordered text-nowrap">
                         <thead>
-                            <tr><strong>Comments</strong></tr>
+                            <tr><strong>Other Expenses</strong></tr>
                             <tr>
                                 <th>#</th>
-                                <th>Comment</th>
+                                <th>Reason</th>
+                                <th>Amount</th>
                                 <th>Date</th>
                                 <th>Time</th>
-                                <th class="no-print">Action</th>
+                                <th class="no-print">Action</th>   
                             </tr>
                         </thead>
                         <tbody>
                             <?php
-                                $comment = $db->conn->prepare("SELECT * FROM `expenses` WHERE `status` = 'comment' AND driver_id = :id");
-                                $comment->execute(['id' => $transport_id]);
-                                $row_comments = $comment->fetchALL();
-                                foreach($row_comments AS $index => $row_comment) : 
+                                $exponly = 0;
+                                $exp = $db->conn->prepare("SELECT * FROM `expenses` WHERE `status` = 'other_exp' AND driver_id = :id");
+                                $exp->execute(['id' => $transport_id]);
+                                $row_exps = $exp->fetchALL();
+                                foreach($row_exps AS $index => $row_exp) : 
+                                    $exponly  += $row_exp['amount'];
                             ?>
                             <tr>
                                 <td><?= $index + 1 ?></td>
-                                <td><?= $row_comment['reason'] ?></td>
-                                <td><?= date('d M Y', strtotime($row_comment['daterecorded'])) ?></td>
-                                <td><?= date('h:i A', strtotime($row_comment['timerecorded'])) ?></td>
+                                <td><?= $row_exp['reason'] ?></td>
+                                <td><?= number_format($row_exp['amount']) ?></td>
+                                <td><?= $row_exp['daterecorded'] ?></td>
+                                <td><?= $row_exp['timerecorded'] ?></td>
                                 <td class="no-print">
-                                    <a href="/delete-comment?id=<?= $row_comment['id'] ?>&tid=<?= $transport_id ?>"
-                                        class="btn btn-sm btn-danger"
-                                        onclick="return confirm('Delete this record?')">
-                                        Delete
-                                    </a>
+                                    <a href="/delete-other-expenses?id=<?= $row_exp['id'] ?>&tid=<?= $transport_id ?>" class="btn btn-sm btn-danger no-print" onclick="return confirm('Delete this record?')">Delete</a>
+                                    <!-- <a href="/edit">Edit</a> -->
                                 </td>
                             </tr>
                             <?php endforeach ?>
-                        </tbody>
+                            </tbody>
+                            <tfoot>
+                            <tr style="background:#f1f1f1; font-weight:bold;">
+                                <td colspan="2">Total</td>
+                                <th colspan="4">₦<?= number_format($exponly) ?></th>
+                            </tr>
+                        </tfoot>
                     </table>
                 </div>
             </div>
 
-            <div class="col-sm-6">
-                <div class="table-responsive">
-                    <table class="table table-bordered text-nowrap">
-                        <thead>
-                            <tr><strong>OtherComments</strong></tr>
-                            <tr>
-                                <th>#</th>
-                                <th>Other Comment</th>
-                                <th>Date</th>
-                                <th>Time</th>
-                                <th class="no-print">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
+            <div class="row">
+                <div class="col-sm-6">
+                    <div class="table-responsive">
+                        <table class="table table-bordered text-nowrap">
+                            <thead>
+                                <tr><strong>Comments</strong></tr>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Comment</th>
+                                    <th>Date</th>
+                                    <th>Time</th>
+                                    <th class="no-print">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php
+                                    $comment = $db->conn->prepare("SELECT * FROM `expenses` WHERE `status` = 'comment' AND driver_id = :id");
+                                    $comment->execute(['id' => $transport_id]);
+                                    $row_comments = $comment->fetchALL();
+                                    foreach($row_comments AS $index => $row_comment) : 
+                                ?>
+                                <tr>
+                                    <td><?= $index + 1 ?></td>
+                                    <td><?= $row_comment['reason'] ?></td>
+                                    <td><?= date('d M Y', strtotime($row_comment['daterecorded'])) ?></td>
+                                    <td><?= date('h:i A', strtotime($row_comment['timerecorded'])) ?></td>
+                                    <td class="no-print">
+                                        <a href="/delete-comment?id=<?= $row_comment['id'] ?>&tid=<?= $transport_id ?>"
+                                            class="btn btn-sm btn-danger"
+                                            onclick="return confirm('Delete this record?')">
+                                            Delete
+                                        </a>
+                                    </td>
+                                </tr>
+                                <?php endforeach ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="col-sm-6">
+                    <div class="table-responsive">
+                        <table class="table table-bordered text-nowrap">
+                            <thead>
+                                <tr><strong>OtherComments</strong></tr>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Other Comment</th>
+                                    <th>Date</th>
+                                    <th>Time</th>
+                                    <th class="no-print">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php
+                                    $comment = $db->conn->prepare("SELECT * FROM `expenses` WHERE `status` = 'other_comment' AND driver_id = :id");
+                                    $comment->execute(['id' => $transport_id]);
+                                    $row_comments = $comment->fetchALL();
+                                    foreach($row_comments AS $index => $row_comment) : 
+                                ?>
+                                <tr>
+                                    <td><?= $index + 1 ?></td>
+                                    <td><?= $row_comment['reason'] ?></td>
+                                    <td><?= date('d M Y', strtotime($row_comment['daterecorded'])) ?></td>
+                                    <td><?= date('h:i A', strtotime($row_comment['timerecorded'])) ?></td>
+                                    <td class="no-print">
+                                        <a href="/delete-comment?id=<?= $row_comment['id'] ?>&tid=<?= $transport_id ?>"
+                                            class="btn btn-sm btn-danger"
+                                            onclick="return confirm('Delete this record?')">
+                                            Delete
+                                        </a>
+                                    </td>
+                                </tr>
+                                <?php endforeach ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-sm-12">
+                    <div class="table table-responsive">
+                        <table class="table table-bordered text-nowrap">
+                            <thead>
+                                <tr><strong>Diary</strong></tr>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Diary Note</th>
+                                    <th>Date</th>
+                                    <th>Time</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
                             <?php
-                                $comment = $db->conn->prepare("SELECT * FROM `expenses` WHERE `status` = 'other_comment' AND driver_id = :id");
-                                $comment->execute(['id' => $transport_id]);
-                                $row_comments = $comment->fetchALL();
-                                foreach($row_comments AS $index => $row_comment) : 
+                                $diary = $db->conn->prepare("SELECT * FROM `expenses` WHERE `status` = 'diary' AND driver_id = :id");
+                                $diary->execute(['id' => $transport_id]);
+                                $row_diarys = $diary->fetchALL();
+                                foreach($row_diarys AS $index => $row_diary) : 
+                                
                             ?>
                             <tr>
                                 <td><?= $index + 1 ?></td>
-                                <td><?= $row_comment['reason'] ?></td>
-                                <td><?= date('d M Y', strtotime($row_comment['daterecorded'])) ?></td>
-                                <td><?= date('h:i A', strtotime($row_comment['timerecorded'])) ?></td>
+                                <td><?= $row_diary['reason'] ?></td>
+                                <td><?= $row_diary['daterecorded'] ?></td>
+                                <td><?= $row_diary['timerecorded'] ?></td>
                                 <td class="no-print">
-                                    <a href="/delete-comment?id=<?= $row_comment['id'] ?>&tid=<?= $transport_id ?>"
-                                        class="btn btn-sm btn-danger"
-                                        onclick="return confirm('Delete this record?')">
-                                        Delete
-                                    </a>
+                                    <a href="/delete-other-expenses?id=<?= $row_diary['id'] ?>&tid=<?= $transport_id ?>" class="btn btn-sm btn-danger no-print" onclick="return confirm('Delete this record?')">Delete</a>
+                                    <!-- <a href="/edit">Edit</a> -->
                                 </td>
                             </tr>
                             <?php endforeach ?>
-                        </tbody>
-                    </table>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <div class="row">
-            <div class="col-sm-12">
-                <div class="table table-responsive">
-                    <table class="table table-bordered text-nowrap">
-                        <thead>
-                            <tr><strong>Diary</strong></tr>
-                            <tr>
-                                <th>#</th>
-                                <th>Diary Note</th>
-                                <th>Date</th>
-                                <th>Time</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                        <?php
-                            $diary = $db->conn->prepare("SELECT * FROM `expenses` WHERE `status` = 'diary' AND driver_id = :id");
-                            $diary->execute(['id' => $transport_id]);
-                            $row_diarys = $diary->fetchALL();
-                            foreach($row_diarys AS $index => $row_diary) : 
-                               
-                        ?>
-                        <tr>
-                            <td><?= $index + 1 ?></td>
-                            <td><?= $row_diary['reason'] ?></td>
-                            <td><?= $row_diary['daterecorded'] ?></td>
-                            <td><?= $row_diary['timerecorded'] ?></td>
-                            <td class="no-print">
-                                <a href="/delete-other-expenses?id=<?= $row_diary['id'] ?>&tid=<?= $transport_id ?>" class="btn btn-sm btn-danger no-print" onclick="return confirm('Delete this record?')">Delete</a>
-                                <!-- <a href="/edit">Edit</a> -->
-                            </td>
-                        </tr>
-                        <?php endforeach ?>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
         </div>
-
-    </div>
            
         </div>   
 	</div>       
