@@ -74,14 +74,8 @@
                     <button type="button" class="btn btn-success" id="addRow">Add Animal</button>
                     <br><br>
                         <!-- Admin can submit or update -->
-                    <button type="submit" name="save"
-                            class="btn btn-primary">
-                           Submit
-                        </button>
-
-                  
-                </form>
-                
+                    <button type="submit" name="save" class="btn btn-primary">Submit</button>
+                </form>                
             </div>
             <div class="mb-3">
                 <br>
