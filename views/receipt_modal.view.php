@@ -5,7 +5,7 @@
 
     <table class="table table-bordered">
         <tr>
-            <th>Name</th>
+            <th>Name__</th>
             <td><?= $person['fullname'] ?></td>
         </tr>
         <tr>
@@ -17,16 +17,22 @@
             <td><?= $transport['bossno'] ?></td>
         </tr>
         <tr>
-            <th>Surviving Animals</th>
-            <td><?= $person['total_animal'] ?></td>
+            <th>Survived Animals</th>
+            <td><?= $person['surviving_animal'] ?></td>
         </tr>
         <tr>
             <th>Cost per Animal</th>
-            <td>₦<?= number_format($costPerAnimal, 2) ?></td>
+            <td>₦<?= number_format($transport['amount_per_animal'], 2) ?></td>
         </tr>
         <tr>
             <th>Expected Amount</th>
-            <td>₦<?= number_format($expected) ?></td>
+            <td>
+                <?php
+                    $expectedTotal =  $person['surviving_animal'] * $transport['amount_per_animal'];
+                ?>
+                ₦<?= number_format($expectedTotal) ?>
+                    
+            </td>
         </tr>
         <tr>
             <th>1st Payment</th>
@@ -47,10 +53,11 @@
         <tr>
             <th>Status</th>
             <td>
-                <?php if($balance > 0): ?>
-                    <?= number_format($balance) ?> Remaining
-                <?php elseif($balance < 0): ?>
-                    <?= number_format(abs($balance)) ?> Overpaid
+                <?php $balanceT = $expectedTotal - $person['total'] ?>
+                <?php if($balanceT > 0): ?>
+                    <?= number_format($balanceT) ?> Remaining
+                <?php elseif($balanceT < 0): ?>
+                    <?= number_format(abs($balanceT)) ?> Overpaid
                 <?php else: ?>
                     Cleared
                 <?php endif; ?>

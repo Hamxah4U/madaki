@@ -11,8 +11,10 @@ if(isset($_POST['driverID'])){
   $deliverydate = $_POST['deliverydate'];
   $agent = $_POST['deliverydate'];
   $deliverydate = $_POST['deliverydate'];
-  $stmt = $db->conn->prepare('UPDATE transportation SET deliverydate = :deliverydate, agent = :agent, first_payment = :first_payment, second_payment = :second_payment, third_payment = :third_payment, driver_name = :driver_name, bossno = :bossno, driver_amount = :driver_amount, amount_per_animal = :amount_per_animal, yan_waju = :yan_waju WHERE id = :id');
+  $other_cost = $_POST['other_cost'];
+  $stmt = $db->conn->prepare('UPDATE transportation SET other_cost = :other_cost, deliverydate = :deliverydate, agent = :agent, first_payment = :first_payment, second_payment = :second_payment, third_payment = :third_payment, driver_name = :driver_name, bossno = :bossno, driver_amount = :driver_amount, amount_per_animal = :amount_per_animal, yan_waju = :yan_waju WHERE id = :id');
   $result = $stmt->execute([
+    ':other_cost' => $_POST['other_cost'],
     ':deliverydate' => $_POST['deliverydate'],
     ':agent' => $_POST['agent'],
     ':first_payment' => $_POST['first_payment'],

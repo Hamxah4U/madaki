@@ -41,6 +41,14 @@
                         <strong>Manage Driver </strong></a>
                 </li>
               
+                <?php if($_SESSION['role'] == 'Viewer 2'):?>
+                <li class="nav-item active">
+                    <a class="nav-link" href="/transportation">
+                        <i class="fas fa-truck"></i>
+                       <strong>Transportation</strong>
+                    </a>
+                </li>
+                <?php endif ?>
 
                 <li class="nav-item active">
                     <a class="nav-link" href="/transportation">
@@ -77,6 +85,8 @@
                     </a>
                 </li>     
             <?php endif; ?>
+
+           
 
             <hr class="sidebar-divider my-0">
             <li class="nav-item active">

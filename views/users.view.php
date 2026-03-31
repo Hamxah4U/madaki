@@ -114,6 +114,8 @@
 								<option value="--choose--">--choose--</option>
 								<option value="Agent">Agent</option>
 								<option value="Admin">Admin</option>
+								<option value="Viewer 1">Viewer 1</option>
+								<option value="Viewer 2">Viewer 2</option>
 						</select>
 						<small class="text-danger" id="errorRole"></small>
 					</div>

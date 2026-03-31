@@ -50,13 +50,18 @@
             </div>
 
             <div class="form-row">
-              <div class="form-group col-md-6">
+              <div class="form-group col-md-4">
                 <label><strong>Cost of Driver (₦):</strong></label>
                 <input type="number" name="driver_amount" id="" class="form-control">
                 <small class="text-danger" id="errorDriverAmount"></small>
               </div>
 
-              <div class="form-group col-md-6">
+              <div class="form-group col-md-4">
+                <label><strong>Other Cost(₦):</strong></label>
+                <input type="number" name="other_cost" id="" class="form-control">
+              </div>
+
+              <div class="form-group col-md-4">
                 <label><strong>Cost price per animal (₦):</strong></label>
                 <input type="number" name="amount_per_animal" id="" class="form-control">
                <small class="text-danger" id="errorAmountPerAnimal"></small>

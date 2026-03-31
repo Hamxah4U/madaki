@@ -38,6 +38,7 @@
                             <th>Yan waju</th>
                             <th>Delivery Date</th>
                             <th>Driver Cost (₦)</th>
+                            <th>Other Cost (₦)</th>
                             <th>Cost per Animal (₦)</th>
                             <!-- <th>Date</th> -->
                             <th>Action</th>
@@ -61,12 +62,20 @@
                             <td><?= $driver['yan_waju'] ?></td>
                             <td><?= $driver['deliverydate'] ?></td>
                             <td><?= number_format($driver['driver_amount']) ?></td>
+                            <td><?= number_format($driver['other_cost']) ?></td>
                             <td><?=number_format( $driver['amount_per_animal']) ?></td>
                             <!-- <td><?php // $driver['date_record'] ?></td> -->
+                            
                             <td>
-                                <a href="/transportationexp?id=<?= $driver['id'] ?>" class="btn btn-primary">View</a> 
-                                <!-- <a href="/edittransportation?id=<?php // $driver['id'] ?>" class="btn btn-info">Edit</a>  -->
+                                <?php if($_SESSION['role'] == 'Viewer 2') :
+                                    echo "Review";
+                                ?>
+                                <?php else: ?>
+                                    <a href="/transportationexp?id=<?= $driver['id'] ?>" class="btn btn-primary">View</a> 
+                                    <!-- <a href="/edittransportation?id=<?php // $driver['id'] ?>" class="btn btn-info">Edit</a>  -->
+                                <?php endif ?>
                             </td>
+                            
                         </tr>
                         <?php endforeach ?>
                         </tbody>

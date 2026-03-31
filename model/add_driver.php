@@ -11,6 +11,9 @@ if($_SERVER['REQUEST_METHOD'] === 'POST'){
   $third_payment = $_POST['third_payment'];
   $agent = $_POST['agent'];
   $deliverydate = $_POST['deliverydate'];
+  $other_cost = isset($_POST['other_cost']) && $_POST['other_cost'] !== '' 
+    ? $_POST['other_cost'] 
+    : null;
   
 
   $errors = [];
@@ -36,8 +39,8 @@ if($_SERVER['REQUEST_METHOD'] === 'POST'){
     if(empty($errors)){
       session_start();
       $user = $_SESSION['userID'];
-      $stmt = $db->conn->prepare('INSERT INTO `transportation` (`driver_name`, `bossno`, `date_record`, `time_record`, `driver_amount`, `amount_per_animal`, `first_payment`, `second_payment`, `third_payment`, `yan_waju`, `created_by`,`agent`, `deliverydate`) 
-      VALUES (:driver_name, :bossno, CURDATE(), CURTIME(), :driver_amount, :amount_per_animal, :first_payment, :second_payment, :third_payment, :yan_waju, :created_by, :agent, :deliverydate ) ');
+      $stmt = $db->conn->prepare('INSERT INTO `transportation` (`driver_name`, `bossno`, `date_record`, `time_record`, `driver_amount`, `amount_per_animal`, `first_payment`, `second_payment`, `third_payment`, `yan_waju`, `created_by`,`agent`, `deliverydate`,`other_cost`) 
+      VALUES (:driver_name, :bossno, CURDATE(), CURTIME(), :driver_amount, :amount_per_animal, :first_payment, :second_payment, :third_payment, :yan_waju, :created_by, :agent, :deliverydate, :other_cost ) ');
       $result = $stmt->execute([
         ':driver_name' => $driver_name,
         ':bossno' => $bossno,
@@ -49,7 +52,8 @@ if($_SERVER['REQUEST_METHOD'] === 'POST'){
         ':yan_waju' => $_POST['yan_waju'],
         ':created_by' => $user,
         ':agent' => $agent,
-        ':deliverydate' => $deliverydate
+        ':deliverydate' => $deliverydate,
+        ':other_cost' => $other_cost
       ]);
 
       if($result){

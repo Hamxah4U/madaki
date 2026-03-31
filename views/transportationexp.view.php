@@ -15,17 +15,8 @@
     $stmt->execute(['id' => $transport_id]);
     $records = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-
-    //fetch transportation table
-    // $transport_id = (int)$_GET['id'];
-    //  $stmt = $db->conn->prepare("SELECT t.agent AS agent_id, t.balance, t.first_payment, t.second_payment, t.third_payment, yan_waju, amount_per_animal, t.driver_name, t.bossno, t.driver_amount FROM transportation_expenses te
-    //     JOIN transportation t ON t.id = te.transportation_id 
-    //     WHERE transportation_id = :id LIMIT 1");
-    // $stmt->execute(['id' => $transport_id]);
-    // $driverInfo = $stmt->fetch(PDO::FETCH_ASSOC);
-
     $transport_id = (int)$_GET['id'];
-    $stmt = $db->conn->prepare("SELECT u.Fullname AS agentname, u.Phone AS agentphone, t.agent, t.deliverydate, t.balance, t.first_payment, t.second_payment, t.third_payment, yan_waju, amount_per_animal, t.driver_name, t.bossno, t.driver_amount FROM transportation_expenses te
+    $stmt = $db->conn->prepare("SELECT u.Fullname AS agentname, u.Phone AS agentphone, t.agent, t.deliverydate, t.balance, t.first_payment, t.second_payment, t.third_payment, yan_waju, amount_per_animal, t.driver_name, t.bossno, t.driver_amount,other_cost FROM transportation_expenses te
         LEFT JOIN transportation t ON t.id = te.transportation_id
         LEFT JOIN users_tbl u ON u.userID = t.agent 
         WHERE transportation_id = :id LIMIT 1");
@@ -45,7 +36,7 @@
     $stmt_exp_other->execute(['id' => $transport_id]);
     $expenses_other = $stmt_exp_other->fetch(PDO::FETCH_ASSOC);
 
-    $grandTotal = ($expenses['total_exp'] ?? 0) + ($driverInfo['driver_amount'] ?? 0);
+    $grandTotal = ($expenses['total_exp'] ?? 0) + ($driverInfo['driver_amount'] ?? 0) + ($driverInfo['other_cost'] ?? 0);
 
    
     
@@ -78,39 +69,6 @@
 ?>
 
 <?php
-    // if (isset($_POST['save'])) {
-    //     $stmt = $db->conn->prepare("INSERT INTO transportation_expenses (transportation_id, fullname, death_animal, surviving_animal, amount,
-    //     first_payment, second_payment, third_payment, total)
-    //     VALUES
-    //     (:tid, :fullname, :death, :survive, :amount, :first, :second, :third, :total)");
-
-    //   foreach ($_POST['fullname'] as $key => $name) {
-        
-    //     if (empty($name)) continue;
-
-    //       $death   = $_POST['death_animal'][$key] ?? 0;
-    //       $survive = $_POST['surviving_animal'][$key] ?? 0;
-    //       $amount  = $_POST['amount'][$key] ?? 0;
-    //       $first   = $_POST['first_payment'][$key] ?? 0;
-    //       $second  = $_POST['second_payment'][$key] ?? 0;
-    //       $third   = $_POST['third_payment'][$key] ?? 0;
-    //       $total   = $_POST['total'][$key] ?? 0;
-
-    //       $stmt->execute([
-    //           'tid'      => $transport_id,
-    //           'fullname' => $name,
-    //           'death'    => $death,
-    //           'survive'  => $survive,
-    //           'amount'   => $amount,
-    //           'first'    => $first,
-    //           'second'   => $second,
-    //           'third'    => $third,
-    //           'total'    => $total
-    //       ]);
-    //   }
-
-    //   echo "<script>alert('Saved successfully');</script>";
-    // }
 
     if (isset($_POST['save'])) {
       // UPDATE (single row edit)
@@ -122,7 +80,8 @@
                 death_animal = :death_animal,
                 first_payment = :first_payment,
                 second_payment = :second_payment,
-                third_payment = :third_payment
+                third_payment = :third_payment,
+                market = :market
                 WHERE id = :id
             ");
 
@@ -133,6 +92,7 @@
                 'first_payment' => $_POST['first_payment'][0],
                 'second_payment' => $_POST['second_payment'][0],
                 'third_payment' => $_POST['third_payment'][0],
+                'market' => $_POST['market'][0],
                 'id'       => $_POST['edit_id']
             ]);
 
@@ -140,9 +100,9 @@
 
             $stmt = $db->conn->prepare("
                 INSERT INTO transportation_expenses 
-                (total_animal, transportation_id, fullname, death_animal, first_payment, second_payment, third_payment)
+                (total_animal, transportation_id, fullname, death_animal, first_payment, second_payment, third_payment, market)
                 VALUES 
-                (:total_animal, :tid, :fullname, :death, :first, :second, :third)
+                (:total_animal, :tid, :fullname, :death, :first, :second, :third, :market)
             ");
             
             foreach ($_POST['fullname'] as $key => $name) {
@@ -157,10 +117,10 @@
                     $checkStmt->execute(['tid' => $transport_id, 'fullname' => trim($_POST['fullname'][$key])]);
                     $count = $checkStmt->fetchColumn();
 
-                    if ($count > 0) {
-                        echo "<script>alert(' " . trim($_POST['fullname'][$key]) . ". already exists.');</script>";
-                        continue; // Skip this record
-                    }
+                    // if ($count > 0) {
+                    //     echo "<script>alert(' " . trim($_POST['fullname'][$key]) . ". already exists.');</script>";
+                    //     continue; // Skip this record
+                    // }
                 }
                 $stmt->execute([
                     'total_animal' => $_POST['total_animal'][$key] ?? null,
@@ -169,7 +129,8 @@
                     'death'        => $_POST['death_animal'][$key] ?? null,
                     'first'        => $_POST['first_payment'][$key] ?? null,
                     'second'       => $_POST['second_payment'][$key] ?? null,
-                    'third'        => $_POST['third_payment'][$key] ?? null
+                    'third'        => $_POST['third_payment'][$key] ?? null,
+                    'market'       => $_POST['market'][$key] ?? null
                 ]);
             }
         
@@ -232,6 +193,7 @@
                             <tr>
                                 <th>#</th>
                                 <th>Full Name</th>
+                                <th>Market</th>
                                 <th>No. of Animal</th>
                                 <th>Death</th>
                                 <th>Surviving</th>
@@ -247,6 +209,9 @@
                             <tr>
                                 <td>1</td>
                                 <td><input type="text" name="fullname[]" class="form-control" value="<?= $editData['fullname'] ?? '' ?>" <?= $ro ?> required></td>
+                                <td>
+                                    <input style="width: 100px;" type="text" name="market[]" class="form-control" value="<?= $editData['fullname'] ?? '' ?>" <?= $ro ?> >
+                                </td>
                                 <td><input type="number" name="total_animal[]" style="width: 66px;" value="<?= $editData['total_animal'] ?? '' ?>" class="form-control" <?= $ro ?>></td>
                                 <td><input type="number" name="death_animal[]" style="width: 66px;" value="<?= $editData['death_animal'] ?? '' ?>" class="form-control"></td>
                                 <td><input type="number" name="surviving_animal[]" style="width: 66px;" value="<?= $editData['surviving_animal'] ?? '' ?>" class="form-control" <?= $ro ?>></td>
@@ -288,17 +253,10 @@
             <div class="mb-3">
                 <br>
                 <button class="btn btn-info" onclick="printDiv('printArea')">
-                    Print
-                </button>
-                <!-- <a href="/export-excel?tid=<?php // $transport_id ?>" class="btn btn-success no-print">
-                    Export to Excel
-                </a> -->
-                <button class="btn btn-primary" type="button" data-target="#modalUser" data-toggle="modal"><strong>Expenses</strong></button>
+                    Print all
+                </button> |
 
-                <button type="button" data-target="#modelUnit" data-toggle="modal" class="btn btn-primary"><strong>Other Expenses</strong></button>  
-                <button type="button" data-target="#modelComment" data-toggle="modal" class="btn btn-primary"><strong>Comments</strong></button>  
-                <button type="button" data-target="#modelotherComment" data-toggle="modal" class="btn btn-primary"><strong>Other Comments</strong></button>              
-                <button type="button" data-target="#modeldiary" data-toggle="modal" class="btn btn-primary"><strong>Diary</strong></button>              
+                <button class="btn btn-secondary" onclick="printHead('headArea')">Print head</button>          
             </div>
 
         <?php
@@ -339,6 +297,8 @@
         ?>
         <div class="print-container" id="printArea">
 
+            <div class="print-container" id="headArea">
+
             <!-- Header -->
             <div class="print-header">
                 <h3>BASHIR MADAKI TRANSPORTATION RECORD</h3>
@@ -359,7 +319,11 @@
                 </tr>
                 <tr>
                     <th>Total Transportation Cost</th>
-                    <td>&#8358;<?= !empty($driverInfo['driver_amount']) ? number_format($driverInfo['driver_amount']) : '0.00' ?></td>
+                    <td>&#8358;<?= !empty($driverInfo['driver_amount']) ? number_format($driverInfo['driver_amount']) : '0.00' ?>  
+                        <?php
+                            echo (!empty($driverInfo['other_cost'])) ? ' + (₦' . number_format($driverInfo['other_cost']) . ')': '';
+                        ?>
+                    </td>
                     <th>Cost Per Animal</th>
                     <td>&#8358;<?= !empty($driverInfo['amount_per_animal']) ? number_format($driverInfo['amount_per_animal']) : '0.00' ?></td>
                     
@@ -395,6 +359,7 @@
                 </tr>
 
             </table>
+        </div>
 
             <!-- Records Table -->
             <table class="table table-bordered text-nowrap">
@@ -423,7 +388,7 @@
                     foreach ($records as $i => $row): 
                 
                     // Expected payment for this person
-                    $expectedAmount = $row['amount_per_animal'] * $row['surviving_animal']; //$costPerAnimal
+                    $expectedAmount = $row['amount_per_animal'] * $row['surviving_animal'];
                     $totalExpectedAmount += $expectedAmount;  
 
                     // Overpayment check
@@ -469,7 +434,8 @@
                                 <span class="text-primary">Cleared</span>
                             <?php endif; ?>
                         </td>
-                        <td class="no-print">                    
+                        <td class="no-print">
+                            <?php if ($_SESSION['role'] == 'Admin' || $_SESSION['role'] == 'Agent'): ?>                    
                             <button 
                                 class="btn btn-sm btn-info receiptBtn"
                                 data-id="<?= $row['id'] ?>"
@@ -480,6 +446,7 @@
                                 Receipt
                             </button>
                             <a href="?id=<?= $transport_id ?>&edit=<?= $row['id'] ?>" class="btn btn-sm btn-primary">Edit </a>
+                            <?php endif ?>
 
                             <?php if ($_SESSION['role'] == 'Admin'): ?>
                                 <a href="/delete-exp?id=<?= $row['id'] ?>&tid=<?= $transport_id ?>"
@@ -511,11 +478,16 @@
                 </tfoot>
             </table>
 
+            <?php if ($_SESSION['role'] == 'Admin'): ?>
             <div class="row">
-                <div class="col-sm-6">
+                <div class="col-sm-6" id="expenses">
                     <table class="table table-bordered text-nowrap">
                         <thead>
-                            <tr><strong>Expenses</strong></tr>
+                            <tr>
+                                <button class="btn btn-primary" type="button" data-target="#modalUser" data-toggle="modal"><strong>Expenses</strong></button>
+
+                                <button class="btn btn-secondary" onclick="expenses('expenses')">Print head</button>
+                            </tr>
                             <tr>
                                 <th>#</th>
                                 <th>Reason</th>
@@ -555,11 +527,12 @@
                         </tfoot>
                     </table>
                 </div>
-            
-                <div class="col-sm-6">
+
+                <div class="col-sm-6" id="other_expenses">
                     <table class="table table-bordered text-nowrap">
                         <thead>
-                            <tr><strong>Other Expenses</strong></tr>
+                            <tr> <button type="button" data-target="#modelUnit" data-toggle="modal" class="btn btn-primary"><strong>Other Expenses</strong></button> </tr>
+                                <button class="btn btn-secondary" onclick="other_expenses('other_expenses')">Print</button>
                             <tr>
                                 <th>#</th>
                                 <th>Reason</th>
@@ -600,13 +573,18 @@
                     </table>
                 </div>
             </div>
+            <?php endif ?>
 
             <div class="row">
-                <div class="col-sm-6">
+                <?php if ($_SESSION['role'] == 'Admin' || $_SESSION['role'] != 'Agent'): ?>
+                <div class="col-sm-6" id="comments">
                     <div class="table-responsive">
                         <table class="table table-bordered text-nowrap">
                             <thead>
-                                <tr><strong>Comments</strong></tr>
+                                <tr><button type="button" data-target="#modelComment" data-toggle="modal" class="btn btn-primary"><strong>Comments</strong></button> 
+                                <button class="btn btn-secondary" onclick="comments('comments')">Print</button>
+
+                                </tr>
                                 <tr>
                                     <th>#</th>
                                     <th>Comment</th>
@@ -640,12 +618,16 @@
                         </table>
                     </div>
                 </div>
+                <?php endif ?>
 
-                <div class="col-sm-6">
+                <?php if ($_SESSION['role'] == 'Admin'): ?>
+                <div class="col-sm-6" id="other_comments">
                     <div class="table-responsive">
                         <table class="table table-bordered text-nowrap">
                             <thead>
-                                <tr><strong>OtherComments</strong></tr>
+                                <tr><button type="button" data-target="#modelotherComment" data-toggle="modal" class="btn btn-primary"><strong>Other Comments</strong></button>
+                                    <button class="btn btn-secondary" onclick="other_comments('other_comments')">Print</button>
+                                </tr>
                                 <tr>
                                     <th>#</th>
                                     <th>Other Comment</th>
@@ -679,14 +661,18 @@
                         </table>
                     </div>
                 </div>
+            <?php endif ?>
             </div>
 
+            <?php if ($_SESSION['role'] == 'Admin'): ?>
             <div class="row">
-                <div class="col-sm-12">
+                <div class="col-sm-12" id="diary">
                     <div class="table table-responsive">
                         <table class="table table-bordered text-nowrap">
                             <thead>
-                                <tr><strong>Diary</strong></tr>
+                                <tr><button type="button" data-target="#modeldiary" data-toggle="modal" class="btn btn-primary"><strong>Diary</strong></button>
+                                    <button class="btn btn-secondary" onclick="diary('diary')">Print</button>
+                                </tr>
                                 <tr>
                                     <th>#</th>
                                     <th>Diary Note</th>
@@ -719,6 +705,7 @@
                     </div>
                 </div>
             </div>
+            <?php endif ?>
 
         </div>
            
@@ -1339,8 +1326,370 @@ document.addEventListener('input', function(e) {
 </script>
 
 <script>
+
+
     function printDiv() {
         var content = document.getElementById('printArea').innerHTML;
+        var win = window.open('', '', 'width=900,height=650');
+
+        win.document.write(`
+            <html>
+            <head>
+                <title><?= $driverInfo['driver_name'] ?>>Transportation Record</title>
+                <style>
+                    @page { size: A4; margin: 10mm; }
+
+                    body {
+                        font-family: Arial, sans-serif;
+                        font-size: 14px;
+                        padding: 10px;
+                    }
+
+                    table {
+                        width: 100%;
+                        border-collapse: collapse;
+                        margin-bottom: 10px;
+                    }
+
+                    th, td {
+                        border: 1px solid #000;
+                        padding: 5px;
+                        text-align: left;
+                    }
+
+                    th {
+                        background: #f2f2f2;
+                        /*text-align: center;*/
+                    }
+
+                    .print-header {
+                        /*text-align: center;*/
+                        margin-bottom: 10px;
+                    }
+
+                    .print-header h3 {
+                        margin: 0;
+                        font-size: 18px;
+                    }
+
+                    .no-print { display:none; }
+                    .overpaid { background:#f8d7da; }
+                    .table-success { background:#d4edda; }
+                </style>
+            </head>
+            <body>
+                ${content}
+            </body>
+            </html>
+        `);
+
+        win.document.close();
+        win.focus();
+        win.print();
+    }
+
+    function printHead() {
+        var content = document.getElementById('headArea').innerHTML;
+        var win = window.open('', '', 'width=900,height=650');
+
+        win.document.write(`
+            <html>
+            <head>
+                <title><?= $driverInfo['driver_name'] ?>>Transportation Record</title>
+                <style>
+                    @page { size: A4; margin: 10mm; }
+
+                    body {
+                        font-family: Arial, sans-serif;
+                        font-size: 14px;
+                        padding: 10px;
+                    }
+
+                    table {
+                        width: 100%;
+                        border-collapse: collapse;
+                        margin-bottom: 10px;
+                    }
+
+                    th, td {
+                        border: 1px solid #000;
+                        padding: 5px;
+                        text-align: left;
+                    }
+
+                    th {
+                        background: #f2f2f2;
+                        /*text-align: center;*/
+                    }
+
+                    .print-header {
+                        /*text-align: center;*/
+                        margin-bottom: 10px;
+                    }
+
+                    .print-header h3 {
+                        margin: 0;
+                        font-size: 18px;
+                    }
+
+                    .no-print { display:none; }
+                    .overpaid { background:#f8d7da; }
+                    .table-success { background:#d4edda; }
+                </style>
+            </head>
+            <body>
+                ${content}
+            </body>
+            </html>
+        `);
+
+        win.document.close();
+        win.focus();
+        win.print();
+    }
+
+    function expenses() {
+        var content = document.getElementById('expenses').innerHTML;
+        var win = window.open('', '', 'width=900,height=650');
+
+        win.document.write(`
+            <html>
+            <head>
+                <title><?= $driverInfo['driver_name'] ?>>Transportation Record</title>
+                <style>
+                    @page { size: A4; margin: 10mm; }
+
+                    body {
+                        font-family: Arial, sans-serif;
+                        font-size: 14px;
+                        padding: 10px;
+                    }
+
+                    table {
+                        width: 100%;
+                        border-collapse: collapse;
+                        margin-bottom: 10px;
+                    }
+
+                    th, td {
+                        border: 1px solid #000;
+                        padding: 5px;
+                        text-align: left;
+                    }
+
+                    th {
+                        background: #f2f2f2;
+                        /*text-align: center;*/
+                    }
+
+                    .print-header {
+                        /*text-align: center;*/
+                        margin-bottom: 10px;
+                    }
+
+                    .print-header h3 {
+                        margin: 0;
+                        font-size: 18px;
+                    }
+
+                    .no-print { display:none; }
+                    .overpaid { background:#f8d7da; }
+                    .table-success { background:#d4edda; }
+                </style>
+            </head>
+            <body>
+                ${content}
+            </body>
+            </html>
+        `);
+
+        win.document.close();
+        win.focus();
+        win.print();
+    }
+
+    function other_expenses() {
+        var content = document.getElementById('other_expenses').innerHTML;
+        var win = window.open('', '', 'width=900,height=650');
+
+        win.document.write(`
+            <html>
+            <head>
+                <title><?= $driverInfo['driver_name'] ?>>Transportation Record</title>
+                <style>
+                    @page { size: A4; margin: 10mm; }
+
+                    body {
+                        font-family: Arial, sans-serif;
+                        font-size: 14px;
+                        padding: 10px;
+                    }
+
+                    table {
+                        width: 100%;
+                        border-collapse: collapse;
+                        margin-bottom: 10px;
+                    }
+
+                    th, td {
+                        border: 1px solid #000;
+                        padding: 5px;
+                        text-align: left;
+                    }
+
+                    th {
+                        background: #f2f2f2;
+                        /*text-align: center;*/
+                    }
+
+                    .print-header {
+                        /*text-align: center;*/
+                        margin-bottom: 10px;
+                    }
+
+                    .print-header h3 {
+                        margin: 0;
+                        font-size: 18px;
+                    }
+
+                    .no-print { display:none; }
+                    .overpaid { background:#f8d7da; }
+                    .table-success { background:#d4edda; }
+                </style>
+            </head>
+            <body>
+                ${content}
+            </body>
+            </html>
+        `);
+
+        win.document.close();
+        win.focus();
+        win.print();
+    }
+
+    function comments() {
+        var content = document.getElementById('comments').innerHTML;
+        var win = window.open('', '', 'width=900,height=650');
+
+        win.document.write(`
+            <html>
+            <head>
+                <title><?= $driverInfo['driver_name'] ?>>Transportation Record</title>
+                <style>
+                    @page { size: A4; margin: 10mm; }
+
+                    body {
+                        font-family: Arial, sans-serif;
+                        font-size: 14px;
+                        padding: 10px;
+                    }
+
+                    table {
+                        width: 100%;
+                        border-collapse: collapse;
+                        margin-bottom: 10px;
+                    }
+
+                    th, td {
+                        border: 1px solid #000;
+                        padding: 5px;
+                        text-align: left;
+                    }
+
+                    th {
+                        background: #f2f2f2;
+                        /*text-align: center;*/
+                    }
+
+                    .print-header {
+                        /*text-align: center;*/
+                        margin-bottom: 10px;
+                    }
+
+                    .print-header h3 {
+                        margin: 0;
+                        font-size: 18px;
+                    }
+
+                    .no-print { display:none; }
+                    .overpaid { background:#f8d7da; }
+                    .table-success { background:#d4edda; }
+                </style>
+            </head>
+            <body>
+                ${content}
+            </body>
+            </html>
+        `);
+
+        win.document.close();
+        win.focus();
+        win.print();
+    }
+
+    function other_comments() {
+        var content = document.getElementById('other_comments').innerHTML;
+        var win = window.open('', '', 'width=900,height=650');
+
+        win.document.write(`
+            <html>
+            <head>
+                <title><?= $driverInfo['driver_name'] ?>>Transportation Record</title>
+                <style>
+                    @page { size: A4; margin: 10mm; }
+
+                    body {
+                        font-family: Arial, sans-serif;
+                        font-size: 14px;
+                        padding: 10px;
+                    }
+
+                    table {
+                        width: 100%;
+                        border-collapse: collapse;
+                        margin-bottom: 10px;
+                    }
+
+                    th, td {
+                        border: 1px solid #000;
+                        padding: 5px;
+                        text-align: left;
+                    }
+
+                    th {
+                        background: #f2f2f2;
+                        /*text-align: center;*/
+                    }
+
+                    .print-header {
+                        /*text-align: center;*/
+                        margin-bottom: 10px;
+                    }
+
+                    .print-header h3 {
+                        margin: 0;
+                        font-size: 18px;
+                    }
+
+                    .no-print { display:none; }
+                    .overpaid { background:#f8d7da; }
+                    .table-success { background:#d4edda; }
+                </style>
+            </head>
+            <body>
+                ${content}
+            </body>
+            </html>
+        `);
+
+        win.document.close();
+        win.focus();
+        win.print();
+    }
+
+     function diary() {
+        var content = document.getElementById('diary').innerHTML;
         var win = window.open('', '', 'width=900,height=650');
 
         win.document.write(`
