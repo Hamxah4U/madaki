@@ -11,7 +11,7 @@
 
     $transport_id = (int)$_GET['id'];
 
-    $stmt = $db->conn->prepare("SELECT te.*, t.amount_per_animal FROM transportation_expenses te JOIN transportation t ON t.id = te.transportation_id WHERE transportation_id = :id");
+    $stmt = $db->conn->prepare("SELECT te.*, m.name, t.amount_per_animal FROM transportation_expenses te JOIN transportation t ON t.id = te.transportation_id LEFT JOIN market_2 m ON m.id = te.market WHERE transportation_id = :id ORDER BY market");
     $stmt->execute(['id' => $transport_id]);
     $records = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -32,7 +32,7 @@
     $expenses = $stmt_exp->fetch(PDO::FETCH_ASSOC);
 
     //Other exp
-    $stmt_exp_other = $db->conn->prepare("SELECT COALESCE(SUM(amount), 0) AS total_other_exp FROM expenses WHERE `status` = 'other_exp' AND `driver_id` = :id");
+    $stmt_exp_other = $db->conn->prepare("SELECT COALESCE(SUM(amount), 0) AS total_other_exp, id FROM expenses WHERE `status` = 'other_exp' AND `driver_id` = :id");
     $stmt_exp_other->execute(['id' => $transport_id]);
     $expenses_other = $stmt_exp_other->fetch(PDO::FETCH_ASSOC);
 
@@ -210,7 +210,19 @@
                                 <td>1</td>
                                 <td><input type="text" name="fullname[]" class="form-control" value="<?= $editData['fullname'] ?? '' ?>" <?= $ro ?> required></td>
                                 <td>
-                                    <input style="width: 100px;" type="text" name="market[]" class="form-control" value="<?= $editData['fullname'] ?? '' ?>" <?= $ro ?> >
+                                    <select name="market[]" id="" class="form-control">
+                                        <option value="">--select--</option>
+                                        <?php
+                                            $stmt = $db->query('SELECT * FROM `market_2`');
+                                            $markets2 = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                                            foreach($markets2 as $market2):?>
+                                            <option value="<?= $market2['id'] ?>"
+                                            <?= ($editData['market'] ?? '') == $market2['id'] ? 'selected' : '' ?>>
+                                            <?= htmlspecialchars($market2['name']) ?>
+                                        </option>
+                                        <?php endforeach ?>
+                                    </select>
+                                    <!-- <input style="width: 100px;" type="text" name="market[]" class="form-control" value="<?php $editData['fullname'] ?? '' ?>" <?= $ro ?> > -->
                                 </td>
                                 <td><input type="number" name="total_animal[]" style="width: 66px;" value="<?= $editData['total_animal'] ?? '' ?>" class="form-control" <?= $ro ?>></td>
                                 <td><input type="number" name="death_animal[]" style="width: 66px;" value="<?= $editData['death_animal'] ?? '' ?>" class="form-control"></td>
@@ -366,7 +378,8 @@
                 <thead>
                     <tr>
                         <th>#</th>
-                        <th>Name</th>
+                        <th>Names</th>
+                        <!-- <th>Market</th> -->
                         <th>Total Animal</th>
                         <th>Death</th>
                         <th>Surviving</th>
@@ -381,83 +394,105 @@
                 </thead>
 
                 <tbody>
-                <?php 
-                    $totalExpectedAmount = 0;
-                    $balance = 0;
-                    $newBal = 0;
-                    foreach ($records as $i => $row): 
-                
-                    // Expected payment for this person
-                    $expectedAmount = $row['amount_per_animal'] * $row['surviving_animal'];
-                    $totalExpectedAmount += $expectedAmount;  
+                    <?php 
+                        $totalExpectedAmount = 0;
+                        $balance = 0;
+                        $newBal = 0;
+                        $previousMarket = null;
 
-                    // Overpayment check
-                    $isOverpaid = $row['total'] > $expectedAmount;
+                        // Subtotals per market
+                        $marketExpected = 0;
+                        $marketPaid = 0;
+                        $marketBalance = 0;
 
-                    // ramaining balance
-                    $balance = round($expectedAmount - $row['total']);
-                    $newBal += $balance;
-                    // Row classes
-                    $rowClass = '';
-                    if ($currentEditId == $row['id']) {
-                        $rowClass = 'table-danger';
-                    }elseif($balance == 0) {
-                        $rowClass = 'table-success';
-                    }elseif($isOverpaid){
-                        $rowClass = 'overpaid';
-                    }
-                    // elseif ($isOverpaid) {
-                    //     $rowClass = 'overpaid';
-                    // }
-                ?>
-                    <tr class="<?= $rowClass ?>">
-                        <td><?= $i + 1 ?></td>
-                        <td><?= $row['fullname'] ?></td>
-                        <td><?= $row['total_animal'] ?></td>
-                        <td><?= $row['death_animal'] ?></td>
-                        <td><?= $row['surviving_animal'] ?></td>
-                        <td><strong><?= number_format($expectedAmount) ?></strong></td>
-                        <td><?= number_format($row['first_payment']) ?></td>
-                        <td><?= number_format($row['second_payment']) ?></td>
-                        <td><?= number_format($row['third_payment']) ?></td>
-                        <td><strong><?= number_format($row['total']) ?></strong></td>
-                        <td>
-                            <?php if($balance > 0): ?>
-                                <span class="text-warning">
-                                    <?= number_format($balance) ?> Remaining
-                                </span>
-                            <?php elseif($balance < 0): ?>
-                                <span class="text-success">
-                                    <?= number_format(abs($balance)) ?> Over
-                                </span>
-                            <?php elseif($balance == 0): ?>
-                                <span class="text-primary">Cleared</span>
-                            <?php endif; ?>
-                        </td>
-                        <td class="no-print">
-                            <?php if ($_SESSION['role'] == 'Admin' || $_SESSION['role'] == 'Agent'): ?>                    
-                            <button 
-                                class="btn btn-sm btn-info receiptBtn"
-                                data-id="<?= $row['id'] ?>"
-                                data-phone="<?= $row['phone'] ?>"
-                                data-tid="<?= $transport_id ?>"
-                                data-bs-toggle="modal"
-                                data-bs-target="#receiptModal">
-                                Receipt
-                            </button>
-                            <a href="?id=<?= $transport_id ?>&edit=<?= $row['id'] ?>" class="btn btn-sm btn-primary">Edit </a>
-                            <?php endif ?>
+                        foreach ($records as $i => $row): 
 
-                            <?php if ($_SESSION['role'] == 'Admin'): ?>
-                                <a href="/delete-exp?id=<?= $row['id'] ?>&tid=<?= $transport_id ?>"
-                                class="btn btn-sm btn-danger"
-                                onclick="return confirm('Delete this record?')">
-                                Delete
-                                </a>
-                            <?php endif; ?>
-                        </td>
-                    </tr>
-                <?php endforeach; ?>
+                            if ($previousMarket !== $row['name']): ?>
+                                <tr class="table-dark text-primary">
+                                    <td colspan="12">
+                                        <!-- <hr> -->
+                                        <!-- <strong><?php // $row['name'] ?? 'No Market' ?></strong> -->
+                                        <strong>Market: <?= $row['name'] ?? 'No Market' ?></strong>
+                                    </td>
+                                </tr>
+                        <?php 
+                            $previousMarket = $row['name'];
+                            endif
+                         ?>
+                        <?php
+                    
+                        // Expected payment for this person
+                        $expectedAmount = $row['amount_per_animal'] * $row['surviving_animal'];
+                        $totalExpectedAmount += $expectedAmount;  
+
+                        // Overpayment check
+                        $isOverpaid = $row['total'] > $expectedAmount;
+
+                        // ramaining balance
+                        $balance = round($expectedAmount - $row['total']);
+                        $newBal += $balance;
+                        // Row classes
+                        $rowClass = '';
+                        if ($currentEditId == $row['id']) {
+                            $rowClass = 'table-danger';
+                        }elseif($balance == 0) {
+                            $rowClass = 'table-success';
+                        }elseif($isOverpaid){
+                            $rowClass = 'overpaid';
+                        }
+                        // elseif ($isOverpaid) {
+                        //     $rowClass = 'overpaid';
+                        // }
+                    ?>
+                        <tr class="<?= $rowClass ?>">
+                            <td><?= $i + 1 ?></td>
+                            <td><?= $row['fullname'] ?></td>
+                            <!-- <td><?php //$row['name'] ?></td> -->
+                            <td><?= $row['total_animal'] ?></td>
+                            <td><?= $row['death_animal'] ?></td>
+                            <td><?= $row['surviving_animal'] ?></td>
+                            <td><strong><?= number_format($expectedAmount) ?></strong></td>
+                            <td><?= number_format($row['first_payment']) ?></td>
+                            <td><?= number_format($row['second_payment']) ?></td>
+                            <td><?= number_format($row['third_payment']) ?></td>
+                            <td><strong><?= number_format($row['total']) ?></strong></td>
+                            <td>
+                                <?php if($balance > 0): ?>
+                                    <span class="text-warning">
+                                        <?= number_format($balance) ?> Remaining
+                                    </span>
+                                <?php elseif($balance < 0): ?>
+                                    <span class="text-success">
+                                        <?= number_format(abs($balance)) ?> Over
+                                    </span>
+                                <?php elseif($balance == 0): ?>
+                                    <span class="text-primary">Cleared</span>
+                                <?php endif; ?>
+                            </td>
+                            <td class="no-print">
+                                <?php if ($_SESSION['role'] == 'Admin' || $_SESSION['role'] == 'Agent'): ?>                    
+                                <button 
+                                    class="btn btn-sm btn-info receiptBtn"
+                                    data-id="<?= $row['id'] ?>"
+                                    data-phone="<?= $row['phone'] ?>"
+                                    data-tid="<?= $transport_id ?>"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#receiptModal">
+                                    Receipt
+                                </button>
+                                <a href="?id=<?= $transport_id ?>&edit=<?= $row['id'] ?>" class="btn btn-sm btn-primary">Edit </a>
+                                <?php endif ?>
+
+                                <?php if ($_SESSION['role'] == 'Admin'): ?>
+                                    <a href="/delete-exp?id=<?= $row['id'] ?>&tid=<?= $transport_id ?>"
+                                    class="btn btn-sm btn-danger"
+                                    onclick="return confirm('Delete this record?')">
+                                    Delete
+                                    </a>
+                                <?php endif; ?>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
                 </tbody>
 
                 <!-- Footer Totals -->
@@ -514,7 +549,13 @@
                                 <td><?= $row_exp['timerecorded'] ?></td>
                                 <td class="no-print">
                                     <a href="/delete-only-exp?id=<?= $row_exp['id'] ?>&tid=<?= $transport_id ?>" class="btn btn-sm btn-danger" onclick="return confirm('Delete this record?')">Delete</a>
-                                    <!-- <a href="/edit">Edit</a> -->
+                                    <button 
+                                        class="btn btn-info btn-edit"
+                                        data-id="<?= $row_exp['id'] ?>"
+                                        data-amount="<?= $row_exp['amount'] ?>"
+                                        data-reason="<?= htmlspecialchars($row_exp['reason']) ?>" >
+                                        Edit
+                                    </button>
                                 </td>
                             </tr>
                             <?php endforeach ?>
@@ -559,7 +600,13 @@
                                 <td><?= $row_exp['timerecorded'] ?></td>
                                 <td class="no-print">
                                     <a href="/delete-other-expenses?id=<?= $row_exp['id'] ?>&tid=<?= $transport_id ?>" class="btn btn-sm btn-danger no-print" onclick="return confirm('Delete this record?')">Delete</a>
-                                    <!-- <a href="/edit">Edit</a> -->
+                                    <button 
+                                        class="btn btn-info btn-edit"
+                                        data-id="<?= $row_exp['id'] ?>"
+                                        data-amount="<?= $row_exp['amount'] ?>"
+                                        data-reason="<?= htmlspecialchars($row_exp['reason']) ?>" >
+                                        Edit
+                                    </button>
                                 </td>
                             </tr>
                             <?php endforeach ?>
@@ -611,6 +658,12 @@
                                             onclick="return confirm('Delete this record?')">
                                             Delete
                                         </a>
+                                        <button 
+                                           class="btn btn-info btn-edit-comment"
+                                            data-id="<?= $row_comment['id'] ?>"
+                                            data-comment="<?= htmlspecialchars($row_comment['reason']) ?>" >
+                                            Edit
+                                        </button>
                                     </td>
                                 </tr>
                                 <?php endforeach ?>
@@ -654,6 +707,13 @@
                                             onclick="return confirm('Delete this record?')">
                                             Delete
                                         </a>
+
+                                        <button 
+                                           class="btn btn-info btn-edit-othercomment"
+                                            data-id="<?= $row_comment['id'] ?>"
+                                            data-comment="<?= htmlspecialchars($row_comment['reason']) ?>" >
+                                            Edit
+                                        </button>
                                     </td>
                                 </tr>
                                 <?php endforeach ?>
@@ -697,6 +757,12 @@
                                 <td class="no-print">
                                     <a href="/delete-other-expenses?id=<?= $row_diary['id'] ?>&tid=<?= $transport_id ?>" class="btn btn-sm btn-danger no-print" onclick="return confirm('Delete this record?')">Delete</a>
                                     <!-- <a href="/edit">Edit</a> -->
+                                    <button 
+                                       class="btn btn-info btn-edit-diary"
+                                        data-id="<?= $row_diary['id'] ?>"
+                                        data-comment="<?= htmlspecialchars($row_diary['reason']) ?>" >
+                                        Edit
+                                    </button>
                                 </td>
                             </tr>
                             <?php endforeach ?>
@@ -721,7 +787,8 @@
 
         <div class="modal-header">
         <h5 class="modal-title">Payment Receipt</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        <!-- <button type="button" class="btn-close" data-bs-dismiss="modal"><span>&times;</span></button> -->
+        <button type="button" class="close text-danger" data-dismiss="modal"><span>&times;</span></button>
         </div>
 
             <div class="modal-body" id="receiptContent">
@@ -731,7 +798,6 @@
             <div class="modal-footer">
                     <button onclick="printReceipt()" class="btn btn-primary">Print</button>
                     <button onclick="shareWhatsApp()" class="btn btn-success">WhatsApp</button>
-                    <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                     <button class="btn btn-success" id="whatsappPdfBtn">
                         WhatsApp PDF <span id="phoneLabel"></span>
                     </button>
@@ -756,10 +822,11 @@
 
                 <div class="modal-body">
                     <form id="diarForm">
+                       <input type="hidden" name="id" id="diary_id">
                         
                         <div class="form-group">
                             <label><strong>Diary</strong></label>
-                            <textarea name="comment" class="form-control" rows="4" required></textarea>
+                            <textarea id="diary_text" name="comment" class="form-control" rows="4" required></textarea>
                             <small class="text-danger" id="errorComment"></small>
                         </div>
 
@@ -769,7 +836,7 @@
                             <button type="submit" class="btn btn-success">
                                 <i class="fas fa-save"></i> Save Diary
                             </button>
-                            <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                            <button type="submit" class="btn btn-success" id="diary-btn" data-mode="add">
                                 Close
                             </button>
                         </div>
@@ -796,17 +863,19 @@
 
                 <div class="modal-body">
                     <form id="othercommentForm">
+                       
+                       <input type="hidden" name="id" id="othercomment_id">
                         
                         <div class="form-group">
                             <label><strong>Other Comment</strong></label>
-                            <textarea name="comment" class="form-control" rows="4" required></textarea>
+                            <textarea name="comment" id="othercomment_text" class="form-control" rows="4" required></textarea>
                             <small class="text-danger" id="errorComment"></small>
                         </div>
 
                         <input type="hidden" name="transport_id" value="<?= $transport_id ?? '' ?>">
                     
                         <div class="modal-footer p-0 pt-3">
-                            <button type="submit" class="btn btn-success">
+                            <button type="submit" class="btn btn-success" id="othercomment-btn" data-mode="add">
                                 <i class="fas fa-save"></i> Save Comment
                             </button>
                             <button type="button" class="btn btn-secondary" data-dismiss="modal">
@@ -836,17 +905,18 @@
 
                 <div class="modal-body">
                     <form id="commentForm">
+                       <input type="hidden" name="id" id="comment_id">
                         
                         <div class="form-group">
                             <label><strong>Comment</strong></label>
-                            <textarea name="comment" class="form-control" rows="4" required></textarea>
+                            <textarea name="comment" id="comment_text" class="form-control" rows="4" required></textarea>
                             <small class="text-danger" id="errorComment"></small>
                         </div>
 
                         <input type="hidden" name="transport_id" value="<?= $transport_id ?? '' ?>">
                     
                         <div class="modal-footer p-0 pt-3">
-                            <button type="submit" class="btn btn-success">
+                            <button type="submit" class="btn btn-success" id="comment-btn" data-mode="add">
                                 <i class="fas fa-save"></i> Save Comment
                             </button>
                             <button type="button" class="btn btn-secondary" data-dismiss="modal">
@@ -873,7 +943,9 @@
                 </div>
                 <div class="modal-body">
                     <form id="userForm">
+                        <input type="text" name="id" id="edit_id" hidden>
                         <input type="text" name="userID" id="userID" value="<?= $transport_id ?>" hidden>
+
                         <div class="form-group">
                             <label for="my-input">Amount</label>
                             <input id="Amount" class="form-control" type="number" name="amount">
@@ -903,13 +975,15 @@
                 </div>
                 <div class="modal-body">
                     <form id="formUnit">
+                        <input type="text" name="id" id="edit_id" hidden>
+
                         <input type="text" name="userID" id="userID" value="<?= $transport_id ?>" hidden>
                         <div class="form-group">
                             <label for="my-input">Amount</label>
-                            <input id="Amount" class="form-control" type="number" name="amount">
+                            <input id="amount" class="form-control" type="number" name="amount">
                             <small class="text-danger" id="errorAmount"></small>
                         </div>
-                        
+                         <input type="hidden" name="transport_id" value="<?= $transport_id ?? '' ?>">
                         <div class="form-group">
                             <label for="my-input">Reason</label>
                             <textarea name="reason" id="reason" class="form-control" rows="3"></textarea>
@@ -928,17 +1002,20 @@
 
 <script>
     // comment form submission commentForm othercommentForm
-     $(document).ready(function(){
-        // diary
-        $('#diarForm').on('submit', function(e){
-			e.preventDefault();
-			$.ajax({
-				url: 'model/add_diary.php', 
-				dataType: 'JSON',
-				data: $(this).serialize(),
-				type: 'POST',
-				success: function(response){
+        $('#diaryForm').on('submit', function(e){
+            e.preventDefault();
+
+            let mode = $('#diary-btn').data('mode');
+
+            $.ajax({
+                url: 'model/add_diary.php',
+                type: 'POST',
+                dataType: 'JSON',
+                data: $(this).serialize() + '&mode=' + mode,
+
+                success: function(response){
                     if(response.status){
+
                         const Toast = Swal.mixin({
                             toast: true,
                             position: "top-end",
@@ -946,33 +1023,30 @@
                             timer: 2000
                         });
 
-                         Toast.fire({
+                        Toast.fire({
                             icon: "success",
                             title: response.success.message
                         }).then(() => {
-                            location.reload(); // refresh page
+                            location.reload();
                         });
 
                         $('#modeldiary').modal('hide');
-                        resetForm();
-                    }else{
-                        // alert('Failed to add expense. Please check your input.');
-                        $('#errorReason').text(response.errors.reason || '');
+                        resetDiaryForm();
+
+                    } else {
+                        $('#errorComment').text(response.errors.comment || '');
                     }
                 }
-                ,
-				error: function(xhr, status, error){
-					alert('Error__:' + xhr + status + error);
-				}
-			});
-		});
+            });
+        });
         // other comment
 		$('#othercommentForm').on('submit', function(e){
 			e.preventDefault();
+             let mode = $('#othercomment-btn').data('mode');
 			$.ajax({
 				url: 'model/add_othercomment.php', 
 				dataType: 'JSON',
-				data: $(this).serialize(),
+				data: $(this).serialize() + '&mode=' + mode,
 				type: 'POST',
 				success: function(response){
                     if(response.status){
@@ -990,11 +1064,12 @@
                             location.reload(); // refresh page
                         });
 
-                        $('#modelComment').modal('hide');
+                        $('#modelotherComment').modal('hide');
                         resetForm();
                     }else{
                         // alert('Failed to add expense. Please check your input.');
                         $('#errorReason').text(response.errors.reason || '');
+                        $('#errorComment')
                     }
                 }
                 ,
@@ -1003,13 +1078,31 @@
 				}
 			});
 		});
+
+        $(document).on('click', '.editExpenseBtn', function () {
+
+            let id = $(this).data('id');
+            let amount = $(this).data('amount');
+            let reason = $(this).data('reason');
+
+            $('#expense_id').val(id);
+            $('#Amount').val(amount);
+            $('#reason').val(reason);
+
+            $('#action-btn')
+                .text('Update')
+                .removeClass('btn-primary')
+                .addClass('btn-info')
+                .attr('data-mode', 'edit');
+        });
         //comment
         $('#commentForm').on('submit', function(e){
 			e.preventDefault();
+            let mode = $('#comment-btn').data('mode');
 			$.ajax({
 				url: 'model/add_comment.php', 
 				dataType: 'JSON',
-				data: $(this).serialize(),
+				data: $(this).serialize() + '&mode=' + mode,
 				type: 'POST',
 				success: function(response){
                     if(response.status){
@@ -1092,14 +1185,32 @@
 
 
 <script>
+
+    function resetForm() {
+        $('#userForm')[0].reset();
+        $('#edit_id').val('');
+
+        $('#action-btn')
+            .text('Save')
+            .removeClass('btn-info')
+            .addClass('btn-primary')
+            .data('mode', 'add');
+
+        $('#errorAmount').text('');
+        $('#errorReason').text('');
+    }
+
+
     $(document).ready(function () {
         $('#userForm').on('submit', function (e) {
             e.preventDefault();
             const mode = $('#action-btn').data('mode');
+            // const mode = $('#action-btn').data('mode');
             $.ajax({
                 url: 'model/expenses.form.php',
                 dataType: 'JSON',
-                data: $(this).serialize(),
+                // data: $(this).serialize(),
+                data: $(this).serialize() + '&mode=' + mode,
                 type: 'POST',
                 success: function (response) {
                     if (response.status === false) {                       
@@ -1271,16 +1382,26 @@
 
 
 <script>
+    let markets = <?= json_encode($markets2) ?>;
     let rowCount = 1;
 
     document.getElementById('addRow').addEventListener('click', function () {
-        rowCount++;
-        // <td><input type="number" name="amount[]" class="form-control"></td>
+    rowCount++;
 
+    let marketOptions = '<option value="">--select--</option>';
+
+    markets.forEach(function(market){
+        marketOptions += `<option value="${market.id}">${market.name}</option>`;
+    });
         let row = `
         <tr>
             <td>${rowCount}</td>
-            <td><input type="text" name="fullname[]" class="form-control" required></td>        
+            <td><input type="text" name="fullname[]" class="form-control" required></td>
+            <td>
+                <select name="market[]" class="form-control">
+                ${marketOptions}
+            </select>
+            </td>       
             <td><input type="number" style="width: 66px;" name="total_animal[]" class="form-control"></td>
             <td><input type="number" style="width: 66px;" name="death_animal[]" class="form-control"></td>
             <td><input type="number" style="width: 66px;" name="surviving_animal[]" class="form-control"></td>
@@ -1293,6 +1414,8 @@
         </tr>`;
         document.getElementById('tableBody').insertAdjacentHTML('beforeend', row);
     });
+
+
 
     // Remove row
     document.addEventListener('click', function(e){
@@ -1747,4 +1870,100 @@ document.addEventListener('input', function(e) {
         win.focus();
         win.print();
     }
+
+    $(document).on('click', '.ediOthertExpenseBtn', function () {
+
+    let id = $(this).data('id');
+    let amount = $(this).data('amount');
+    let reason = $(this).data('reason');
+
+    $('#expense_id').val(id);
+    $('#reason').val(reason);
+
+    $('#form_mode').val('edit');
+
+    $('#action-btn')
+        .html('<i class="fas fa-edit"></i> Update')
+        .removeClass('btn-success')
+        .addClass('btn-info');
+});
+</script>
+
+
+<script type="text/javascript">
+    $(document).on('click', '.btn-edit', function () {
+        let id = $(this).data('id');
+        let amount = $(this).data('amount');
+        let reason = $(this).data('reason');
+
+        // Fill form
+        $('#edit_id').val(id);
+        $('#Amount').val(amount);
+        $('#reason').val(reason);
+
+        // Change button to UPDATE
+        $('#action-btn')
+            .text('Update')
+            .removeClass('btn-primary')
+            .addClass('btn-info')
+            .data('mode', 'edit');
+
+        // Show modal
+        $('#modalUser').modal('show');
+    });
+
+
+    $(document).on('click', '.btn-edit-comment', function () {
+
+    let id = $(this).data('id');
+        let comment = $(this).data('comment');
+
+        // Fill modal
+        $('#comment_id').val(id);
+        $('#comment_text').val(comment);
+
+        // Change button
+        $('#comment-btn')
+            .text('Update Comment')
+            .removeClass('btn-success')
+            .addClass('btn-info')
+            .data('mode', 'edit');
+
+        // Show modal
+        $('#modelComment').modal('show');
+    });
+
+    $(document).on('click', '.btn-edit-othercomment', function () {
+
+        let id = $(this).data('id');
+        let comment = $(this).data('comment');
+
+        $('#othercomment_id').val(id);
+        $('#othercomment_text').val(comment);
+
+        $('#othercomment-btn')
+            .text('Update Comment')
+            .removeClass('btn-success')
+            .addClass('btn-info')
+            .data('mode', 'edit');
+
+        $('#modelotherComment').modal('show');
+    });
+
+    $(document).on('click', '.btn-edit-diary', function () {
+
+    let id = $(this).data('id');
+    let comment = $(this).data('comment');
+
+    $('#diary_id').val(id);
+    $('#diary_text').val(comment);
+
+    $('#diary-btn')
+        .text('Update Diary')
+        .removeClass('btn-success')
+        .addClass('btn-info')
+        .data('mode', 'edit');
+
+    $('#modeldiary').modal('show');
+});
 </script>

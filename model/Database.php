@@ -3,7 +3,7 @@
       public $conn;
       public function __construct()
       {
-        $dsn = 'mysql:host=localhost;dbname=animaldb_test'; //sfgeorgn_shafabillingdb  billing_db
+        $dsn = 'mysql:host=localhost;dbname=animaldb'; //sfgeorgn_shafabillingdb  billing_db
           $dbuser = 'root';
           $dbpass = '';
           try {
