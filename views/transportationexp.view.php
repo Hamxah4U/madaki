@@ -210,7 +210,7 @@
                                 <td>1</td>
                                 <td><input type="text" name="fullname[]" class="form-control" value="<?= $editData['fullname'] ?? '' ?>" <?= $ro ?> required></td>
                                 <td>
-                                    <select name="market[]" id="" class="form-control">
+                                    <select name="market[]" id="" class="form-control" required>
                                         <option value="">--select--</option>
                                         <?php
                                             $stmt = $db->query('SELECT * FROM `market_2`');
@@ -374,12 +374,12 @@
         </div>
 
             <!-- Records Table -->
+
             <table class="table table-bordered text-nowrap">
                 <thead>
                     <tr>
                         <th>#</th>
                         <th>Names</th>
-                        <!-- <th>Market</th> -->
                         <th>Total Animal</th>
                         <th>Death</th>
                         <th>Surviving</th>
@@ -393,86 +393,126 @@
                     </tr>
                 </thead>
 
-                <tbody>
+            <tbody>
+                <?php 
+                    $totalExpectedAmount = 0;
+                    $balance = 0;
+                    $newBal = 0;
+                    $previousMarket = null;
+
+                    // Subtotals per market
+                    $marketExpected = 0;
+                    $marketPaid = 0;
+                    $marketBalance = 0;
+                    $marketAnimals = 0;
+                    $marketDeath = 0;
+                    $marketSurviving = 0;
+                    $marketFirst = 0;
+                    $marketSecond = 0;
+                    $marketThird = 0;
+
+                    foreach ($records as $i => $row): 
+
+                        // 🔁 CHECK MARKET CHANGE
+                        if ($previousMarket !== null && $previousMarket !== $row['name']):
+                ?>
+                <!-- SUBTOTAL ROW -->
+                <tr style="background:#ffeeba; font-weight:bold;">
+                    <td colspan="2">Subtotal (<?= $previousMarket ?>)</td>
+                    <td><?= $marketAnimals ?></td>
+                    <td><?= $marketDeath ?></td>
+                    <td><?= $marketSurviving ?></td>
+                    <td>₦<?= number_format($marketExpected) ?></td>
+                    <td>₦<?= number_format($marketFirst) ?></td>
+                    <td>₦<?= number_format($marketSecond) ?></td>
+                    <td>₦<?= number_format($marketThird) ?></td>
+                    <td>₦<?= number_format($marketPaid) ?></td>
+                    <td>₦<?= number_format($marketBalance) ?></td>
+                    <td></td>
+                </tr>
+
+                <?php
+                            // RESET MARKET TOTALS
+                            $marketExpected = 0;
+                            $marketPaid = 0;
+                            $marketBalance = 0;
+                            $marketAnimals = 0;
+                            $marketDeath = 0;
+                            $marketSurviving = 0;
+                            $marketFirst = 0;
+                            $marketSecond = 0;
+                            $marketThird = 0;
+                        endif;
+
+                        // 🏷️ MARKET HEADER
+                        if ($previousMarket !== $row['name']):
+                ?>
+                <tr class="table-dark text-primary">
+                    <td colspan="12">
+                        <strong>Market: <?= $row['name'] ?? 'No Market' ?></strong>
+                    </td>
+                </tr>
                     <?php 
-                        $totalExpectedAmount = 0;
-                        $balance = 0;
-                        $newBal = 0;
-                        $previousMarket = null;
-
-                        // Subtotals per market
-                        $marketExpected = 0;
-                        $marketPaid = 0;
-                        $marketBalance = 0;
-
-                        foreach ($records as $i => $row): 
-
-                            if ($previousMarket !== $row['name']): ?>
-                                <tr class="table-dark text-primary">
-                                    <td colspan="12">
-                                        <!-- <hr> -->
-                                        <!-- <strong><?php // $row['name'] ?? 'No Market' ?></strong> -->
-                                        <strong>Market: <?= $row['name'] ?? 'No Market' ?></strong>
-                                    </td>
-                                </tr>
-                        <?php 
                             $previousMarket = $row['name'];
-                            endif
-                         ?>
-                        <?php
-                    
-                        // Expected payment for this person
+                        endif;
+
+                        // 💰 CALCULATIONS
                         $expectedAmount = $row['amount_per_animal'] * $row['surviving_animal'];
-                        $totalExpectedAmount += $expectedAmount;  
+                        $totalExpectedAmount += $expectedAmount;
 
-                        // Overpayment check
-                        $isOverpaid = $row['total'] > $expectedAmount;
-
-                        // ramaining balance
                         $balance = round($expectedAmount - $row['total']);
                         $newBal += $balance;
-                        // Row classes
+
+                        $isOverpaid = $row['total'] > $expectedAmount;
+
+                        // ✅ ADD TO MARKET SUBTOTAL
+                        $marketExpected += $expectedAmount;
+                        $marketPaid += $row['total'];
+                        $marketBalance += $balance;
+                        $marketAnimals += $row['total_animal'];
+                        $marketDeath += $row['death_animal'];
+                        $marketSurviving += $row['surviving_animal'];
+                        $marketFirst += $row['first_payment'];
+                        $marketSecond += $row['second_payment'];
+                        $marketThird += $row['third_payment'];
+
+                        // 🎨 ROW STYLE
                         $rowClass = '';
                         if ($currentEditId == $row['id']) {
                             $rowClass = 'table-danger';
-                        }elseif($balance == 0) {
+                        } elseif ($balance == 0) {
                             $rowClass = 'table-success';
-                        }elseif($isOverpaid){
+                        } elseif ($isOverpaid) {
                             $rowClass = 'overpaid';
                         }
-                        // elseif ($isOverpaid) {
-                        //     $rowClass = 'overpaid';
-                        // }
                     ?>
-                        <tr class="<?= $rowClass ?>">
-                            <td><?= $i + 1 ?></td>
-                            <td><?= $row['fullname'] ?></td>
-                            <!-- <td><?php //$row['name'] ?></td> -->
-                            <td><?= $row['total_animal'] ?></td>
-                            <td><?= $row['death_animal'] ?></td>
-                            <td><?= $row['surviving_animal'] ?></td>
-                            <td><strong><?= number_format($expectedAmount) ?></strong></td>
-                            <td><?= number_format($row['first_payment']) ?></td>
-                            <td><?= number_format($row['second_payment']) ?></td>
-                            <td><?= number_format($row['third_payment']) ?></td>
-                            <td><strong><?= number_format($row['total']) ?></strong></td>
-                            <td>
-                                <?php if($balance > 0): ?>
-                                    <span class="text-warning">
-                                        <?= number_format($balance) ?> Remaining
-                                    </span>
-                                <?php elseif($balance < 0): ?>
-                                    <span class="text-success">
-                                        <?= number_format(abs($balance)) ?> Over
-                                    </span>
-                                <?php elseif($balance == 0): ?>
-                                    <span class="text-primary">Cleared</span>
-                                <?php endif; ?>
-                            </td>
-                            <td class="no-print">
-                                <?php if ($_SESSION['role'] == 'Admin' || $_SESSION['role'] == 'Agent'): ?>                    
-                                <button 
-                                    class="btn btn-sm btn-info receiptBtn"
+                    <tr class="<?= $rowClass ?>">
+                        <td><?= $i + 1 ?></td>
+                        <td><?= $row['fullname'] ?></td>
+                        <td><?= $row['total_animal'] ?></td>
+                        <td><?= $row['death_animal'] ?></td>
+                        <td><?= $row['surviving_animal'] ?></td>
+                        <td><strong><?= number_format($expectedAmount) ?></strong></td>
+                        <td><?= number_format($row['first_payment']) ?></td>
+                        <td><?= number_format($row['second_payment']) ?></td>
+                        <td><?= number_format($row['third_payment']) ?></td>
+                        <td><strong><?= number_format($row['total']) ?></strong></td>
+                        <td>
+                            <?php if($balance > 0): ?>
+                                <span class="text-warning">
+                                    <?= number_format($balance) ?> Remaining
+                                </span>
+                            <?php elseif($balance < 0): ?>
+                                <span class="text-success">
+                                    <?= number_format(abs($balance)) ?> Over
+                                </span>
+                            <?php else: ?>
+                                <span class="text-primary">Cleared</span>
+                            <?php endif; ?>
+                        </td>
+                        <td class="no-print">
+                            <?php if ($_SESSION['role'] == 'Admin' || $_SESSION['role'] == 'Agent'): ?>                    
+                                <button class="btn btn-sm btn-info receiptBtn"
                                     data-id="<?= $row['id'] ?>"
                                     data-phone="<?= $row['phone'] ?>"
                                     data-tid="<?= $transport_id ?>"
@@ -480,35 +520,52 @@
                                     data-bs-target="#receiptModal">
                                     Receipt
                                 </button>
-                                <a href="?id=<?= $transport_id ?>&edit=<?= $row['id'] ?>" class="btn btn-sm btn-primary">Edit </a>
-                                <?php endif ?>
+                                <a href="?id=<?= $transport_id ?>&edit=<?= $row['id'] ?>" class="btn btn-sm btn-primary">Edit</a>
+                            <?php endif ?>
 
-                                <?php if ($_SESSION['role'] == 'Admin'): ?>
-                                    <a href="/delete-exp?id=<?= $row['id'] ?>&tid=<?= $transport_id ?>"
-                                    class="btn btn-sm btn-danger"
-                                    onclick="return confirm('Delete this record?')">
-                                    Delete
-                                    </a>
-                                <?php endif; ?>
-                            </td>
-                        </tr>
+                            <?php if ($_SESSION['role'] == 'Admin'): ?>
+                                <a href="/delete-exp?id=<?= $row['id'] ?>&tid=<?= $transport_id ?>"
+                                class="btn btn-sm btn-danger"
+                                onclick="return confirm('Delete this record?')">
+                                Delete
+                                </a>
+                            <?php endif; ?>
+                        </td>
+                    </tr>
+
                     <?php endforeach; ?>
+
+                    <!-- ✅ LAST MARKET SUBTOTAL -->
+                    <tr style="background:#ffeeba; font-weight:bold;">
+                        <td colspan="2">Subtotal (<?= $previousMarket ?>)</td>
+                        <td><?= $marketAnimals ?></td>
+                        <td><?= $marketDeath ?></td>
+                        <td><?= $marketSurviving ?></td>
+                        <td>₦<?= number_format($marketExpected) ?></td>
+                        <td>₦<?= number_format($marketFirst) ?></td>
+                        <td>₦<?= number_format($marketSecond) ?></td>
+                        <td>₦<?= number_format($marketThird) ?></td>
+                        <td>₦<?= number_format($marketPaid) ?></td>
+                        <td>₦<?= number_format($marketBalance) ?></td>
+                        <td></td>
+                    </tr>
+
                 </tbody>
 
-                <!-- Footer Totals -->
+                <!-- FOOTER TOTAL -->
                 <tfoot>
                     <tr style="background:#f1f1f1; font-weight:bold;">
                         <td colspan="2">TOTAL</td>
                         <td><?= $total_animal ?></td>
                         <td><?= $totalDeath ?></td>
                         <td><?= $totalSurviving ?></td>
-                        <td>₦<?= isset($totalExpectedAmount) ? number_format($totalExpectedAmount, 2) : '0.00' ?></td>
+                        <td>₦<?= number_format($totalExpectedAmount, 2) ?></td>
                         <td>₦<?= number_format($totalFirst) ?></td>
                         <td>₦<?= number_format($totalSecond) ?></td>
                         <td>₦<?= number_format($totalThird) ?></td>
                         <td>₦<?= number_format($totalPaid) ?></td>
-                         <td colspan="1">₦<?= number_format($newBal) ?></td>
-                        <td class="no-print"></td>
+                        <td>₦<?= number_format($newBal) ?></td>
+                        <td></td>
                     </tr>
                 </tfoot>
             </table>

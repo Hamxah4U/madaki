@@ -164,6 +164,33 @@
         background-color: #f5f5f5;
     }
 
+
+        
+    /* Sticky subtotal */
+    .subtotal-row {
+        position: sticky;
+        bottom: 0;
+        background: #ffeeba;
+        z-index: 2;
+        font-weight: bold;
+    }
+
+    /* Market header clickable */
+    .market-header {
+        cursor: pointer;
+    }
+
+    /* Hidden rows */
+    .market-group {
+        display: none;
+    }
+
+    /* Overpaid style */
+    .overpaid {
+        background-color: #d4edda;
+    }
+
+
 </style>
 
 

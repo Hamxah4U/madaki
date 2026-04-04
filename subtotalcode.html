@@ -1,87 +1,87 @@
 <tbody>
-<?php 
-foreach ($records as $i => $row): 
+    <?php 
+    foreach ($records as $i => $row): 
 
-    // Detect market change
-    if ($previousMarket !== null && $previousMarket !== $row['name']):
-?>
-        <!-- 🔥 SUBTOTAL ROW -->
-        <tr style="background:#ffe9a7; font-weight:bold;">
-            <td colspan="6">Subtotal (<?= $previousMarket ?? 'No Market' ?>)</td>
-            <td>₦<?= number_format($marketExpected) ?></td>
-            <td colspan="3"></td>
-            <td>₦<?= number_format($marketPaid) ?></td>
-            <td>₦<?= number_format($marketBalance) ?></td>
+        // Detect market change
+        if ($previousMarket !== null && $previousMarket !== $row['name']):
+    ?>
+            <!-- 🔥 SUBTOTAL ROW -->
+            <tr style="background:#ffe9a7; font-weight:bold;">
+                <td colspan="6">Subtotal (<?= $previousMarket ?? 'No Market' ?>)</td>
+                <td>₦<?= number_format($marketExpected) ?></td>
+                <td colspan="3"></td>
+                <td>₦<?= number_format($marketPaid) ?></td>
+                <td>₦<?= number_format($marketBalance) ?></td>
+                <td></td>
+            </tr>
+    <?php
+            // Reset market totals
+            $marketExpected = 0;
+            $marketPaid = 0;
+            $marketBalance = 0;
+        endif;
+
+        // Show Market Header
+        if ($previousMarket !== $row['name']):
+    ?>
+            <tr class="table-dark">
+                <td colspan="13">
+                    Market: <?= $row['name'] ?? 'No Market' ?>
+                </td>
+            </tr>
+    <?php
+            $previousMarket = $row['name'];
+        endif;
+
+        // Calculations
+        $expectedAmount = $row['amount_per_animal'] * $row['surviving_animal'];
+        $balance = round($expectedAmount - $row['total']);
+
+        // 👉 Add to GRAND totals
+        $totalExpectedAmount += $expectedAmount;
+        $newBal += $balance;
+
+        // 👉 Add to MARKET subtotals
+        $marketExpected += $expectedAmount;
+        $marketPaid += $row['total'];
+        $marketBalance += $balance;
+
+    ?>
+        <tr>
+            <td><?= $i + 1 ?></td>
+            <td><?= $row['fullname'] ?></td>
+            <td><?= $row['name'] ?></td>
+            <td><?= $row['total_animal'] ?></td>
+            <td><?= $row['death_animal'] ?></td>
+            <td><?= $row['surviving_animal'] ?></td>
+            <td><strong><?= number_format($expectedAmount) ?></strong></td>
+            <td><?= number_format($row['first_payment']) ?></td>
+            <td><?= number_format($row['second_payment']) ?></td>
+            <td><?= number_format($row['third_payment']) ?></td>
+            <td><strong><?= number_format($row['total']) ?></strong></td>
+            <td>
+                <?php if($balance > 0): ?>
+                    <span class="text-warning"><?= number_format($balance) ?> Remaining</span>
+                <?php elseif($balance < 0): ?>
+                    <span class="text-success"><?= number_format(abs($balance)) ?> Over</span>
+                <?php else: ?>
+                    <span class="text-primary">Cleared</span>
+                <?php endif; ?>
+            </td>
             <td></td>
         </tr>
-<?php
-        // Reset market totals
-        $marketExpected = 0;
-        $marketPaid = 0;
-        $marketBalance = 0;
-    endif;
 
-    // Show Market Header
-    if ($previousMarket !== $row['name']):
-?>
-        <tr class="table-dark">
-            <td colspan="13">
-                Market: <?= $row['name'] ?? 'No Market' ?>
-            </td>
-        </tr>
-<?php
-        $previousMarket = $row['name'];
-    endif;
+    <?php endforeach; ?>
 
-    // Calculations
-    $expectedAmount = $row['amount_per_animal'] * $row['surviving_animal'];
-    $balance = round($expectedAmount - $row['total']);
-
-    // 👉 Add to GRAND totals
-    $totalExpectedAmount += $expectedAmount;
-    $newBal += $balance;
-
-    // 👉 Add to MARKET subtotals
-    $marketExpected += $expectedAmount;
-    $marketPaid += $row['total'];
-    $marketBalance += $balance;
-
-?>
-    <tr>
-        <td><?= $i + 1 ?></td>
-        <td><?= $row['fullname'] ?></td>
-        <td><?= $row['name'] ?></td>
-        <td><?= $row['total_animal'] ?></td>
-        <td><?= $row['death_animal'] ?></td>
-        <td><?= $row['surviving_animal'] ?></td>
-        <td><strong><?= number_format($expectedAmount) ?></strong></td>
-        <td><?= number_format($row['first_payment']) ?></td>
-        <td><?= number_format($row['second_payment']) ?></td>
-        <td><?= number_format($row['third_payment']) ?></td>
-        <td><strong><?= number_format($row['total']) ?></strong></td>
-        <td>
-            <?php if($balance > 0): ?>
-                <span class="text-warning"><?= number_format($balance) ?> Remaining</span>
-            <?php elseif($balance < 0): ?>
-                <span class="text-success"><?= number_format(abs($balance)) ?> Over</span>
-            <?php else: ?>
-                <span class="text-primary">Cleared</span>
-            <?php endif; ?>
-        </td>
+    <!-- 🔥 LAST MARKET SUBTOTAL (VERY IMPORTANT) -->
+    <tr style="background:#ffe9a7; font-weight:bold;">
+        <td colspan="6">Subtotal (<?= $previousMarket ?? 'No Market' ?>)</td>
+        <td>₦<?= number_format($marketExpected) ?></td>
+        <td colspan="3"></td>
+        <td>₦<?= number_format($marketPaid) ?></td>
+        <td>₦<?= number_format($marketBalance) ?></td>
         <td></td>
     </tr>
-
-<?php endforeach; ?>
-
-<!-- 🔥 LAST MARKET SUBTOTAL (VERY IMPORTANT) -->
-<tr style="background:#ffe9a7; font-weight:bold;">
-    <td colspan="6">Subtotal (<?= $previousMarket ?? 'No Market' ?>)</td>
-    <td>₦<?= number_format($marketExpected) ?></td>
-    <td colspan="3"></td>
-    <td>₦<?= number_format($marketPaid) ?></td>
-    <td>₦<?= number_format($marketBalance) ?></td>
-    <td></td>
-</tr>
 
 </tbody>
 
@@ -95,35 +95,104 @@ foreach ($records as $i => $row):
 
 without sub <i class="fas fa-tombstone-alt    "></i>
 
+<tbody>
+                    <?php 
+                        $totalExpectedAmount = 0;
+                        $balance = 0;
+                        $newBal = 0;
+                        $previousMarket = null;
 
+                        // Subtotals per market
+                        $marketExpected = 0;
+                        $marketPaid = 0;
+                        $marketBalance = 0;
 
-<tbody id="tableBody">
-                            <tr>
-                                <td>1</td>
-                                <td><input type="text" name="fullname[]" class="form-control" value="<?= $editData['fullname'] ?? '' ?>" <?= $ro ?> required></td>
-                                <td>
-                                    <select name="market[]" id="" class="form-control">
-                                        <option value="">--select--</option>
-                                        <?php
-                                            $stmt = $db->query('SELECT * FROM `market_2`');
-                                            $markets2 = $stmt->fetchAll(PDO::FETCH_ASSOC);
-                                            foreach($markets2 as $market2):?>
-                                            <option value="<?= $market2['id'] ?>"
-                                            <?= ($editData['market'] ?? '') == $market2['id'] ? 'selected' : '' ?>>
-                                            <?= htmlspecialchars($market2['name']) ?>
-                                        </option>
-                                        <?php endforeach ?>
-                                    </select>
-                                    <!-- <input style="width: 100px;" type="text" name="market[]" class="form-control" value="<?php $editData['fullname'] ?? '' ?>" <?= $ro ?> > -->
-                                </td>
-                                <td><input type="number" name="total_animal[]" style="width: 66px;" value="<?= $editData['total_animal'] ?? '' ?>" class="form-control" <?= $ro ?>></td>
-                                <td><input type="number" name="death_animal[]" style="width: 66px;" value="<?= $editData['death_animal'] ?? '' ?>" class="form-control"></td>
-                                <td><input type="number" name="surviving_animal[]" style="width: 66px;" value="<?= $editData['surviving_animal'] ?? '' ?>" class="form-control" <?= $ro ?>></td>
-                                <!-- <td><input type="number" name="amount[]" value="<?php // $editData['amount'] ?? '' ?>" class="form-control"></td> -->
-                                <td><input type="number" name="first_payment[]" style="width: 85px;" value="<?= $editData['first_payment'] ?? '' ?>" class="form-control"></td>
-                                <td><input type="number" name="second_payment[]" style="width: 85px;" value="<?= $editData['second_payment'] ?? '' ?>" class="form-control"></td>
-                                <td><input type="number" name="third_payment[]" style="width: 85px;" value="<?= $editData['third_payment'] ?? '' ?>" class="form-control"></td>
-                                <td><input type="number" name="total[]" style="width: 86px;" value="<?= $editData['total'] ?? '' ?>" class="form-control" <?= $ro ?>></td>
-                                <td><button style="width: 32px;" type="button" class="btn btn-danger removeRow">X</button></td>
-                            </tr>
-                        </tbody>
+                        foreach ($records as $i => $row): 
+
+                            if ($previousMarket !== $row['name']): ?>
+                                <tr class="table-dark text-primary">
+                                    <td colspan="12">
+                                        <!-- <hr> -->
+                                        <!-- <strong><?php // $row['name'] ?? 'No Market' ?></strong> -->
+                                        <strong>Market: <?= $row['name'] ?? 'No Market' ?></strong>
+                                    </td>
+                                </tr>
+                        <?php 
+                            $previousMarket = $row['name'];
+                            endif
+                         ?>
+                        <?php
+                    
+                        // Expected payment for this person
+                        $expectedAmount = $row['amount_per_animal'] * $row['surviving_animal'];
+                        $totalExpectedAmount += $expectedAmount;  
+
+                        // Overpayment check
+                        $isOverpaid = $row['total'] > $expectedAmount;
+
+                        // ramaining balance
+                        $balance = round($expectedAmount - $row['total']);
+                        $newBal += $balance;
+                        // Row classes
+                        $rowClass = '';
+                        if ($currentEditId == $row['id']) {
+                            $rowClass = 'table-danger';
+                        }elseif($balance == 0) {
+                            $rowClass = 'table-success';
+                        }elseif($isOverpaid){
+                            $rowClass = 'overpaid';
+                        }
+                        // elseif ($isOverpaid) {
+                        //     $rowClass = 'overpaid';
+                        // }
+                    ?>
+                        <tr class="<?= $rowClass ?>">
+                            <td><?= $i + 1 ?></td>
+                            <td><?= $row['fullname'] ?></td>
+                            <!-- <td><?php //$row['name'] ?></td> -->
+                            <td><?= $row['total_animal'] ?></td>
+                            <td><?= $row['death_animal'] ?></td>
+                            <td><?= $row['surviving_animal'] ?></td>
+                            <td><strong><?= number_format($expectedAmount) ?></strong></td>
+                            <td><?= number_format($row['first_payment']) ?></td>
+                            <td><?= number_format($row['second_payment']) ?></td>
+                            <td><?= number_format($row['third_payment']) ?></td>
+                            <td><strong><?= number_format($row['total']) ?></strong></td>
+                            <td>
+                                <?php if($balance > 0): ?>
+                                    <span class="text-warning">
+                                        <?= number_format($balance) ?> Remaining
+                                    </span>
+                                <?php elseif($balance < 0): ?>
+                                    <span class="text-success">
+                                        <?= number_format(abs($balance)) ?> Over
+                                    </span>
+                                <?php elseif($balance == 0): ?>
+                                    <span class="text-primary">Cleared</span>
+                                <?php endif; ?>
+                            </td>
+                            <td class="no-print">
+                                <?php if ($_SESSION['role'] == 'Admin' || $_SESSION['role'] == 'Agent'): ?>                    
+                                <button 
+                                    class="btn btn-sm btn-info receiptBtn"
+                                    data-id="<?= $row['id'] ?>"
+                                    data-phone="<?= $row['phone'] ?>"
+                                    data-tid="<?= $transport_id ?>"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#receiptModal">
+                                    Receipt
+                                </button>
+                                <a href="?id=<?= $transport_id ?>&edit=<?= $row['id'] ?>" class="btn btn-sm btn-primary">Edit </a>
+                                <?php endif ?>
+
+                                <?php if ($_SESSION['role'] == 'Admin'): ?>
+                                    <a href="/delete-exp?id=<?= $row['id'] ?>&tid=<?= $transport_id ?>"
+                                    class="btn btn-sm btn-danger"
+                                    onclick="return confirm('Delete this record?')">
+                                    Delete
+                                    </a>
+                                <?php endif; ?>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
