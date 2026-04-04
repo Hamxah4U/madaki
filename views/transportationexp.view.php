@@ -1455,7 +1455,7 @@
             <td>${rowCount}</td>
             <td><input type="text" name="fullname[]" class="form-control" required></td>
             <td>
-                <select name="market[]" class="form-control">
+                <select name="market[]" class="form-control" required>
                 ${marketOptions}
             </select>
             </td>       
