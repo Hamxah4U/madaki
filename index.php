@@ -24,7 +24,9 @@ if(!isset($_SESSION['userID']) &&
   $uri != '/delete-other-expenses' &&
   $uri != '/agent-transportation' &&
   $uri != '/market' &&
-  $uri != '/view-market' 
+  $uri != '/view-market' &&
+  $uri != '/manage-agent' &&
+  $uri != '/view-agent'
   
   ) {
   header('Location: /');
@@ -55,9 +57,9 @@ $routes = [
     '/market' => 'controllers/market.php',
     '/view-market' => 'controllers/viewmarket.php',
     
-
-
-
+    // agent
+    '/manage-agent' => 'controllers/manageagent.php',
+    '/view-agent' => 'controllers/view-agent2.php',
 
 
   '/unit' => 'controllers/unit.php',

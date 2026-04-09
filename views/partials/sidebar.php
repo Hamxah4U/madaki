@@ -9,7 +9,7 @@
     <!-- Sidebar - Brand -->
     <a class="sidebar-brand d-flex align-items-center justify-content-center" href="/dashboard">
         <div class="sidebar-brand-icon rotate-n-15">
-            <i class="fas fa-laugh-win"></i>
+            <i class="fas fa-laugh-win">ssss</i>
         </div>
         <div class="sidebar-brand-text mx-3">
             <!-- Smart billing -->
@@ -39,6 +39,12 @@
                     <a class="nav-link" href="/manage-drivers">
                        <i class="fas fa-fw fa-id-card"></i>
                         <strong>Manage Driver </strong></a>
+                </li>
+
+                <li class="nav-item active">
+                    <a class="nav-link" href="/manage-agent">
+                       <i class="fas fa-users"></i>
+                        <strong>Manage Aget </strong></a>
                 </li>
               
                 <?php if($_SESSION['role'] == 'Viewer 2'):?>

@@ -62,7 +62,7 @@
                             <td><?= $driver['yan_waju'] ?></td>
                             <td><?= $driver['deliverydate'] ?></td>
                             <td><?= number_format($driver['driver_amount']) ?></td>
-                            <td><?= number_format($driver['other_cost']) ?></td>
+                            <td><?= !empty($driver['other_cost']) ? number_format($driver['other_cost']) : '' ?></td>
                             <td><?=number_format( $driver['amount_per_animal']) ?></td>
                             <!-- <td><?php // $driver['date_record'] ?></td> -->
                             

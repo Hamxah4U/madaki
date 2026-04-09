@@ -11,9 +11,7 @@ if($_SERVER['REQUEST_METHOD'] === 'POST'){
   $third_payment = $_POST['third_payment'];
   $agent = $_POST['agent'];
   $deliverydate = $_POST['deliverydate'];
-  $other_cost = isset($_POST['other_cost']) && $_POST['other_cost'] !== '' 
-    ? $_POST['other_cost'] 
-    : null;
+  $other_cost = isset($_POST['other_cost']) && $_POST['other_cost'] !== '' ? $_POST['other_cost'] : null;
   
 
   $errors = [];
