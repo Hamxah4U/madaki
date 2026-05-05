@@ -81,16 +81,7 @@
                 <br>
                 <button class="btn btn-info" onclick="printDiv('printArea')">
                     Print
-                </button>
-                <!-- <a href="/export-excel?tid=<?php // $transport_id ?>" class="btn btn-success no-print">
-                    Export to Excel
-                </a> -->
-                <button class="btn btn-primary" type="button" data-target="#modalUser" data-toggle="modal"><strong>Expenses</strong></button>
-
-                <button type="button" data-target="#modelUnit" data-toggle="modal" class="btn btn-primary"><strong>Other Expenses</strong></button>  
-                <button type="button" data-target="#modelComment" data-toggle="modal" class="btn btn-primary"><strong>Comments</strong></button>  
-                <button type="button" data-target="#modelotherComment" data-toggle="modal" class="btn btn-primary"><strong>Other Comments</strong></button>              
-                <button type="button" data-target="#modeldiary" data-toggle="modal" class="btn btn-primary"><strong>Diary</strong></button>              
+                </button>              
             </div>
     
         <div class="print-container" id="printArea">
@@ -106,8 +97,8 @@
             <thead>
                 <tr>
                     <th>#</th>
-                    <th>Animal</th>
                     <th>Amounnt</th>
+                    <th>Animal</th>
                     <th>Action</th>
                 </tr>
             </thead>
@@ -121,17 +112,28 @@
                     ]);
 
                     $rowmarkets = $stmtmarket->fetchAll();
-                    foreach($rowmarkets as $index => $rowmarket): ?>
+                    $animalAmountAubtoal = 0;
+                    foreach($rowmarkets as $index => $rowmarket): 
+                    $animalAmountAubtoal += $rowmarket['amount'];
+                    ?>
                 <tr>
                     <td><?= $index + 1; ?></td>
-                    <td><?= $rowmarket['Department'] ?></td>
                     <td><?= $rowmarket['amount'] ?></td>
+                    <td><?= $rowmarket['Department'] ?></td>
                     <td>
                         <a class="btn btn-info" href="editmarket.php?id=<?= $rowmarket['id'] ?>">Edit</a>
                         <a class="btn btn-danger" href="deletemarket.php?id=<?= $rowmarket['id'] ?>">Delete</a>
                     </td>
                 </tr>
                 <?php endforeach ?>
+                <tfoot>
+                    <tr style="background:#f1f1f1; font-weight:bold;">
+                        <td colspan="1">Total</td>
+                        <td><strong>₦<?= number_format($animalAmountAubtoal, 2) ?></strong></td>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                </tfoot>
             </tbody>                           
             <!-- Footer Totals -->
             <tfoot>
@@ -178,74 +180,9 @@
     require 'partials/footer.php';    
 ?>
 
-<script>
-  /* $(document).ready(function(){
-
-      $("#animalForm").on("submit", function(e){
-          e.preventDefault(); 
-
-          $.ajax({
-              url: "model/add_animalrecord.php", 
-              type: "POST",
-              data: $(this).serialize(), 
-              success: function(response){
-                  if(response == "success"){
-                      Swal.fire({
-                          icon: 'success',
-                          title: 'Data inserted successfully',
-                          timer: 2000,
-                          showConfirmButton: false
-                      });
-
-                      $("#animalForm")[0].reset();
-                      $("#tableBody").html(""); // clear table
-                  }else{
-                      Swal.fire({
-                          icon: 'error',
-                          title: 'Error inserting data'
-                      });
-                  }
-              }
-          });
-
-      });
-
-  }); */
-</script>
 
 
-<script>
-  /* let rowCount = 1;
-    document.getElementById('addRow').addEventListener('click', function () {
-        rowCount++;
-        let row = `
-        <tr>
-            <td>${rowCount}</td>
-            <td>
-              <select name="animal[]" id="animal" class="form-control">
-                <option value="">--select--</option>
-                <?php
-                  $stmt = $db->conn->prepare("SELECT * FROM `department_tbl`");
-                  $stmt->execute();
-                  $rows = $stmt->fetchAll();
-                  foreach($rows as $row) : ?>
-                  <option value="<?= $row['deptID'] ?>"><?= $row['Department'] ?></option>
-                <?php endforeach ?>
-              </select>
-            </td>
-            <td><input type="number" name="amount[]" style="width: 100px;" class="form-control"></td>
-            <td><button type="button" style="width: 32px;" class="btn btn-danger removeRow">X</button></td>
-        </tr>`;
-        document.getElementById('tableBody').insertAdjacentHTML('beforeend', row);
-    });
 
-    // Remove row
-    document.addEventListener('click', function(e){
-        if(e.target.classList.contains('removeRow')){
-            e.target.closest('tr').remove();
-        }
-    }); */
-</script>
 <script>
   $(document).ready(function(){
 
@@ -339,7 +276,7 @@
                           title: 'Data saved successfully',
                           timer: 2000,
                           showConfirmButton: false
-                      });
+                      }).then(() => location.reload())
 
                       // Reset form
                       $("#animalForm")[0].reset();

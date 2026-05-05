@@ -104,6 +104,7 @@
                 return `
                     <button class="btn btn-info" data-id="${row.id}" id="editDepartment">Edit</button>
                     <a href="view-market?marketId=${row.id}" class="btn btn-success">View market</a>
+										<button class="btn btn-warning" data-id="${row.id}" id="closeMarket">Close market</button>
                 `;
             }
         }
