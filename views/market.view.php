@@ -97,7 +97,7 @@
 					<input type="text" id="unitId" name="unitId" hidden>
 					<div class="form-group">
 							<label for="Unit">Amount</label>
-							<input class="form-control" id="unitName" type="number" name="unit" placeholder="Enter Amount" required>
+							<input class="form-control" id="unitName" type="text" name="unit" placeholder="Enter Amount" required>
 							<small class="text-danger" id="errorUnit"></small>
 					</div>
 					<button type="submit" class="btn btn-primary" id="action-btn" data-mode="add">Save</button>
@@ -150,7 +150,7 @@ $(document).ready(function () {
 
                 if (response.status === 'success') {
 
-                    Toast.fire({
+                    Swal.fire({
                         icon: 'success',
                         title: 'Success',
                         text: response.message,
@@ -211,6 +211,16 @@ $(document).ready(function () {
 			columns: [
 				{ "data": null, render: (data, type, row, meta) => meta.row + 1 },
 				{ "data": "market_name" },
+       {
+					"data": "moneyinTotal",
+					render: function(data) {
+
+							return '₦' + parseFloat(data || 0).toLocaleString('en-NG', {
+									minimumFractionDigits: 2,
+									maximumFractionDigits: 2
+							});
+					}
+			},
         { "data": "status" },
         // { "data": "created_by" },
 				{
