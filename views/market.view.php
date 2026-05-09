@@ -38,6 +38,7 @@
                     <tr>
 											<th>#</th>
 											<th>Market</th>
+											<th>Money In</th>
 											<th>Status</th>
 											<!-- <th>View Store</th> -->
 											<!-- <th>RecordedBy</th> -->
@@ -82,9 +83,123 @@
 	</div>
 </div>
 
+<div class="modal fade" id="addmoney" tabindex="-1" role="dialog" aria-labelledby="modelTitleId" aria-hidden="true">
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title text-primary"><strong>Money In</strong></h5>
+					<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+						<span aria-hidden="true" class="text-danger">&times;</span>
+					</button>
+			</div>
+			<div class="modal-body">
+				<form id="formAmount">
+					<input type="text" id="unitId" name="unitId" hidden>
+					<div class="form-group">
+							<label for="Unit">Amount</label>
+							<input class="form-control" id="unitName" type="number" name="unit" placeholder="Enter Amount" required>
+							<small class="text-danger" id="errorUnit"></small>
+					</div>
+					<button type="submit" class="btn btn-primary" id="action-btn" data-mode="add">Save</button>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>
+
 <?php
     require 'partials/footer.php';
 ?>
+
+<script>
+	$('#addmoney').on('show.bs.modal', function (event) {
+    let button = $(event.relatedTarget);
+    let id = button.data('id');
+
+    $(this).find('#unitId').val(id);
+	});
+</script>
+
+<script>
+$(document).ready(function () {
+
+    // Open modal and set ID
+    $('#addmoney').on('show.bs.modal', function (event) {
+        let button = $(event.relatedTarget);
+        let id = button.data('id');
+
+        $('#unitId').val(id);
+    });
+
+    // Submit form with AJAX
+    $('#formAmount').submit(function (e) {
+        e.preventDefault();
+
+        $.ajax({
+            url: 'model/add_moneyin.php',
+            type: 'POST',
+            data: $(this).serialize(),
+            dataType: 'json',
+
+            beforeSend: function () {
+                $('#action-btn').html('Saving...');
+                $('#action-btn').prop('disabled', true);
+            },
+
+            success: function (response) {
+
+                if (response.status === 'success') {
+
+                    Toast.fire({
+                        icon: 'success',
+                        title: 'Success',
+                        text: response.message,
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+
+                    // Reset form
+                    $('#formAmount')[0].reset();
+
+                    // Hide modal
+                    $('#addmoney').modal('hide');
+
+                    // Reload only DataTable
+                    $('#departmentTable').DataTable().ajax.reload(null, false);
+
+                } else {
+
+                    // Swal.fire({
+                    //     icon: 'error',
+                    //     title: 'Error',
+                    //     text: response.message
+                    // });
+										
+
+                }
+            },
+
+            error: function (xhr) {
+
+                console.log(xhr.responseText);
+
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Server Error',
+                    text: xhr.responseText
+                });
+
+            },
+
+            complete: function () {
+                $('#action-btn').html('Save');
+                $('#action-btn').prop('disabled', false);
+            }
+        });
+    });
+
+});
+</script>
 
 <script>
 	$(document).ready(function(){
@@ -105,6 +220,8 @@
                     <button class="btn btn-info" data-id="${row.id}" id="editDepartment">Edit</button>
                     <a href="view-market?marketId=${row.id}" class="btn btn-success">View market</a>
 										<button class="btn btn-warning" data-id="${row.id}" id="closeMarket">Close market</button>
+										<button type="button" data-id="${row.id}" data-target="#addmoney" data-toggle="modal" class="btn btn-primary"><strong>Money In</strong></button>
+
                 `;
             }
         }
@@ -131,7 +248,6 @@
 			const url = mode === 'edit' ? 'model/update_market.php' : 'model/add_market.php';
 			const iconType = mode === 'edit' ? 'info' : 'success';
 			$.ajax({
-				//url: 'model/unit.form.php',
 				url: url,//mode === 'edit' ? 'model/unit.edit.php' : 'model/unit.form.php', 
 				dataType: 'JSON',
 				data: $(this).serialize(),

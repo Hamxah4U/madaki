@@ -10,7 +10,20 @@
     }
     $market_id = (int)$_GET['marketId'];
 
-  
+  $stmtmarket = $db->conn->prepare("
+                        SELECT * FROM market_transaction
+                        LEFT JOIN department_tbl d ON d.deptID = market_transaction.animal_id 
+                        LEFT JOIN market ON market.id = market_transaction.market_id 
+                        WHERE market_id = :market_id
+                    ");
+
+                    $stmtmarket->execute([
+                        ':market_id' => $market_id
+                    ]);
+                    $rowmarkets = $stmtmarket->fetchAll();
+
+                   
+                    $animalAmountAubtoal = 0;
 
 
 ?>
@@ -52,7 +65,8 @@
                         </thead>
                         <tbody id="tableBody">
                             <tr>
-                                <td>1</td>
+                                <!-- <td>1</td> -->
+                                <td><?= count($rowmarkets) + 1 ?></td>
                                 <td>
                                   <select name="animal[]" id="animal" class="form-control">
                                     <option value="">--select--</option>
@@ -104,15 +118,6 @@
             </thead>
             <tbody>
                 <?php
-                    $stmtmarket = $db->conn->prepare("SELECT * FROM `market_transaction`
-                    LEFT JOIN department_tbl d ON d.deptID = market_transaction.animal_id 
-                    LEFT JOIN market ON market.id = market_transaction.market_id WHERE `market_id` = :market_id ");
-                    $stmtmarket->execute([
-                        ':market_id' => $market_id
-                    ]);
-
-                    $rowmarkets = $stmtmarket->fetchAll();
-                    $animalAmountAubtoal = 0;
                     foreach($rowmarkets as $index => $rowmarket): 
                     $animalAmountAubtoal += $rowmarket['amount'];
                     ?>
@@ -181,22 +186,26 @@
 ?>
 
 
-
+<script>
+    let existingRows = <?= count($rowmarkets); ?>;
+</script>
 
 <script>
   $(document).ready(function(){
 
-      let rowCount = 1;
+      let rowCount = existingRows + 1;
 
       // Function to renumber rows
-      function renumberRows(){
-          let count = 1;
-          $("#tableBody tr").each(function(){
-              $(this).find("td:first").text(count);
-              count++;
-          });
-          rowCount = count - 1;
-      }
+    function renumberRows(){
+        let count = existingRows + 1;
+
+        $("#tableBody tr").each(function(){
+            $(this).find("td:first").text(count);
+            count++;
+        });
+
+        rowCount = count - 1;
+    }
 
       // Add Row
       $("#addRow").click(function(){
@@ -224,6 +233,8 @@
                   <button type="button" class="btn btn-danger removeRow" style="width:32px;">X</button>
               </td>
           </tr>`;
+
+          rowCount++; 
 
           $("#tableBody").append(row);
       });
