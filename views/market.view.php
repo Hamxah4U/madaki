@@ -112,6 +112,80 @@
 ?>
 
 <script>
+
+	$(document).on("click", ".closeMarket", function(){
+
+			let marketId = $(this).data("id");
+			let button = $(this);
+
+			Swal.fire({
+					title: 'Close this market?',
+					text: "This market will be marked as closed.",
+					icon: 'warning',
+					showCancelButton: true,
+					confirmButtonText: 'Yes, Close It'
+			}).then((result) => {
+
+					if(result.isConfirmed){
+
+							$.ajax({
+									url: "model/close_market.php",
+									type: "POST",
+									data: {
+											id: marketId
+									},
+
+									success: function(response){
+
+											if(response.trim() == "success"){
+
+													Swal.fire({
+															icon: 'success',
+															title: 'Market Closed',
+															timer: 2000,
+															showConfirmButton: false
+													}).then(() => location.reload());
+
+													// // optional button update
+													// button
+													// 		.removeClass("btn-warning")
+													// 		.addClass("btn-secondary")
+													// 		.text("Closed")
+													// 		.prop("disabled", true);
+
+											} else {
+
+													Swal.fire({
+															icon: 'error',
+															title: 'Failed to close market'
+													});
+
+											}
+
+									},
+
+									error: function(xhr){
+
+											console.log(xhr.responseText);
+
+											Swal.fire({
+													icon: 'error',
+													title: 'Server Error'
+											});
+
+									}
+
+							});
+
+					}
+
+			});
+
+	});
+
+</script>
+
+<script>
 	$('#addmoney').on('show.bs.modal', function (event) {
     let button = $(event.relatedTarget);
     let id = button.data('id');
@@ -229,7 +303,7 @@ $(document).ready(function () {
                 return `
                     <button class="btn btn-info" data-id="${row.id}" id="editDepartment">Edit</button>
                     <a href="view-market?marketId=${row.id}" class="btn btn-success">View market</a>
-										<button class="btn btn-warning" data-id="${row.id}" id="closeMarket">Close market</button>
+										<button class="btn btn-warning closeMarket" data-id="${row.id}">Close market</button>
 										<button type="button" data-id="${row.id}" data-target="#addmoney" data-toggle="modal" class="btn btn-primary"><strong>Money In</strong></button>
 
                 `;
