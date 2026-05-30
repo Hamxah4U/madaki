@@ -160,6 +160,21 @@ if (isset($_POST['save'])) {
 
 ?>
 
+<?php
+    // next and Previous record
+    $currentId = $_GET['id'];
+
+    // Prev.
+    $prevStmt = $db->conn->prepare("SELECT id FROM transportation WHERE id < ? ORDER BY id DESC LIMIT 1");
+    $prevStmt->execute([$currentId]);
+    $prev = $prevStmt->fetch(PDO::FETCH_ASSOC);
+
+    // Next
+    $nextStmt = $db->conn->prepare("SELECT id FROM transportation WHERE id > ? ORDER BY id ASC LIMIT 1");
+    $nextStmt->execute([$currentId]);
+    $next = $nextStmt->fetch(PDO::FETCH_ASSOC);
+?>
+
 <!-- Page Wrapper -->
 <div id="wrapper">
     <!-- Sidebar -->
@@ -258,6 +273,30 @@ if (isset($_POST['save'])) {
                             <?php endif; ?>
 
                         </form>
+                        <br/>
+                        <div class="d-flex gap-2">
+
+                            <?php if($prev): ?>
+                                <a href="/transportationexp?id=<?= $prev['id'] ?>" class="btn btn-info">
+                                    Prev. Motor
+                                </a>&nbsp;
+                            <?php else: ?>
+                                <button class="btn btn-info" disabled>
+                                    Prev. Motor
+                                </button>&nbsp;
+                            <?php endif; ?>
+
+                            <?php if($next): ?>
+                                <a href="/transportationexp?id=<?= $next['id'] ?>" class="btn btn-primary">
+                                    Next Motor
+                                </a>&nbsp;
+                            <?php else: ?>
+                                <button class="btn btn-primary" disabled>
+                                    Next Motor
+                                </button>
+                            <?php endif; ?>
+
+                        </div>
 
                     </div>
                     <div class="mb-3">
@@ -316,6 +355,7 @@ if (isset($_POST['save'])) {
                             </div>
 
                             <!-- Driver Info -->
+                             <a href="/edittransportation?id=<?= $_GET['id'] ?>" class="btn btn-info">Edit Driver Info.</a><br/>
                             <table class="table table-bordered text-nowrap mb-3">
                                 <tr>
                                     <th>Driver</th>
@@ -979,11 +1019,11 @@ if (isset($_POST['save'])) {
                     </div>
 
                     <div class="modal-footer">
-                        <button onclick="printReceipt()" class="btn btn-primary">Print</button>
-                        <button onclick="shareWhatsApp()" class="btn btn-success">WhatsApp</button>
-                        <button class="btn btn-success" id="whatsappPdfBtn">
+                        <button onclick="printReceipt()" class="btn btn-primary">Print and share receipt</button>
+                        <!-- <button onclick="shareWhatsApp()" class="btn btn-success">WhatsApp</button> -->
+                        <!-- <button class="btn btn-success" id="whatsappPdfBtn">
                             WhatsApp PDF <span id="phoneLabel"></span>
-                        </button>
+                        </button> -->
                     </div>
                 </div>
             </div>
@@ -1147,7 +1187,7 @@ if (isset($_POST['save'])) {
             </div>
         </div>
 
-        <div class="modal fade" id="modelUnit" tabindex="-1" role="dialog" aria-labelledby="modelTitleId" aria-hidden="true">
+        <div class="modal fade" id="modelStatus" tabindex="-1" role="dialog" aria-labelledby="modelTitleId" aria-hidden="true">
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
@@ -1500,7 +1540,7 @@ if (isset($_POST['save'])) {
                 let total = document.querySelector('#receiptPrintArea table tr:nth-child(10) td').innerText;
 
                 let message =
-                    `BASHIR MADAKI TRANSPORTATION RECEIPT
+                    `BASHIR MADAKI TRANSPORTATION RECEIPT______
 
         Name: ${name}
         Total Paid: ${total}

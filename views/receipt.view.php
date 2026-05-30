@@ -157,7 +157,7 @@ body { font-family: Arial; padding:20px; }
     <h3 style="text-align:center;">Payment Receipt</h3>
     <hr>
 
-    <p><strong>Name:</strong> <?= $person['fullname'] ?></p>
+    <p><strong>Name____:</strong> <?= $person['fullname'] ?></p>
     <p><strong>Driver:</strong> <?= $transport['driver_name'] ?></p>
     <p><strong>Motor No:</strong> <?= $transport['bossno'] ?></p>
 

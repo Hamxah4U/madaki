@@ -5,7 +5,7 @@
 
     <table class="table table-bordered">
         <tr>
-            <th>Name__</th>
+            <th>Name</th>
             <td><?= $person['fullname'] ?></td>
         </tr>
         <tr>
