@@ -128,7 +128,8 @@ if (isset($_POST['save'])) {
                 'first'        => $_POST['first_payment'][$key] ?? null,
                 'second'       => $_POST['second_payment'][$key] ?? null,
                 'third'        => $_POST['third_payment'][$key] ?? null,
-                'market'       => $_POST['market'][$key] ?? null
+                'market'       => $_POST['market'][$key] ?? null,
+                'yan_waju'     => $_POST['yan_waju'][$key] ?? null,
             ]);
         }
     }

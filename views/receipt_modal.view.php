@@ -17,6 +17,10 @@
             <td><?= $transport['bossno'] ?></td>
         </tr>
         <tr>
+            <th>Yan waju</th>
+            <td><?= $transport['yan_waju'] ?></td>
+        </tr>
+        <tr>
             <th>Survived Animals</th>
             <td><?= $person['surviving_animal'] ?></td>
         </tr>
