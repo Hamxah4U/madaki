@@ -61,9 +61,40 @@
                         <i class="fas fa-truck"></i>
                        <strong>Transportation</strong>
                     </a>
-                </li>   
+                </li>
 
                 <li class="nav-item active">
+                    <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseTwo"
+                        aria-expanded="true" aria-controls="collapseTwo">
+                        <i class="fas fa-truck"></i></i><strong>Motor Status</strong>
+                        <span></span>
+                    </a>
+                    <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordionSidebar">
+                        <div class="bg-white py-2 collapse-inner rounded">
+                            <a class="collapse-item" href="/onview"><strong>On View</strong></a>
+                        </div>
+                    </div>
+
+                    <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordionSidebar">
+                        <div class="bg-white py-2 collapse-inner rounded">
+                            <a class="collapse-item" href="/completed"><strong>Completed</strong></a>
+                        </div>
+                    </div>
+
+                    <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordionSidebar">
+                        <div class="bg-white py-2 collapse-inner rounded">
+                            <a class="collapse-item" href="#"><strong>Over</strong></a>
+                        </div>
+                    </div>
+
+                    <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordionSidebar">
+                        <div class="bg-white py-2 collapse-inner rounded">
+                            <a class="collapse-item" href="#"><strong>Short</strong></a>
+                        </div>
+                    </div>
+                </li>   
+
+                <!-- <li class="nav-item active">
                     <a class="nav-link" href="/onview">
                         <i class="fas fa-truck"></i>
                        <strong>On View Motor</strong>
@@ -75,7 +106,7 @@
                         <i class="fas fa-truck"></i>
                        <strong>Completed Motor</strong>
                     </a>
-                </li>  
+                </li>   -->
                 
                 <li class="nav-item active">
                     <a class="nav-link" href="/market">
