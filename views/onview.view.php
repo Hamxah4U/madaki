@@ -28,6 +28,7 @@
 						<div class="row mb-4">
 							<div class="col-md-12 col-lg-12">
 								<div class="table-responsive">
+                  <p><strong class="text-primary">List of On view motors</strong></p>
                       <table class="table table-bordered text-nowrap" width="100%" id="driverTable">
                         <thead>
                         <tr>
@@ -44,7 +45,7 @@
                         </thead>
                         <tbody>
                         <?php
-                            $stmt = $db->query('SELECT * FROM transportation LEFT JOIN users_tbl u ON `agent` = u.userID WHERE status_id = 1 ORDER BY `id` DESC');
+                            $stmt = $db->query('SELECT * FROM transportation LEFT JOIN users_tbl u ON `agent` = u.userID WHERE status_id = 2 ORDER BY `id` DESC');
                             $drivers = $stmt->fetchAll(PDO::FETCH_ASSOC);
                             foreach($drivers as $index => $driver):
                         ?>
@@ -61,7 +62,7 @@
                             <td><?=number_format( $driver['amount_per_animal']) ?></td>
                             <!-- <td><?php // $driver['date_record'] ?></td> -->
                             <td>
-                                <button 
+                              <button 
                                     type="button"
                                     class="btn btn-warning"
                                     data-toggle="modal"
@@ -70,6 +71,7 @@
                                     >
                                     <strong>Status</strong>
                                 </button> |
+                                
                                 <a href="/transportationexp?id=<?= $driver['id'] ?>" class="btn btn-primary">View</a> |
                                 <a href="/edittransportation?id=<?= $driver['id'] ?>" class="btn btn-info">Edit</a> 
                             </td>
@@ -136,7 +138,7 @@
 
             <div class="modal-body">
                 <form action="" id="statusForm">
-                   <input type="text" name="driverID" id="driverID">
+                   <input type="text" name="driverID" id="driverID" hidden>
 					<div class="form-group">
 						<label for="my-input">Status</label>
                         <select name="status" id="change" class="form-control">

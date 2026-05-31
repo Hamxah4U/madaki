@@ -44,7 +44,7 @@
                 <li class="nav-item active">
                     <a class="nav-link" href="/manage-agent">
                        <i class="fas fa-users"></i>
-                        <strong>Manage Aget </strong></a>
+                        <strong>Manage Agent </strong></a>
                 </li>
               
                 <?php if($_SESSION['role'] == 'Viewer 2'):?>
@@ -62,6 +62,20 @@
                        <strong>Transportation</strong>
                     </a>
                 </li>   
+
+                <li class="nav-item active">
+                    <a class="nav-link" href="/onview">
+                        <i class="fas fa-truck"></i>
+                       <strong>On View Motor</strong>
+                    </a>
+                </li>   
+
+                <li class="nav-item active">
+                    <a class="nav-link" href="/completed">
+                        <i class="fas fa-truck"></i>
+                       <strong>Completed Motor</strong>
+                    </a>
+                </li>  
                 
                 <li class="nav-item active">
                     <a class="nav-link" href="/market">
