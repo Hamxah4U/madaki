@@ -11,6 +11,7 @@ try {
 
     $unitId = trim($_POST['unitId'] ?? '');
     $amount = trim($_POST['unit'] ?? '');
+    $date = $_POST['date'];
 
     if (empty($unitId)) {
         throw new Exception('Market ID is required');
@@ -34,13 +35,15 @@ try {
             market_id,
             user_id,
             datercorded,
-            timerecorded
+            timerecorded,
+            date_in
         ) VALUES (
             :amount,
             :market_id,
             :user_id,
             :datercorded,
-            :timerecorded
+            :timerecorded,
+            :date_in
         )
     ");
 
@@ -49,7 +52,8 @@ try {
         ':market_id'     => $unitId,
         ':user_id'       => $_SESSION['userID'] ?? 0,
         ':datercorded'   => date('Y-m-d'),
-        ':timerecorded'  => date('H:i:s')
+        ':timerecorded'  => date('H:i:s'),
+        ':date_in' => $date
     ]);
 
     echo json_encode([

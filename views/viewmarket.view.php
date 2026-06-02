@@ -8,23 +8,30 @@
       require 'controllers/404.php';
       exit();
     }
-    $market_id = (int)$_GET['marketId'];
+    $code = (int)$_GET['marketId'];
 
   $stmtmarket = $db->conn->prepare("
-                        SELECT * FROM market_transaction
-                        LEFT JOIN department_tbl d ON d.deptID = market_transaction.animal_id 
-                        LEFT JOIN market ON market.id = market_transaction.market_id 
-                        WHERE market_id = :market_id
-                    ");
+        SELECT * FROM market_transaction
+        LEFT JOIN department_tbl d ON d.deptID = market_transaction.animal_id 
+        LEFT JOIN market ON market.id = market_transaction.market_id 
+        WHERE market_code = :market_code
+    ");
 
-                    $stmtmarket->execute([
-                        ':market_id' => $market_id
-                    ]);
-                    $rowmarkets = $stmtmarket->fetchAll();
+    $stmtmarket->execute([
+        ':market_code' => $code
+    ]);
+    $rowmarkets = $stmtmarket->fetchAll();
 
-                   
-                    $animalAmountAubtoal = 0;
+    
+    $animalAmountAubtoal = 0;
 
+    $market = $db->conn->prepare("SELECT * FROM `market` WHERE `id` = :id");
+    $market->execute([':id' => $_GET['marketId']]);
+    $currentMarket = $market->fetch();
+
+    $market3 = $db->conn->prepare("SELECT * FROM `market_3` ORDER BY `name`");
+    $market3->execute();
+    $rowMarket3 = $market3->fetchAll();  
 
 ?>
 
@@ -49,42 +56,54 @@
 
 			<div class="container-fluid">
             <div class="table-responsive">
-            <div class="form-area no-print">
-                
+            <div class="form-area no-print">                
                 <form id="animalForm" method="POST">
-                    <input type="hidden" name="market_id" value="<?=  $market_id ?>">
-                    <input type="hidden" name="edit_id" value="<?= $editData['id'] ?? '' ?>">            
-                    <table class="table table-striped text-nowrap" id="peopleTable">  
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>Animal</th>
-                                <th>Amount</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tableBody">
-                            <tr>
-                                <!-- <td>1</td> -->
-                                <td><?= count($rowmarkets) + 1 ?></td>
-                                <td>
-                                  <select name="animal[]" id="animal" class="form-control">
-                                    <option value="">--select--</option>
-                                    <?php
-                                      $stmt = $db->conn->prepare("SELECT * FROM `department_tbl`");
-                                      $stmt->execute();
-                                      $rows = $stmt->fetchAll();
-                                      foreach($rows as $row) : ?>
-                                      <option value="<?= $row['deptID'] ?>"><?= $row['Department'] ?></option>
-                                    <?php endforeach ?>
-                                  </select>
-                                  <span class="text-danger" id="animalError"></span>
-                                </td>
-                                <td><input type="number" name="amount[]" style="width: 100px;" value="<?= $editData['total'] ?? '' ?>" class="form-control" ></td>
-                                <td><button style="width: 32px;" type="button" class="btn btn-danger removeRow">X</button></td>
-                            </tr>
-                        </tbody>
-                    </table>
+                    <input type="text" name="market_code" value="<?= $_GET['marketId'] ?>" hidden>
+                    <input type="hidden" name="edit_id" value="<?= $editData['id'] ?? '' ?>"> 
+                    <div class="table-responsive">     
+                        <table class="table table-striped text-nowrap" id="peopleTable">  
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Market</th>
+                                    <th>Animal</th>
+                                    <th>Amount</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tableBody">
+                                <tr>
+                                    <!-- <td>1</td> -->
+                                    <!-- <td><?php //echo count($rowmarkets) + 1 ?></td> -->
+                                    <td><input required type="number" name="number[]" style="width: 100px;" class="form-control" ></td>
+                                    
+                                    <td>
+                                        <select name="market_id[]" id="market_id" class="form-control">
+                                            <option value="">--select market--</option>
+                                            <?php foreach($rowMarket3 as $rowMarket3_1): ?>
+                                            <option value="<?= $rowMarket3_1['id'] ?>"><?= $rowMarket3_1['name'] ?></option>
+                                            <?php endforeach ?>
+                                        </select>
+                                    </td>
+                                    <td>
+                                    <select name="animal[]" id="animal" class="form-control">
+                                        <option value="">--select--</option>
+                                        <?php
+                                        $stmt = $db->conn->prepare("SELECT * FROM `department_tbl` ORDER BY Department");
+                                        $stmt->execute();
+                                        $rows = $stmt->fetchAll();
+                                        foreach($rows as $row) : ?>
+                                        <option value="<?= $row['deptID'] ?>"><?= $row['Department'] ?></option>
+                                        <?php endforeach ?>
+                                    </select>
+                                    <span class="text-danger" id="animalError"></span>
+                                    </td>
+                                    <td><input type="number" name="amount[]" style="width: 100px;" value="<?= $editData['total'] ?? '' ?>" class="form-control" ></td>
+                                    <td><button style="width: 32px;" type="button" class="btn btn-danger removeRow">X</button></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                     <button type="button" class="btn btn-success" id="addRow">Add Animal</button>
                     <br><br>
                         <!-- Admin can submit or update -->
@@ -102,7 +121,7 @@
 
         <!-- Header -->
         <div class="print-header">
-            <h3>BASHIR MADAKI TRANSPORTATION RECORD</h3>
+            <h3>BASHIR MADAKI TRANSPORTATION RECORD for <strong><?= $currentMarket['market_name'] ?></strong></h3>
             <small><?= date('d M Y') ?></small>
         </div>
 
@@ -110,7 +129,7 @@
         <table class="table table-bordered text-nowrap">
             <thead>
                 <tr>
-                    <th>#</th>
+                    <th>Number</th>
                     <th>Amounnt</th>
                     <th>Animal</th>
                     <th>Action</th>
@@ -122,7 +141,7 @@
                     $animalAmountAubtoal += $rowmarket['amount'];
                     ?>
                 <tr>
-                    <td><?= $index + 1; ?></td>
+                    <td><?= $rowmarket['sn_number'] ?></td>
                     <td><?= $rowmarket['amount'] ?></td>
                     <td><?= $rowmarket['Department'] ?></td>
                     <td>
@@ -209,16 +228,26 @@
 
       // Add Row
       $("#addRow").click(function(){
-          rowCount++;
+        //   rowCount++;
+        //   <td>${rowCount}</td>
 
           let row = `
           <tr>
-              <td>${rowCount}</td>
+              
+                <td><input required type="number" name="number[]" style="width: 100px;" class="form-control" ></td>
+              <td>
+                <select name="market_id[]" id="market_id" class="form-control">
+                    <option value="">--select market--</option>
+                    <?php foreach($rowMarket3 as $rowMarket3_1): ?>
+                    <option value="<?= $rowMarket3_1['id'] ?>"><?= $rowMarket3_1['name'] ?></option>
+                    <?php endforeach ?>
+                </select>
+              </td>
               <td>
                   <select name="animal[]" class="form-control">
                       <option value="">--select--</option>
                       <?php
-                        $stmt = $db->conn->prepare("SELECT * FROM department_tbl");
+                        $stmt = $db->conn->prepare("SELECT * FROM department_tbl ORDER BY Department");
                         $stmt->execute();
                         $rows = $stmt->fetchAll();
                         foreach($rows as $row) : ?>

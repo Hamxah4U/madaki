@@ -33,12 +33,15 @@
                 <!-- Content Row -->
 								 
                 <div class="table-responsive">
-								<table id="departmentTable" class="table table-striped" style="width: 100%;">
+								<table id="departmentTable" class="table table-striped text-nowrap" style="width: 100%;">
                   <thead>
                     <tr>
 											<th>#</th>
 											<th>Market</th>
+											<th>Agent</th>
 											<th>Money In</th>
+											<th>Money Out</th>
+											<th>Expenses</th>
 											<th>Status</th>
 											<!-- <th>View Store</th> -->
 											<!-- <th>RecordedBy</th> -->
@@ -76,6 +79,22 @@
 							<input class="form-control" id="unitName" type="text" name="unit" placeholder="Enter Market">
 							<small class="text-danger" id="errorUnit"></small>
 					</div>
+
+					<div class="form-group">
+							<label for="Unit">Agent</label>
+							<?php
+									$stmtAgent = $db->conn->prepare("SELECT * FROM `users_tbl` WHERE `Role` = :userRole");
+									$stmtAgent->execute([':userRole' => 'User']);
+									$rowAgents = $stmtAgent->fetchAll(PDO::FETCH_ASSOC);
+							?>
+							<select name="agent" id="agent" class="form-control">
+								<option value="">--select agent--</option>
+								<?php foreach($rowAgents as $rowAgent):?>
+									<option value="<?= $rowAgent['userID'] ?>"><?= $rowAgent['Fullname'] ?></option>
+								<?php endforeach ?>
+							</select>
+							<small class="text-danger" id="errorAgent"></small>
+					</div>
 					<button type="submit" class="btn btn-primary" id="action-btn" data-mode="add">Save</button>
 				</form>
 			</div>
@@ -97,8 +116,12 @@
 					<input type="text" id="unitId" name="unitId" hidden>
 					<div class="form-group">
 							<label for="Unit">Amount</label>
-							<input class="form-control" id="unitName" type="text" name="unit" placeholder="Enter Amount" required>
+							<input class="form-control" id="unitName" type="number" name="unit" placeholder="Enter Amount" required>
 							<small class="text-danger" id="errorUnit"></small>
+					</div>
+					<div class="form-group">
+						<label for="">Date</label>
+						<input type="date" name="date" id="date" class="form-control" required>
 					</div>
 					<button type="submit" class="btn btn-primary" id="action-btn" data-mode="add">Save</button>
 				</form>
@@ -285,8 +308,9 @@ $(document).ready(function () {
 			columns: [
 				{ "data": null, render: (data, type, row, meta) => meta.row + 1 },
 				{ "data": "market_name" },
-       {
-					"data": "moneyinTotal",
+				{ "data": "agent_name" },
+        {
+					"data": "moneyOutTotal",
 					render: function(data) {
 
 							return '₦' + parseFloat(data || 0).toLocaleString('en-NG', {
@@ -294,7 +318,22 @@ $(document).ready(function () {
 									maximumFractionDigits: 2
 							});
 					}
-			},
+			  },
+				{
+					"data": "totalMoneyInAnimal",
+					render: function(data) {
+
+							return '₦' + parseFloat(data || 0).toLocaleString('en-NG', {
+									minimumFractionDigits: 2,
+									maximumFractionDigits: 2
+							});
+					}
+				},
+
+				{
+					"data": "status"
+				},
+				
         { "data": "status" },
         // { "data": "created_by" },
 				{
@@ -359,6 +398,7 @@ $(document).ready(function () {
 						resetForm();
 					}else{
 						$('#errorUnit').text(response.errors.unit || response.errors.unitExist || '');
+						$('#errorAgent').text(response.errors.agent || '');
 					}
 				},
 				error: function(xhr, status, error){

@@ -44,7 +44,7 @@
                         </thead>
                         <tbody>
                         <?php
-                            $stmt = $db->query('SELECT * FROM transportation LEFT JOIN users_tbl u ON `agent` = u.userID WHERE status_id = 1 ORDER BY `id` DESC');
+                            $stmt = $db->query('SELECT * FROM transportation LEFT JOIN users_tbl u ON `agent` = u.userID  ORDER BY `id` DESC');
                             $drivers = $stmt->fetchAll(PDO::FETCH_ASSOC);
                             foreach($drivers as $index => $driver):
                         ?>
@@ -129,14 +129,14 @@
             <div class="modal-header">
                 <h5 class="modal-title">Transportation Status</h5>
 
-                <button type="button" class="close" data-dismiss="modal">
+                <button type="button" class="close text-danger" data-dismiss="modal">
                     <span>&times;</span>
                 </button>
             </div>
 
             <div class="modal-body">
                 <form action="" id="statusForm">
-                   <input type="text" name="driverID" id="driverID">
+                   <input type="text" name="driverID" id="driverID" hidden>
 					<div class="form-group">
 						<label for="my-input">Status</label>
                         <select name="status" id="change" class="form-control">

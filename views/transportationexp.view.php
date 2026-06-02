@@ -10,7 +10,7 @@ if (!isset($_GET['id']) || empty($_GET['id'])) {
 
 $transport_id = (int)$_GET['id'];
 
-$stmt = $db->conn->prepare("SELECT te.*, m.name, t.amount_per_animal FROM transportation_expenses te JOIN transportation t ON t.id = te.transportation_id LEFT JOIN market_2 m ON m.id = te.market WHERE transportation_id = :id ORDER BY market");
+$stmt = $db->conn->prepare("SELECT te.*, m.name, status_id, t.amount_per_animal FROM transportation_expenses te JOIN transportation t ON t.id = te.transportation_id LEFT JOIN market_2 m ON m.id = te.market WHERE transportation_id = :id ORDER BY market");
 $stmt->execute(['id' => $transport_id]);
 $records = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -63,7 +63,6 @@ if (isset($_GET['edit'])) {
 
 $isAgent = ($_SESSION['role'] == 'Agent');
 $ro = ($_SESSION['role'] == 'Agent') ? 'readonly' : '';
-
 
 ?>
 
@@ -357,7 +356,7 @@ if (isset($_POST['save'])) {
 
                             <!-- Driver Info -->
                              <a href="/edittransportation?id=<?= $_GET['id'] ?>" class="btn btn-info">Edit Driver Info.</a><br/>
-                            <table class="table table-bordered text-nowrap mb-3">
+                            <table class="table table-bordered text-nowrap mb-3" width="100%">
                                 <tr>
                                     <th>Driver</th>
                                     <td><?= !empty($driverInfo['driver_name']) ? $driverInfo['driver_name'] : '' ?></td>
@@ -368,6 +367,8 @@ if (isset($_POST['save'])) {
                                                 ?></td> -->
                                     <th>General Grand Total </th>
                                     <td>&#8358;<?= number_format($grandTotal) ?></td>
+
+                                    
                                 </tr>
                                 <tr>
                                     <th>Total Transportation Cost</th>
@@ -386,10 +387,24 @@ if (isset($_POST['save'])) {
                                     <th>Total Surviving Animals</th>
                                     <td><?= $totalSurviving ?></td>
                                     <th>Total Death</th>
-                                    <td><?= number_format($totalDeath) ?></td>
+                                    <td ><?= number_format($totalDeath) ?></td>
                                     <th>Expected Return</th>
                                     <td>&#8358;<?= number_format($subGrandTotal) ?></td>
                                 </tr>
+
+                                <tr>
+                                    <th>Other Balance</th>
+                                    <td colspan="5">
+                                        <?php
+                                            $c = $expenses_other['total_other_exp'] ?? 0;
+                                            $a = !empty($driverInfo['amount_per_animal']) ? (float)$driverInfo['amount_per_animal'] : (0) ;
+                                            $b = $a * $totalSurviving;
+                                            $bal = $b - $c; 
+                                        ?>
+                                        &#8358;<?= number_format($bal) ?>
+                                    </td>
+                                </tr>
+
                                 <tr>
                                     <th>Deposits</th>
                                     <td colspan="5">
@@ -409,6 +424,7 @@ if (isset($_POST['save'])) {
                                     <th>Agent Phone</th>
                                     <td><?= $driverInfo['agentphone'] ?? '' ?></td>
                                 </tr>
+                              
 
                             </table>
                         </div>
@@ -434,10 +450,10 @@ if (isset($_POST['save'])) {
                             </thead>
                             <tbody>
                                 <?php
-                                $totalExpectedAmount = 0;
-                                $balance = 0;
-                                $newBal = 0;
-                                $previousMarket = null;
+                                    $totalExpectedAmount = 0;
+                                    $balance = 0;
+                                    $newBal = 0;
+                                    $previousMarket = null;
 
                                 // MARKET SUBTOTALS
                                 $marketExpected = 0;
@@ -582,9 +598,14 @@ if (isset($_POST['save'])) {
                                                     data-bs-target="#receiptModal">
                                                     Receipt
                                                 </button>
-                                                <a href="?id=<?= $transport_id ?>&edit=<?= $row['id'] ?>" class="btn btn-sm btn-primary">Edit</a>
+                                                <?php if($row['status_id'] == 1 && $_SESSION['role'] == 'Agent') : ?>
+                                                    <a href="?id=<?= $transport_id ?>&edit=<?= $row['id'] ?>" class="btn btn-sm btn-primary">Receive Money</a>
+                                                    <?php elseif($_SESSION['role'] == 'Admin') : ?>
+                                                    <a href="?id=<?= $transport_id ?>&edit=<?= $row['id'] ?>" class="btn btn-sm btn-primary">Edit</a>
+                                                <?php  endif?>
+                                                
                                             <?php endif ?>
-
+                                                
                                             <?php if ($_SESSION['role'] == 'Admin'): ?>
                                                 <a href="/delete-exp?id=<?= $row['id'] ?>&tid=<?= $transport_id ?>"
                                                     class="btn btn-sm btn-danger"
