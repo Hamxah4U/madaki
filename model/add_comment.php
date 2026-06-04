@@ -15,6 +15,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $userID  = trim($_POST['transport_id'] ?? '');
     $mode    = $_POST['mode'] ?? 'add'; // add | edit
     $id      = $_POST['id'] ?? null;
+    $amount  = $_POST['amount'] ?? null;
 
     // =========================
     // VALIDATION
@@ -49,13 +50,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $stmt = $db->conn->prepare("
                 INSERT INTO expenses 
-                (driver_id, reason, daterecorded, timerecorded, status) 
-                VALUES (:driver_id, :reason, CURDATE(), CURTIME(), 'comment')
+                (driver_id, reason, amount, daterecorded, timerecorded, status) 
+                VALUES (:driver_id, :reason, :amount, CURDATE(), CURTIME(), 'comment')
             ");
 
             $stmt->execute([
                 ':driver_id' => $userID,
-                ':reason'    => $comment
+                ':reason'    => $comment,
+                ':amount'    => $amount
             ]);
 
             echo json_encode([
@@ -86,12 +88,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $stmt = $db->conn->prepare("
                 UPDATE expenses 
-                SET reason = :reason 
+                SET reason = :reason, amount = :amount 
                 WHERE id = :id AND status = 'comment'
             ");
 
             $stmt->execute([
                 ':reason' => $comment,
+                ':amount' => $amount,
                 ':id'     => $id
             ]);
 

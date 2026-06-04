@@ -403,7 +403,14 @@ if (isset($_POST['save'])) {
                                         &#8358;<?= number_format($bal) ?>
                                     </td>
                                     <th>Other Paid Balance</th>
-                                    <td>&#8358;<?= number_format($expenses_other['total_other_paid'] ?? 0) ?></td>
+                                    
+                                    <td colspan="3">
+                                        ₦<?php
+                                            $exp = $expenses_other['total_other_exp'] ?? 0;
+                                            $other_paid = $totalPaid - $exp;
+                                            echo  number_format($other_paid) ? number_format($other_paid) : '0.00';
+                                        ?>
+                                    </td>
                                 </tr>
 
                                 <tr>
@@ -878,6 +885,7 @@ if (isset($_POST['save'])) {
                                                 <tr>
                                                     <th>#</th>
                                                     <th>Comment</th>
+                                                    <th>Amount</th>
                                                     <th>Date</th>
                                                     <th>Time</th>
                                                     <th class="no-print">Action</th>
@@ -888,11 +896,14 @@ if (isset($_POST['save'])) {
                                                 $comment = $db->conn->prepare("SELECT * FROM `expenses` WHERE `status` = 'comment' AND driver_id = :id");
                                                 $comment->execute(['id' => $transport_id]);
                                                 $row_comments = $comment->fetchALL();
+                                                $totalAmountForComment = 0;
                                                 foreach ($row_comments as $index => $row_comment) :
+                                                   $totalAmountForComment += $row_comment['amount'];
                                                 ?>
                                                     <tr>
                                                         <td><?= $index + 1 ?></td>
                                                         <td><?= $row_comment['reason'] ?></td>
+                                                        <td><?= $row_comment['amount'] ?></td>
                                                         <td><?= date('d M Y', strtotime($row_comment['daterecorded'])) ?></td>
                                                         <td><?= date('h:i A', strtotime($row_comment['timerecorded'])) ?></td>
                                                         <td class="no-print">
@@ -904,12 +915,16 @@ if (isset($_POST['save'])) {
                                                             <button
                                                                 class="btn btn-info btn-edit-comment"
                                                                 data-id="<?= $row_comment['id'] ?>"
-                                                                data-comment="<?= htmlspecialchars($row_comment['reason']) ?>">
+                                                                data-comment="<?= htmlspecialchars($row_comment['reason']) ?>"
+                                                                data-amount="<?= $row_comment['amount'] ?>">
                                                                 Edit
                                                             </button>
                                                         </td>
                                                     </tr>
                                                 <?php endforeach ?>
+                                                <tr></tr>
+                                                    <td colspan="2">Total</td>
+                                                    <td colspan="4">₦<?= number_format($totalAmountForComment) ?></td>
                                             </tbody>
                                         </table>
                                     </div>
@@ -1151,11 +1166,15 @@ if (isset($_POST['save'])) {
 
                     <div class="modal-body">
                         <form id="commentForm">
-                            <input type="hidden" name="id" id="comment_id">
-
+                            <input type="text" name="id" id="comment_id" hidden>
+                        
+                            <div class="form-group">
+                                <label><strong>Amount</strong></label>
+                                <input type="number" id="commentAmount" name="amount" class="form-control" required>
+                            </div>
                             <div class="form-group">
                                 <label><strong>Comment</strong></label>
-                                <textarea name="comment" id="comment_text" class="form-control" rows="4" required></textarea>
+                                <textarea name="comment" id="comment_text" class="form-control"  required></textarea>
                                 <small class="text-danger" id="errorComment"></small>
                             </div>
 
@@ -2154,10 +2173,12 @@ if (isset($_POST['save'])) {
 
                 let id = $(this).data('id');
                 let comment = $(this).data('comment');
+                let commentAmount = $(this).data('amount');
 
                 // Fill modal
                 $('#comment_id').val(id);
                 $('#comment_text').val(comment);
+                $('#commentAmount').val(commentAmount);                
 
                 // Change button
                 $('#comment-btn')
