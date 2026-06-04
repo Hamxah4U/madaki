@@ -72,8 +72,8 @@
                         <div class="bg-white py-2 collapse-inner rounded">
                             <a class="collapse-item" href="/onview"><strong>On View</strong></a>
                             <a class="collapse-item" href="/completed"><strong>Completed</strong></a>
-                            <a class="collapse-item" href="#"><strong>Over</strong></a>
-                            <a class="collapse-item" href="#"><strong>Short</strong></a>
+                            <a class="collapse-item" href="/over"><strong>Over</strong></a>
+                            <a class="collapse-item" href="/short"><strong>Short</strong></a>
                         </div>
                     </div>
                 </li>
