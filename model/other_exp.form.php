@@ -26,8 +26,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
 
     try {
-        $db = new Database();
-
         $stmt = $db->conn->prepare("
             INSERT INTO expenses 
             (driver_id, amount, reason, daterecorded, timerecorded, status)

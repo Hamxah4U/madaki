@@ -128,7 +128,6 @@ if (isset($_POST['save'])) {
                 'second'       => $_POST['second_payment'][$key] ?? null,
                 'third'        => $_POST['third_payment'][$key] ?? null,
                 'market'       => $_POST['market'][$key] ?? null,
-                // 'yan_waju'     => $_POST['yan_waju'][$key] ?? null,
             ]);
         }
     }
@@ -394,7 +393,7 @@ if (isset($_POST['save'])) {
 
                                 <tr>
                                     <th>Other Balance</th>
-                                    <td colspan="5">
+                                    <td>
                                         <?php
                                             $c = $expenses_other['total_other_exp'] ?? 0;
                                             $a = !empty($driverInfo['amount_per_animal']) ? (float)$driverInfo['amount_per_animal'] : (0) ;
@@ -403,6 +402,8 @@ if (isset($_POST['save'])) {
                                         ?>
                                         &#8358;<?= number_format($bal) ?>
                                     </td>
+                                    <th>Other Paid Balance</th>
+                                    <td>&#8358;<?= number_format($expenses_other['total_other_paid'] ?? 0) ?></td>
                                 </tr>
 
                                 <tr>
@@ -812,7 +813,7 @@ if (isset($_POST['save'])) {
                                 <table class="table table-bordered text-nowrap">
                                     <thead>
                                         <?php if ($_SESSION['role'] == 'Admin'): ?>
-                                            <tr> <button type="button" data-target="#modelUnit" data-toggle="modal" class="btn btn-primary"><strong>Other Expenses</strong></button> </tr>
+                                            <tr> <button type="button" data-target="#modelOtherExpenses" data-toggle="modal" class="btn btn-primary"><strong>Other Expenses</strong></button> </tr>
                                         <?php endif ?>
                                             <button class="btn btn-secondary" onclick="other_expenses('other_expenses')">Print</button>
                                         <tr>
@@ -1209,7 +1210,7 @@ if (isset($_POST['save'])) {
             </div>
         </div>
 
-        <div class="modal fade" id="modelStatus" tabindex="-1" role="dialog" aria-labelledby="modelTitleId" aria-hidden="true">
+        <div class="modal fade" id="modelOtherExpenses" tabindex="-1" role="dialog" aria-labelledby="modelTitleId" aria-hidden="true">
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
@@ -1225,13 +1226,13 @@ if (isset($_POST['save'])) {
                             <input type="text" name="userID" id="userID" value="<?= $transport_id ?>" hidden>
                             <div class="form-group">
                                 <label for="my-input">Amount</label>
-                                <input id="amount" class="form-control" type="number" name="amount">
+                                <input id="amount" class="form-control" type="number" name="amount" required>
                                 <small class="text-danger" id="errorAmount"></small>
                             </div>
                             <input type="hidden" name="transport_id" value="<?= $transport_id ?? '' ?>">
                             <div class="form-group">
                                 <label for="my-input">Reason</label>
-                                <textarea name="reason" id="reason" class="form-control" rows="3"></textarea>
+                                <textarea name="reason" id="reason" class="form-control" rows="3" required></textarea>
                                 <small class="text-danger" id="errorReason"></small>
                             </div>
                             <button type="submit" class="btn btn-primary" id="action-btn" data-mode='add'><strong>Save</strong></button>
