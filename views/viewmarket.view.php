@@ -55,121 +55,180 @@
             <!-- Begin Page Content -->
 
 			<div class="container-fluid">
-            <div class="table-responsive">
-            <div class="form-area no-print">                
-                <form id="animalForm" method="POST">
-                    <input type="text" name="market_code" value="<?= $_GET['marketId'] ?>" hidden>
-                    <input type="hidden" name="edit_id" value="<?= $editData['id'] ?? '' ?>"> 
-                    <div class="table-responsive">     
-                        <table class="table table-striped text-nowrap" id="peopleTable">  
-                            <thead>
-                                <tr>
-                                    <th>#</th>
-                                    <th>Market</th>
-                                    <th>Animal</th>
-                                    <th>Amount</th>
-                                    <th>Action</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tableBody">
-                                <tr>
-                                    <!-- <td>1</td> -->
-                                    <!-- <td><?php //echo count($rowmarkets) + 1 ?></td> -->
-                                    <td><input required type="number" name="number[]" style="width: 100px;" class="form-control" ></td>
-                                    
-                                    <td>
-                                        <select name="market_id[]" id="market_id" class="form-control">
-                                            <option value="">--select market--</option>
-                                            <?php foreach($rowMarket3 as $rowMarket3_1): ?>
-                                            <option value="<?= $rowMarket3_1['id'] ?>"><?= $rowMarket3_1['name'] ?></option>
+                <div class="table-responsive">
+                <div class="form-area no-print">                
+                    <form id="animalForm" method="POST">
+                        <input type="text" name="market_code" value="<?= $_GET['marketId'] ?>" hidden>
+                        <input type="hidden" name="edit_id" value="<?= $editData['id'] ?? '' ?>"> 
+                        <div class="table-responsive">     
+                            <table class="table table-striped text-nowrap" id="peopleTable">  
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Market</th>
+                                        <th>Animal</th>
+                                        <th>Amount</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tableBody">
+                                    <tr>
+                                        <!-- <td>1</td> -->
+                                        <!-- <td><?php //echo count($rowmarkets) + 1 ?></td> -->
+                                        <td><input required type="number" name="number[]" style="width: 100px;" class="form-control" ></td>
+                                        
+                                        <td>
+                                            <select name="market_id[]" id="market_id" class="form-control">
+                                                <option value="">--select market--</option>
+                                                <?php foreach($rowMarket3 as $rowMarket3_1): ?>
+                                                <option value="<?= $rowMarket3_1['id'] ?>"><?= $rowMarket3_1['name'] ?></option>
+                                                <?php endforeach ?>
+                                            </select>
+                                        </td>
+                                        <td>
+                                        <select name="animal[]" id="animal" class="form-control">
+                                            <option value="">--select--</option>
+                                            <?php
+                                            $stmt = $db->conn->prepare("SELECT * FROM `department_tbl` ORDER BY Department");
+                                            $stmt->execute();
+                                            $rows = $stmt->fetchAll();
+                                            foreach($rows as $row) : ?>
+                                            <option value="<?= $row['deptID'] ?>"><?= $row['Department'] ?></option>
                                             <?php endforeach ?>
                                         </select>
-                                    </td>
-                                    <td>
-                                    <select name="animal[]" id="animal" class="form-control">
-                                        <option value="">--select--</option>
-                                        <?php
-                                        $stmt = $db->conn->prepare("SELECT * FROM `department_tbl` ORDER BY Department");
-                                        $stmt->execute();
-                                        $rows = $stmt->fetchAll();
-                                        foreach($rows as $row) : ?>
-                                        <option value="<?= $row['deptID'] ?>"><?= $row['Department'] ?></option>
-                                        <?php endforeach ?>
-                                    </select>
-                                    <span class="text-danger" id="animalError"></span>
-                                    </td>
-                                    <td><input type="number" name="amount[]" style="width: 100px;" value="<?= $editData['total'] ?? '' ?>" class="form-control" ></td>
-                                    <td><button style="width: 32px;" type="button" class="btn btn-danger removeRow">X</button></td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                    <button type="button" class="btn btn-success" id="addRow">Add Animal</button>
-                    <br><br>
-                        <!-- Admin can submit or update -->
-                    <button type="submit" name="save" class="btn btn-primary">Submit</button>
-                </form>                
-            </div>
-            <div class="mb-3">
-                <br>
-                <button class="btn btn-info" onclick="printDiv('printArea')">
-                    Print
-                </button>              
-            </div>
-    
+                                        <span class="text-danger" id="animalError"></span>
+                                        </td>
+                                        <td><input type="number" name="amount[]" style="width: 100px;" value="<?= $editData['total'] ?? '' ?>" class="form-control" ></td>
+                                        <td><button style="width: 32px;" type="button" class="btn btn-danger removeRow">X</button></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <button type="button" class="btn btn-success" id="addRow">Add Animal</button>
+                        <br><br>
+                            <!-- Admin can submit or update -->
+                        <button type="submit" name="save" class="btn btn-primary">Submit</button>
+                    </form>                
+                </div>
+                <div class="mb-3">
+                    <br>
+                    <button class="btn btn-info" onclick="printDiv('printArea')">
+                        Print
+                    </button>              
+                </div>
+        
         <div class="print-container" id="printArea">
 
-        <!-- Header -->
-        <div class="print-header">
-            <h3>BASHIR MADAKI TRANSPORTATION RECORD for <strong><?= $currentMarket['market_name'] ?></strong></h3>
-            <small><?= date('d M Y') ?></small>
-        </div>
+            <!-- Header -->
+            <div class="print-header">
+                <h3>BASHIR MADAKI TRANSPORTATION RECORD for <strong><?= $currentMarket['market_name'] ?></strong></h3>
+                <small><?= date('d M Y') ?></small>
+            </div>
 
-        <!-- Records Table -->
-        <table class="table table-bordered text-nowrap">
-            <thead>
-                <tr>
-                    <th>Number</th>
-                    <th>Amounnt</th>
-                    <th>Animal</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php
-                    foreach($rowmarkets as $index => $rowmarket): 
-                    $animalAmountAubtoal += $rowmarket['amount'];
-                    ?>
-                <tr>
-                    <td><?= $rowmarket['sn_number'] ?></td>
-                    <td><?= $rowmarket['amount'] ?></td>
-                    <td><?= $rowmarket['Department'] ?></td>
-                    <td>
-                        <a class="btn btn-info" href="editmarket.php?id=<?= $rowmarket['id'] ?>">Edit</a>
-                        <a class="btn btn-danger" href="deletemarket.php?id=<?= $rowmarket['id'] ?>">Delete</a>
-                    </td>
-                </tr>
-                <?php endforeach ?>
+            <!-- Records Table -->
+            <table class="table table-bordered text-nowrap">
+                <thead>
+                    <tr>
+                        <th>Number</th>
+                        <th>Amounnt</th>
+                        <th>Animal</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php
+                        foreach($rowmarkets as $index => $rowmarket): 
+                        $animalAmountAubtoal += $rowmarket['amount'];
+                        ?>
+                    <tr>
+                        <td><?= $rowmarket['sn_number'] ?></td>
+                        <td><?= $rowmarket['amount'] ?></td>
+                        <td><?= $rowmarket['Department'] ?></td>
+                        <td>
+                            <a class="btn btn-info" href="editmarket.php?id=<?= $rowmarket['id'] ?>">Edit</a>
+                            <a class="btn btn-danger" href="deletemarket.php?id=<?= $rowmarket['id'] ?>">Delete</a>
+                        </td>
+                    </tr>
+                    <?php endforeach ?>
+                    <tfoot>
+                        <tr style="background:#f1f1f1; font-weight:bold;">
+                            <td colspan="1">Total</td>
+                            <td><strong>₦<?= number_format($animalAmountAubtoal, 2) ?></strong></td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                </tbody>                           
+                <!-- Footer Totals -->
                 <tfoot>
                     <tr style="background:#f1f1f1; font-weight:bold;">
-                        <td colspan="1">Total</td>
-                        <td><strong>₦<?= number_format($animalAmountAubtoal, 2) ?></strong></td>
-                        <td></td>
-                        <td></td>
+                    
                     </tr>
                 </tfoot>
-            </tbody>                           
-            <!-- Footer Totals -->
-            <tfoot>
-                <tr style="background:#f1f1f1; font-weight:bold;">
-                   
-                </tr>
-            </tfoot>
-        </table>
+            </table>
+        </div>
+            
+            </div>   
+	</div> 
+    
+    <div class="row">
+        <div class="col-sm-6" id="expenses">
+            <table class="table table-bordered text-nowrap">
+                <thead>
+                    <tr>
+                        <?php if ($_SESSION['role'] == 'Admin'): ?>
+                            <button class="btn btn-primary" type="button" data-target="#modalUser" data-toggle="modal"><strong>Expenses</strong></button>
+                        <?php endif ?>
+                        <button class="btn btn-secondary" onclick="expenses('expenses')">Print head</button>
+                    </tr>
+                    <tr>
+                        <th>#</th>
+                        <th>Reason</th>
+                        <th>Amount</th>
+                        <th>Date</th>
+                        <th>Time</th>
+                        <th class="no-print">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php
+                        $exponly = 0;
+                        $exp = $db->conn->prepare("SELECT * FROM `expenses` WHERE `status` = 'exp' AND driver_id = :id AND agent_id IS NOT NULL AND agent_id != 0 ");
+                        $exp->execute(['id' => $_GET['marketId']]);
+                        $row_exps = $exp->fetchALL();
+                        foreach ($row_exps as $index => $row_exp) :
+                            $exponly  += $row_exp['amount']; ?>
+                        <tr>
+                            <td><?= $index + 1 ?></td>
+                            <td><?= $row_exp['reason'] ?></td>
+                            <td><?= number_format($row_exp['amount']) ?></td>
+                            <td><?= $row_exp['daterecorded'] ?></td>
+                            <td><?= $row_exp['timerecorded'] ?></td>
+                            <td class="no-print">
+                                <?php if ($_SESSION['role'] == 'Admin'): ?>
+                                <a href="/delete-only-exp?id=<?= $row_exp['id'] ?>&tid=<?= $transport_id ?>" class="btn btn-sm btn-danger" onclick="return confirm('Delete this record?')">Delete</a>
+                                
+                                <button
+                                    class="btn btn-info btn-edit"
+                                    data-id="<?= $row_exp['id'] ?>"
+                                    data-amount="<?= $row_exp['amount'] ?>"
+                                    data-reason="<?= htmlspecialchars($row_exp['reason']) ?>">
+                                    Edit
+                                </button>
+                                <?php endif ?>
+                            </td>
+                        </tr>
+                    <?php endforeach ?>
+                </tbody>
+                <tfoot>
+                    <tr style="background:#f1f1f1; font-weight:bold;">
+                        <td colspan="2">Total</td>
+                        <th colspan="5">₦<?= number_format($exponly) ?></th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
     </div>
-           
-        </div>   
-	</div>       
 	 </div>
         <!-- End of Main Content -->
 
@@ -199,11 +258,116 @@
         </div>
     </div>
 
+     <div class="modal fade" id="modalUser" tabindex="-1" role="dialog" aria-labelledby="modelTitleId" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title text-primary"><strong>Expenses Window</strong></h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true" class="text-danger"><strong>&times;</strong></span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="userForm">
+                            <input type="text" name="id" id="edit_id" hidden >
+                            <input type="text" name="userID" id="userID" value="<?= $_GET['marketId'] ?>" hidden>
+                            <?php
+                                $stmtAgent = $db->conn->prepare('SELECT * FROM market WHERE id = :id');
+                                $stmtAgent->execute([':id' => $_GET['marketId']]);
+                                $row = $stmtAgent->fetch();
+                            ?>
+                            <input type="text" name="agent_id" id="" value="<?= $row['agent_id']; ?>" hidden>
+
+                            <div class="form-group">
+                                <label for="my-input">Amount</label>
+                                <input id="Amount" class="form-control" type="number" name="amount">
+                                <small class="text-danger" id="errorAmount"></small>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="my-input">Reason</label>
+                                <textarea name="reason" id="reason" class="form-control" rows="3"></textarea>
+                                <small class="text-danger" id="errorReason"></small>
+                            </div>
+                            <button type="submit" class="btn btn-primary" id="action-btn" data-mode='add'><strong>Save</strong></button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
 
 <?php
     require 'partials/footer.php';    
 ?>
 
+
+ <script>
+            function resetForm() {
+                $('#userForm')[0].reset();
+                $('#edit_id').val('');
+
+                $('#action-btn')
+                    .text('Save')
+                    .removeClass('btn-info')
+                    .addClass('btn-primary')
+                    .data('mode', 'add');
+
+                $('#errorAmount').text('');
+                $('#errorReason').text('');
+            }
+
+
+            $(document).ready(function() {
+                $('#userForm').on('submit', function(e) {
+                    e.preventDefault();
+                    const mode = $('#action-btn').data('mode');
+                    // const mode = $('#action-btn').data('mode');
+                    $.ajax({
+                        url: 'model/expenses.form.php',
+                        dataType: 'JSON',
+                        // data: $(this).serialize(),
+                        data: $(this).serialize() + '&mode=' + mode,
+                        type: 'POST',
+                        success: function(response) {
+                            if (response.status === false) {
+                                $('#errorAmount').text(response.errors.amount || '');
+                                $('#errorReason').text(response.errors.reason || '');
+                            } else {
+                                const Toast = Swal.mixin({
+                                    toast: true,
+                                    position: "top-end",
+                                    showConfirmButton: false,
+                                    timer: 2000,
+                                    timerProgressBar: true,
+                                    didOpen: (toast) => {
+                                        toast.onmouseenter = Swal.stopTimer;
+                                        toast.onmouseleave = Swal.resumeTimer;
+                                    }
+                                });
+                                Toast.fire({
+                                    icon: "success",
+                                    title: response.success.message
+                                }).then(() => {
+                                    location.reload(); // refresh page
+                                });
+
+                                // $('#usersTable').DataTable().ajax.reload();
+                                $('#modalUser').modal('hide');
+                                resetForm();
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            alert('Error: ' + xhr.status + ' - ' + error);
+                        }
+                    });
+                });
+
+                $('#modalUser').on('hidden.bs.modal', function() {
+                    resetForm();
+                });
+            });
+        </script>
 
 <script>
     let existingRows = <?= count($rowmarkets); ?>;

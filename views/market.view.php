@@ -42,7 +42,7 @@
 											<th>Money In</th>
 											<th>Money Out</th>
 											<th>Expenses</th>
-											<th>Status</th>
+											<!-- <th>Status</th> -->
 											<!-- <th>View Store</th> -->
 											<!-- <th>RecordedBy</th> -->
 											<th>Action</th>
@@ -331,10 +331,18 @@ $(document).ready(function () {
 				},
 
 				{
-					"data": "status"
+					"data": "ttexp",
+					render: function(data) {
+
+							return '₦' + parseFloat(data || 0).toLocaleString('en-NG', {
+									minimumFractionDigits: 2,
+									maximumFractionDigits: 2
+							});
+					}
+					
 				},
 				
-        { "data": "status" },
+        // { "data": "status" },
         // { "data": "created_by" },
 				{
             data: null,
