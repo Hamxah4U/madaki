@@ -37,11 +37,12 @@
                   <thead>
                     <tr>
 											<th>#</th>
-											<th>Market</th>
+											<!-- <th>Market</th> -->
 											<th>Agent</th>
 											<th>Money In</th>
 											<th>Money Out</th>
-											<th>Expenses</th>
+											<th>Diff. Bal.</th>
+											<!-- <th>Expenses</th> -->
 											<!-- <th>Status</th> -->
 											<!-- <th>View Store</th> -->
 											<!-- <th>RecordedBy</th> -->
@@ -84,7 +85,7 @@
 							<label for="Unit">Agent</label>
 							<?php
 									$stmtAgent = $db->conn->prepare("SELECT * FROM `users_tbl` WHERE `Role` = :userRole");
-									$stmtAgent->execute([':userRole' => 'User']);
+									$stmtAgent->execute([':userRole' => 'Agent']);
 									$rowAgents = $stmtAgent->fetchAll(PDO::FETCH_ASSOC);
 							?>
 							<select name="agent" id="agent" class="form-control">
@@ -307,23 +308,31 @@ $(document).ready(function () {
 			},
 			columns: [
 				{ "data": null, render: (data, type, row, meta) => meta.row + 1 },
-				{ "data": "market_name" },
+				// { "data": "market_name" },
 				{ "data": "agent_name" },
+				// {"data" : "ttotherexp"},
         {
-					"data": "moneyOutTotal",
-					render: function(data) {
+					data: null,
+					render: function(data, type, row) {
 
-							return '₦' + parseFloat(data || 0).toLocaleString('en-NG', {
+							let total = (parseFloat(row.moneyOutTotal) || 0) + 
+													(parseFloat(row.ttotherexp) || 0);
+
+							return '₦' + total.toLocaleString('en-NG', {
 									minimumFractionDigits: 2,
 									maximumFractionDigits: 2
 							});
 					}
 			  },
+				
 				{
-					"data": "totalMoneyInAnimal",
-					render: function(data) {
+					data: null,
+					render: function(data, type, row) {
 
-							return '₦' + parseFloat(data || 0).toLocaleString('en-NG', {
+							let total = (parseFloat(row.totalMoneyInAnimal) || 0) + 
+													(parseFloat(row.ttexp) || 0);
+
+							return '₦' + total.toLocaleString('en-NG', {
 									minimumFractionDigits: 2,
 									maximumFractionDigits: 2
 							});
@@ -331,15 +340,18 @@ $(document).ready(function () {
 				},
 
 				{
-					"data": "ttexp",
-					render: function(data) {
+					data: null,
+					render: function(data, type, row) {
 
-							return '₦' + parseFloat(data || 0).toLocaleString('en-NG', {
+							let total1 =	(parseFloat(row.totalMoneyInAnimal) || 0) + (parseFloat(row.ttexp) || 0);
+							let total2 =	(parseFloat(row.moneyOutTotal) || 0) + (parseFloat(row.ttotherexp) || 0);
+							let total =	total1 - total2;
+
+							return '₦' + total.toLocaleString('en-NG', {
 									minimumFractionDigits: 2,
 									maximumFractionDigits: 2
 							});
-					}
-					
+					}					
 				},
 				
         // { "data": "status" },
@@ -352,7 +364,7 @@ $(document).ready(function () {
                     <a href="view-market?marketId=${row.id}" class="btn btn-success">View market</a>
 										<button class="btn btn-warning closeMarket" data-id="${row.id}">Close market</button>
 										<button type="button" data-id="${row.id}" data-target="#addmoney" data-toggle="modal" class="btn btn-primary"><strong>Money In</strong></button>
-
+										<a href="money-history?marketId=${row.id}" class="btn btn-info">Money History</a>
                 `;
             }
         }
@@ -362,6 +374,7 @@ $(document).ready(function () {
 
 		});
 	});
+	
 </script>
 
 <script>

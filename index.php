@@ -30,7 +30,8 @@ if(!isset($_SESSION['userID']) &&
   $uri != '/onview' &&
   $uri != '/completed' &&
   $uri != '/over' &&
-  $uri != '/short'
+  $uri != '/short' &&
+  $uri != '/money-history'
   ) {
   header('Location: /');
   exit();
@@ -63,6 +64,7 @@ $routes = [
     '/completed' => 'controllers/completed.php',
     '/over' => 'controllers/over.php',
     '/short' => 'controllers/short.php',
+    '/money-history' => 'controllers/moneyhistory.php',
     
     // agent
     '/manage-agent' => 'controllers/manageagent.php',

@@ -1244,6 +1244,11 @@ if (isset($_POST['save'])) {
                             <input type="text" name="id" id="edit_id" hidden>
 
                             <input type="text" name="userID" id="userID" value="<?= $transport_id ?>" hidden>
+
+                            <input type="text" name="agent_id" id="" hidden>
+                                                    
+
+
                             <div class="form-group">
                                 <label for="my-input">Amount</label>
                                 <input id="amount" class="form-control" type="number" name="amount" required>
