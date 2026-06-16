@@ -165,7 +165,7 @@
                 Swal.fire({
                         toast: true,
                         position: 'top-end',
-                        icon: 'danger',
+                        icon: 'warning',
                         title: response,
                         timer: 2000,
                         showConfirmButton: false

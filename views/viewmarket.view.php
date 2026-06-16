@@ -47,10 +47,26 @@
 
 ?>
 
+<style>
+ @media print {
+      .actionColumn,
+      .editBtn,
+      .deleteBtn,
+      .btn {
+          display: none !important;
+      }
+      
+      /* Utility to hide specific table rows during group printing */
+      .d-none-print {
+          display: none !important;
+      }
+  }
+</style>
+
 <!-- Page Wrapper -->
 <div id="wrapper">
   <!-- Sidebar -->
-  <?php require 'partials/sidebar.php' ?>
+ <div class="actionColumn"> <?php require 'partials/sidebar.php' ?></div>
 
   <!-- End of Sidebar -->
 
@@ -80,7 +96,7 @@
                       <th>Market</th>
                       <th>Animal</th>
                       <th>Amount</th>
-                      <th>Action</th>
+                      <th class="actionColumn">Action</th>
                     </tr>
                   </thead>
                   <tbody id="tableBody">
@@ -138,13 +154,17 @@
               <small><?= date('d M Y') ?></small>
             </div>
 
+            <div id="printHeading" style="display:none;text-align:center;margin-bottom:20px;">
+                <h3 id="groupTitle">BASHIR MADAKI TRANSPORTATION RECORD for <strong><?= $currentMarket['market_name'] ?></strong></h3>
+            </div>
+
             <table class="table table-bordered text-nowrap">
               <thead>
                 <tr>
                   <th>Number</th>
                   <th>Amount</th>
                   <th>Animal</th>
-                  <th>Action</th>
+                  <th class="actionColumn">Action</th>
                 </tr>
               </thead>
 
@@ -172,9 +192,14 @@
                 ?>
 
                         <!-- Group Header -->
-                        <tr class="table-dark text-primary">
+                        <tr class="table-dark text-primary groupHeader">
                           <th colspan="4">
-                            <strong><?= $currentGroup ?></strong>
+                            <strong> <?= $currentGroup ?></strong>
+                            <button type="button"
+                                    class="btn btn-success btn-sm printGroupBtn"
+                                    data-group="<?= $currentGroup ?>">
+                                Print
+                            </button>
                           </th>
                         </tr>
 
@@ -184,11 +209,11 @@
                     $groupTotal += $rowmarket['amount'];
                     $grandTotal += $rowmarket['amount'];
                 ?>
-                <tr>
+                <tr id="row<?= $rowmarket['id'] ?>">
                   <td><?= $rowmarket['sn_number'] ?></td>
                   <td><?= number_format($rowmarket['amount'], 2) ?></td>
                   <td><?= $rowmarket['animal_name'] ?></td>
-                  <td>
+                  <td class="actionColumn">
                     <button
                         type="button"
                         class="btn btn-info btn-sm editBtn"
@@ -733,9 +758,20 @@
         },
         success: function(response) {
 
-          alert(response);
+          // alert(response);
 
-          location.reload();
+          Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: 'warning',
+            title: response,
+            timer: 2000,
+            showConfirmButton: false
+          });
+
+          $('#row'+id).remove();
+
+          // location.reload();
         }
       });
     }
@@ -811,4 +847,59 @@
         scrollTop: $("#animalFormSection").offset().top - 100
     }, 500);
   });
+</script>
+
+<script>
+$(document).on('click', '.printGroupBtn', function () {
+    let groupName = $(this).data('group');
+
+    // 1. Update the document heading for the print job
+    $('#groupTitle').html(
+        'BASHIR MADAKI TRANSPORTATION RECORD FOR <strong>' + groupName + '</strong>'
+    );
+    $('#printHeading').show();
+
+    // 2. Hide everything in the print container that is NOT part of this group
+    let clearToPrint = false;
+
+    $('#printArea tbody tr').each(function() {
+        let $row = $(this);
+
+        // Check if we hit a group header row
+        if ($row.hasClass('groupHeader')) {
+            let rowGroup = $row.find('strong').text().trim();
+            
+            if (rowGroup === groupName.trim()) {
+                clearToPrint = true; // Start printing rows from this group
+                $row.addClass('d-none-print'); // Hide the inner group header if redundant with main heading
+            } else {
+                clearToPrint = false; // Different group header? Stop displaying rows
+                $row.addClass('d-none-print');
+            }
+        } else {
+            // It's a standard transaction row, a subtotal row, or a grand total row
+            if (!clearToPrint) {
+                $row.addClass('d-none-print');
+            } else {
+                // If it is the Subtotal row right after our group, print it, but stop printing further
+                if ($row.text().includes('Subtotal')) {
+                    clearToPrint = false; 
+                }
+            }
+        }
+    });
+
+    // Hide the final Grand Total row when printing a single group
+    $('#printArea tbody tr').last().addClass('d-none-print'); 
+    
+    // Hide other non-relevant sections entirely (Expenses, Form, Sidebar, etc.)
+    $('.form-area, #expenses, #other_expenses, .print-header').addClass('d-none-print');
+
+    // 3. Open system print window
+    window.print();
+
+    // 4. Reset layout context back to normal tracking state
+    $('#printHeading').hide();
+    $('.d-none-print').removeClass('d-none-print');
+});
 </script>
