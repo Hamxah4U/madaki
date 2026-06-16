@@ -66,12 +66,12 @@
             ?>
       <!-- Begin Page Content -->
 
-      <div class="container-fluid">
+      <div class="container-fluid" id="animalFormSection">
         <div class="table-responsive">
           <div class="form-area no-print">
             <form id="animalForm" method="POST">
               <input type="text" name="market_code" value="<?= $_GET['marketId'] ?>" hidden>
-              <input type="hidden" name="edit_id" value="<?= $editData['id'] ?? '' ?>">
+              <input type="hidden" id="edit_id" name="edit_id" value="<?= $editData['id'] ?? '' ?>">
               <div class="table-responsive">
                 <table class="table table-striped text-nowrap" id="peopleTable">
                   <thead>
@@ -120,7 +120,7 @@
               <button type="button" class="btn btn-success" id="addRow">Add Animal</button>
               <br><br>
               <!-- Admin can submit or update -->
-              <button type="submit" name="save" class="btn btn-primary">Submit</button>
+              <button type="submit" name="save" class="btn btn-primary" id="saveBtn">Submit</button>
             </form>
           </div>
           <div class="mb-3">
@@ -153,50 +153,54 @@
                 <?php foreach($rowmarkets as $index => $rowmarket): ?>
 
                 <?php
-        // When market changes
-        if($currentGroup != $rowmarket['currentMarketName']):
+                // When market changes
+                if($currentGroup != $rowmarket['currentMarketName']):
 
-            // Close previous group with subtotal
-            if($currentGroup != ''):
-        ?>
-                <tr style="background:#ffeeba; font-weight:bold;">
-                  <td colspan="1">Subtotal</td>
-                  <td>₦<?= number_format($groupTotal, 2) ?></td>
-                  <td colspan="2"></td>
-                </tr>
-                <?php
-                $groupTotal = 0;
-            endif;
+                    // Close previous group with subtotal
+                    if($currentGroup != ''):
+                ?>
+                        <tr style="background:#ffeeba; font-weight:bold;">
+                          <td colspan="1">Subtotal</td>
+                          <td>₦<?= number_format($groupTotal, 2) ?></td>
+                          <td colspan="2"></td>
+                        </tr>
+                        <?php
+                        $groupTotal = 0;
+                    endif;
 
-            $currentGroup = $rowmarket['currentMarketName'];
-        ?>
+                    $currentGroup = $rowmarket['currentMarketName'];
+                ?>
 
-                <!-- Group Header -->
-                <tr class="table-dark text-primary">
-                  <th colspan="4">
-                    <strong><?= $currentGroup ?></strong>
-                  </th>
-                </tr>
+                        <!-- Group Header -->
+                        <tr class="table-dark text-primary">
+                          <th colspan="4">
+                            <strong><?= $currentGroup ?></strong>
+                          </th>
+                        </tr>
 
-                <?php endif; ?>
+                        <?php endif; ?>
 
-                <?php
-            $groupTotal += $rowmarket['amount'];
-            $grandTotal += $rowmarket['amount'];
-        ?>
-
+                        <?php
+                    $groupTotal += $rowmarket['amount'];
+                    $grandTotal += $rowmarket['amount'];
+                ?>
                 <tr>
                   <td><?= $rowmarket['sn_number'] ?></td>
                   <td><?= number_format($rowmarket['amount'], 2) ?></td>
                   <td><?= $rowmarket['animal_name'] ?></td>
                   <td>
-                    <a class="btn btn-info btn-sm" href="editmarket.php?id=<?= $rowmarket['id'] ?>">
-                      Edit
-                    </a>
-
-                    <a class="btn btn-danger btn-sm" href="deletemarket.php?id=<?= $rowmarket['id'] ?>">
-                      Delete
-                    </a>
+                    <button
+                        type="button"
+                        class="btn btn-info btn-sm editBtn"
+                        data-id="<?= $rowmarket['id'] ?>"
+                        data-animal="<?= $rowmarket['animal_id'] ?>"
+                        data-amount="<?= $rowmarket['amount'] ?>"
+                        data-market="<?= $rowmarket['market_id'] ?>"
+                        data-number="<?= $rowmarket['sn_number'] ?>"
+                      >
+                        Edit
+                    </button>
+                    <button type="button" class="btn btn-danger btn-sm deleteBtn" data-id="<?= $rowmarket['id'] ?>">Delete</button>
                   </td>
                 </tr>
 
@@ -531,150 +535,142 @@
     </script>
 
     <script>
-    $(document).ready(function() {
+      $(document).ready(function() {
 
-      let rowCount = existingRows + 1;
+        let rowCount = existingRows + 1;
 
-      // Function to renumber rows
-      function renumberRows() {
-        let count = existingRows + 1;
+        // Function to renumber rows
+        function renumberRows() {
+          let count = existingRows + 1;
 
-        $("#tableBody tr").each(function() {
-          $(this).find("td:first").text(count);
-          count++;
-        });
+          $("#tableBody tr").each(function() {
+            $(this).find("td:first").text(count);
+            count++;
+          });
 
-        rowCount = count - 1;
-      }
+          rowCount = count - 1;
+        }
 
-      // Add Row
-      $("#addRow").click(function() {
-        //   rowCount++;
-        //   <td>${rowCount}</td>
+        // Add Row
+        $("#addRow").click(function() {
+          //   rowCount++;
+          //   <td>${rowCount}</td>
 
-        let row = `
-          <tr>
-              
-                <td><input required type="number" name="number[]" style="width: 100px;" class="form-control" ></td>
-              <td>
-                <select name="market_id[]" id="market_id" class="form-control">
-                    <option value="">--select market--</option>
-                    <?php foreach($rowMarket3 as $rowMarket3_1): ?>
-                    <option value="<?= $rowMarket3_1['id'] ?>"><?= $rowMarket3_1['name'] ?></option>
-                    <?php endforeach ?>
-                </select>
-              </td>
-              <td>
-                  <select name="animal[]" class="form-control">
-                      <option value="">--select--</option>
-                      <?php
-                        $stmt = $db->conn->prepare("SELECT * FROM department_tbl ORDER BY Department");
-                        $stmt->execute();
-                        $rows = $stmt->fetchAll();
-                        foreach($rows as $row) : ?>
-                        <option value="<?= $row['deptID'] ?>"><?= $row['Department'] ?></option>
+          let row = `
+            <tr>
+                
+                  <td><input required type="number" name="number[]" style="width: 100px;" class="form-control" ></td>
+                <td>
+                  <select name="market_id[]" id="market_id" class="form-control">
+                      <option value="">--select market--</option>
+                      <?php foreach($rowMarket3 as $rowMarket3_1): ?>
+                      <option value="<?= $rowMarket3_1['id'] ?>"><?= $rowMarket3_1['name'] ?></option>
                       <?php endforeach ?>
                   </select>
-              </td>
-              <td>
-                  <input type="number" name="amount[]" class="form-control" style="width:100px;">
-              </td>
-              <td>
-                  <button type="button" class="btn btn-danger removeRow" style="width:32px;">X</button>
-              </td>
-          </tr>`;
+                </td>
+                <td>
+                    <select name="animal[]" class="form-control">
+                        <option value="">--select--</option>
+                        <?php
+                          $stmt = $db->conn->prepare("SELECT * FROM department_tbl ORDER BY Department");
+                          $stmt->execute();
+                          $rows = $stmt->fetchAll();
+                          foreach($rows as $row) : ?>
+                          <option value="<?= $row['deptID'] ?>"><?= $row['Department'] ?></option>
+                        <?php endforeach ?>
+                    </select>
+                </td>
+                <td>
+                    <input type="number" name="amount[]" class="form-control" style="width:100px;">
+                </td>
+                <td>
+                    <button type="button" class="btn btn-danger removeRow" style="width:32px;">X</button>
+                </td>
+            </tr>`;
 
-        rowCount++;
+          rowCount++;
 
-        $("#tableBody").append(row);
-      });
-
-      // Remove Row
-      $(document).on("click", ".removeRow", function() {
-        $(this).closest("tr").remove();
-        renumberRows(); // auto renumber
-      });
-
-      // Form Submit with Validation
-      $("#animalForm").submit(function(e) {
-        e.preventDefault();
-
-        $("#animalError").text(""); // clear old error
-
-        let isValid = true;
-
-        // Check at least one row
-        if ($("#tableBody tr").length == 0) {
-          $("#animalError").text("Please add at least one animal.");
-          return;
-        }
-
-        // Validate each row
-        $("#tableBody tr").each(function() {
-          let animal = $(this).find("select[name='animal[]']").val();
-          let amount = $(this).find("input[name='amount[]']").val();
-
-          if (animal == "" || amount == "" || amount <= 0) {
-            isValid = false;
-          }
+          $("#tableBody").append(row);
         });
 
-        if (!isValid) {
-          $("#animalError").text("All rows must have animal selected and valid amount.");
-          return;
-        }
+        // Remove Row
+        $(document).on("click", ".removeRow", function() {
+          $(this).closest("tr").remove();
+          renumberRows(); // auto renumber
+        });
 
-        // If validation passed → AJAX submit
-        $.ajax({
-          url: "model/add_animalrecord.php",
-          type: "POST",
-          data: $(this).serialize(),
-          success: function(response) {
-            if (response.trim() == "success") {
+        // Form Submit with Validation
+        $("#animalForm").submit(function(e) {
+          e.preventDefault();
 
-              Swal.fire({
-                icon: 'success',
-                title: 'Data saved successfully',
-                timer: 2000,
-                showConfirmButton: false
-              }).then(() => location.reload())
+          $("#animalError").text(""); 
+          let isValid = true;
 
-              // Reset form
-              $("#animalForm")[0].reset();
-              $("#tableBody").html(`
-                          <tr>
-                              <td>1</td>
-                              <td>
-                                  <select name="animal[]" class="form-control">
-                                      <option value="">--select--</option>
-                                      <?php foreach($rows as $row) : ?>
-                                      <option value="<?= $row['deptID'] ?>"><?= $row['Department'] ?></option>
-                                      <?php endforeach ?>
-                                  </select>
-                              </td>
-                              <td>
-                                  <input type="number" name="amount[]" class="form-control" style="width:100px;">
-                              </td>
-                              <td>
-                                  <button type="button" class="btn btn-danger removeRow" style="width:32px;">X</button>
-                              </td>
-                          </tr>
-                      `);
+          // Check at least one row
+          if ($("#tableBody tr").length == 0) {
+            $("#animalError").text("Please add at least one animal.");
+            return;
+          }
 
-              renumberRows();
+          // Validate each row
+          $("#tableBody tr").each(function() {
+            let animal = $(this).find("select[name='animal[]']").val();
+            let amount = $(this).find("input[name='amount[]']").val();
 
-            } else {
-              $("#animalError").text("Failed to save data.");
+            if (animal == "" || amount == "" || amount <= 0) {
+              isValid = false;
             }
-          },
-          error: function() {
-            $("#animalError").text("Server error occurred.");
+          });
+
+          if (!isValid) {
+            $("#animalError").text("All rows must have animal selected and valid amount.");
+            return;
           }
+
+          // If validation passed → AJAX submit
+          let isUpdate = $("#edit_id").val() !== "";
+          $.ajax({
+            url: "model/add_animalrecord.php",
+            type: "POST",
+            data: $(this).serialize(),
+            success: function(response) {
+
+                if (response.trim() == "success") {
+
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: 'success',
+                        title: 'Data saved successfully',
+                        timer: 2000,
+                        showConfirmButton: false
+                    }).then(() => location.reload());
+
+                } else if (response.trim() == "updated") {
+
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: 'info',
+                        title: 'Data updated successfully',
+                        timer: 2000,
+                        showConfirmButton: false
+                    }).then(() => location.reload());
+
+                } else {
+
+                    $("#animalError").text("Failed to save data.");
+
+                }
+            },
+            error: function() {
+              $("#animalError").text("Server error occurred.");
+            }
+          });
+
         });
 
       });
-
-    });
     </script>
 
     <script>
@@ -722,3 +718,97 @@
       });
     });
     </script>
+
+<script>
+  $(document).on('click', '.deleteBtn', function() {
+
+    let id = $(this).data('id');
+
+    if (confirm('Are you sure you want to delete this record?')) {
+      $.ajax({
+        url: 'model/delete_market_transaction.php',
+        type: 'POST',
+        data: {
+          id: id
+        },
+        success: function(response) {
+
+          alert(response);
+
+          location.reload();
+        }
+      });
+    }
+
+  });
+</script>
+
+
+<script>
+  $(document).on("click", ".editBtn", function () {
+
+    let id = $(this).data("id");
+    let animal = $(this).data("animal");
+    let amount = $(this).data("amount");
+    let market = $(this).data("market");
+    let number = $(this).data("number");
+    $("button[name='save']").text("Update");
+
+    $("#saveBtn")
+    .text("Update")
+    .removeClass("btn-primary")
+    .addClass("btn-info");
+
+
+    // Clear old rows
+    $("#tableBody").html("");
+
+    let row = `
+        <tr>
+            <td>
+                <input type="number" name="number[]" value="${number}" class="form-control">
+            </td>
+
+            <td>
+                <select name="market_id[]" class="form-control marketSelect">
+                    <?php foreach($rowMarket3 as $rowMarket3_1): ?>
+                        <option value="<?= $rowMarket3_1['id'] ?>">
+                            <?= $rowMarket3_1['name'] ?>
+                        </option>
+                    <?php endforeach ?>
+                </select>
+            </td>
+
+            <td>
+                <select name="animal[]" class="form-control animalSelect">
+                    <?php foreach($rows as $row): ?>
+                        <option value="<?= $row['deptID'] ?>">
+                            <?= $row['Department'] ?>
+                        </option>
+                    <?php endforeach ?>
+                </select>
+            </td>
+
+            <td>
+                <input type="number" name="amount[]" value="${amount}" class="form-control">
+            </td>
+
+            <td>
+                <button type="button" class="btn btn-danger removeRow">X</button>
+            </td>
+        </tr>
+    `;
+
+    $("#tableBody").append(row);
+
+    $(".animalSelect").val(animal);
+    $(".marketSelect").val(market);
+
+    $("#edit_id").val(id);
+
+    // Scroll to form
+    $('html, body').animate({
+        scrollTop: $("#animalFormSection").offset().top - 100
+    }, 500);
+  });
+</script>

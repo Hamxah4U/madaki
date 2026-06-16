@@ -8,7 +8,31 @@ if($_SERVER['REQUEST_METHOD'] === 'POST') {
     $market_id = $_POST['market_id'];
     $market_code = $_POST['market_code'];
     $number = $_POST['number'];
+    $edit_id = $_POST['edit_id'] ?? '';
 
+    if(!empty($edit_id)){
+
+    $stmt = $db->conn->prepare("
+        UPDATE market_transaction
+        SET
+            market_id = :market_id,
+            animal_id = :animal_id,
+            amount = :amount,
+            sn_number = :sn_number
+        WHERE id = :id
+    ");
+
+    $stmt->execute([
+        'market_id' => $market_id[0],
+        'animal_id' => $animals[0],
+        'amount' => $amounts[0],
+        'sn_number' => $number[0],
+        'id' => $edit_id
+    ]);
+
+    echo "updated";
+    exit;
+}
 
     try{
         $stmt = $db->conn->prepare("INSERT INTO market_transaction (qty, market_id, market_code, animal_id, amount, user_id, date_create, time_create, sn_number)
