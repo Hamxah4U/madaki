@@ -141,13 +141,12 @@
           </div>
           <div class="mb-3">
             <br>
-            <button class="btn btn-info" onclick="printDiv('printArea')">
+            <button class="btn btn-dark no-print" onclick="printDiv('printArea')">
               Print
             </button>
           </div>
 
           <div class="print-container" id="printArea">
-
             <!-- Header -->
             <div class="print-header">
               <h3>BASHIR MADAKI TRANSPORTATION RECORD for <strong><?= $currentMarket['market_name'] ?></strong></h3>
@@ -164,7 +163,7 @@
                   <th>Number</th>
                   <th>Amount</th>
                   <th>Animal</th>
-                  <th class="actionColumn">Action</th>
+                  <th class="no-print">Action</th>
                 </tr>
               </thead>
 
@@ -196,9 +195,10 @@
                           <th colspan="4">
                             <strong> <?= $currentGroup ?></strong>
                             <button type="button"
-                                    class="btn btn-success btn-sm printGroupBtn"
+                                    class="btn btn-dark btn-sm printGroupBtn no-print"
                                     data-group="<?= $currentGroup ?>">
                                 Print
+
                             </button>
                           </th>
                         </tr>
@@ -213,7 +213,7 @@
                   <td><?= $rowmarket['sn_number'] ?></td>
                   <td><?= number_format($rowmarket['amount'], 2) ?></td>
                   <td><?= $rowmarket['animal_name'] ?></td>
-                  <td class="actionColumn">
+                  <td class="no-print">
                     <button
                         type="button"
                         class="btn btn-info btn-sm editBtn"
@@ -248,12 +248,8 @@
               </tbody>
             </table>
 
-            <!-- Records Table -->
-
-          </div>
-
-        </div>
-      </div>
+        
+     
       <div class="container">
         <div class="row">
 
@@ -265,7 +261,7 @@
                   <button class="btn btn-primary" type="button" data-target="#modalUser"
                     data-toggle="modal"><strong>Expenses</strong></button>
                   <?php endif ?>
-                  <button class="btn btn-secondary" onclick="expenses('expenses')">Print head</button>
+                  <button class="btn btn-dark no-print" onclick="expenses('expenses')">Print</button>
                 </tr>
                 <tr>
                   <th>#</th>
@@ -320,7 +316,7 @@
                 <tr> <button type="button" data-target="#modelOtherExpenses" data-toggle="modal"
                     class="btn btn-primary"><strong>Other Expenses</strong></button> </tr>
                 <?php endif ?>
-                <button class="btn btn-secondary" onclick="other_expenses('other_expenses')">Print</button>
+                <button class="btn btn-dark no-print" onclick="other_expenses('other_expenses')">Print</button>
                 <tr>
                   <th>#</th>
                   <th>Reason</th>
@@ -370,6 +366,9 @@
 
         </div>
       </div>
+        </div>
+        </div>
+         </div>
 
     </div>
     <!-- End of Main Content -->
@@ -481,82 +480,200 @@
     </div>
 
 
-    <?php
-    require 'partials/footer.php';    
-?>
+    <?php require 'partials/footer.php'; ?>
 
 
+    
+<script>
+    function expenses() {
+        var content = document.getElementById('expenses').innerHTML;
+        var win = window.open('', '', 'width=900,height=650');
 
+        win.document.write(`
+                  <html>
+                  <head>
+                     
+                      <style>
+                          @page { size: A4; margin: 10mm; }
 
-    <script>
-    function resetForm() {
-      $('#userForm')[0].reset();
-      $('#edit_id').val('');
+                          body {
+                              font-family: Arial, sans-serif;
+                              font-size: 14px;
+                              padding: 10px;
+                          }
 
-      $('#action-btn')
-        .text('Save')
-        .removeClass('btn-info')
-        .addClass('btn-primary')
-        .data('mode', 'add');
+                          table {
+                              width: 100%;
+                              border-collapse: collapse;
+                              margin-bottom: 10px;
+                          }
 
-      $('#errorAmount').text('');
-      $('#errorReason').text('');
+                          th, td {
+                              border: 1px solid #000;
+                              padding: 5px;
+                              text-align: left;
+                          }
+
+                          th {
+                              background: #f2f2f2;
+                              /*text-align: center;*/
+                          }
+
+                          .print-header {
+                              /*text-align: center;*/
+                              margin-bottom: 10px;
+                          }
+
+                          .print-header h3 {
+                              margin: 0;
+                              font-size: 18px;
+                          }
+
+                          .no-print { display:none; }
+                          .overpaid { background:#f8d7da; }
+                          .table-success { background:#d4edda; }
+                      </style>
+                  </head>
+                  <body>
+                      ${content}
+                  </body>
+                  </html>
+              `);
+
+        win.document.close();
+        win.focus();
+        win.print();
     }
 
+    function other_expenses() {
+      var content = document.getElementById('other_expenses').innerHTML;
+      var win = window.open('', '', 'width=900,height=650');
 
-    $(document).ready(function() {
-      $('#userForm').on('submit', function(e) {
-        e.preventDefault();
-        const mode = $('#action-btn').data('mode');
-        // const mode = $('#action-btn').data('mode');
-        $.ajax({
-          url: 'model/expenses.form.php',
-          dataType: 'JSON',
-          // data: $(this).serialize(),
-          data: $(this).serialize() + '&mode=' + mode,
-          type: 'POST',
-          success: function(response) {
-            if (response.status === false) {
-              $('#errorAmount').text(response.errors.amount || '');
-              $('#errorReason').text(response.errors.reason || '');
-            } else {
-              const Toast = Swal.mixin({
-                toast: true,
-                position: "top-end",
-                showConfirmButton: false,
-                timer: 2000,
-                timerProgressBar: true,
-                didOpen: (toast) => {
-                  toast.onmouseenter = Swal.stopTimer;
-                  toast.onmouseleave = Swal.resumeTimer;
-                }
-              });
-              Toast.fire({
-                icon: "success",
-                title: response.success.message
-              }).then(() => {
-                location.reload(); // refresh page
-              });
+      win.document.write(`
+                <html>
+                <head>
+                    <style>
+                        @page { size: A4; margin: 10mm; }
 
-              // $('#usersTable').DataTable().ajax.reload();
-              $('#modalUser').modal('hide');
-              resetForm();
+                        body {
+                            font-family: Arial, sans-serif;
+                            font-size: 14px;
+                            padding: 10px;
+                        }
+
+                        table {
+                            width: 100%;
+                            border-collapse: collapse;
+                            margin-bottom: 10px;
+                        }
+
+                        th, td {
+                            border: 1px solid #000;
+                            padding: 5px;
+                            text-align: left;
+                        }
+
+                        th {
+                            background: #f2f2f2;
+                            /*text-align: center;*/
+                        }
+
+                        .print-header {
+                            /*text-align: center;*/
+                            margin-bottom: 10px;
+                        }
+
+                        .print-header h3 {
+                            margin: 0;
+                            font-size: 18px;
+                        }
+
+                        .no-print { display:none; }
+                        .overpaid { background:#f8d7da; }
+                        .table-success { background:#d4edda; }
+                    </style>
+                </head>
+                <body>
+                    ${content}
+                </body>
+                </html>
+            `);
+
+      win.document.close();
+      win.focus();
+      win.print();
+    }
+
+</script>
+
+    <script>
+      function resetForm() {
+        $('#userForm')[0].reset();
+        $('#edit_id').val('');
+
+        $('#action-btn')
+          .text('Save')
+          .removeClass('btn-info')
+          .addClass('btn-primary')
+          .data('mode', 'add');
+
+        $('#errorAmount').text('');
+        $('#errorReason').text('');
+      }
+
+      $(document).ready(function() {
+        $('#userForm').on('submit', function(e) {
+          e.preventDefault();
+          const mode = $('#action-btn').data('mode');
+          // const mode = $('#action-btn').data('mode');
+          $.ajax({
+            url: 'model/expenses.form.php',
+            dataType: 'JSON',
+            // data: $(this).serialize(),
+            data: $(this).serialize() + '&mode=' + mode,
+            type: 'POST',
+            success: function(response) {
+              if (response.status === false) {
+                $('#errorAmount').text(response.errors.amount || '');
+                $('#errorReason').text(response.errors.reason || '');
+              } else {
+                const Toast = Swal.mixin({
+                  toast: true,
+                  position: "top-end",
+                  showConfirmButton: false,
+                  timer: 2000,
+                  timerProgressBar: true,
+                  didOpen: (toast) => {
+                    toast.onmouseenter = Swal.stopTimer;
+                    toast.onmouseleave = Swal.resumeTimer;
+                  }
+                });
+                Toast.fire({
+                  icon: "success",
+                  title: response.success.message
+                }).then(() => {
+                  location.reload(); // refresh page
+                });
+
+                // $('#usersTable').DataTable().ajax.reload();
+                $('#modalUser').modal('hide');
+                resetForm();
+              }
+            },
+            error: function(xhr, status, error) {
+              alert('Error: ' + xhr.status + ' - ' + error);
             }
-          },
-          error: function(xhr, status, error) {
-            alert('Error: ' + xhr.status + ' - ' + error);
-          }
+          });
+        });
+
+        $('#modalUser').on('hidden.bs.modal', function() {
+          resetForm();
         });
       });
-
-      $('#modalUser').on('hidden.bs.modal', function() {
-        resetForm();
-      });
-    });
     </script>
 
     <script>
-    let existingRows = <?= count($rowmarkets); ?>;
+      let existingRows = <?= count($rowmarkets); ?>;
     </script>
 
     <script>
@@ -699,49 +816,49 @@
     </script>
 
     <script>
-    function resetForm() {
-      $('#formUnit')[0].reset();
-      $('#errorAmount').text('');
-      $('#errorReason').text('');
-    }
-    $(document).ready(function() {
-      $('#formUnit').on('submit', function(e) {
-        e.preventDefault();
-        $.ajax({
-          url: 'model/other_exp.form.php',
-          dataType: 'JSON',
-          data: $(this).serialize(),
-          type: 'POST',
-          success: function(response) {
-            if (response.status) {
-              const Toast = Swal.mixin({
-                toast: true,
-                position: "top-end",
-                showConfirmButton: false,
-                timer: 2000
-              });
+      function resetForm() {
+        $('#formUnit')[0].reset();
+        $('#errorAmount').text('');
+        $('#errorReason').text('');
+      }
+      $(document).ready(function() {
+        $('#formUnit').on('submit', function(e) {
+          e.preventDefault();
+          $.ajax({
+            url: 'model/other_exp.form.php',
+            dataType: 'JSON',
+            data: $(this).serialize(),
+            type: 'POST',
+            success: function(response) {
+              if (response.status) {
+                const Toast = Swal.mixin({
+                  toast: true,
+                  position: "top-end",
+                  showConfirmButton: false,
+                  timer: 2000
+                });
 
-              Toast.fire({
-                icon: "success",
-                title: response.success.message
-              }).then(() => {
-                location.reload(); // refresh page
-              });
+                Toast.fire({
+                  icon: "success",
+                  title: response.success.message
+                }).then(() => {
+                  location.reload(); // refresh page
+                });
 
-              $('#modelUnit').modal('hide');
-              resetForm();
-            } else {
-              alert('Failed to add expense. Please check your input.');
-              $('#errorAmount').text(response.errors.amount || '');
-              $('#errorReason').text(response.errors.reason || '');
+                $('#modelUnit').modal('hide');
+                resetForm();
+              } else {
+                alert('Failed to add expense. Please check your input.');
+                $('#errorAmount').text(response.errors.amount || '');
+                $('#errorReason').text(response.errors.reason || '');
+              }
+            },
+            error: function(xhr, status, error) {
+              alert('Error__:' + xhr + status + error);
             }
-          },
-          error: function(xhr, status, error) {
-            alert('Error__:' + xhr + status + error);
-          }
+          });
         });
       });
-    });
     </script>
 
 <script>
@@ -925,4 +1042,67 @@ $(document).on('click', '.printGroupBtn', function () {
     $('#printHeading').hide();
     $('.d-none-print').removeClass('d-none-print');
 });
+</script>
+
+<script>
+    function printDiv() {
+        var content = document.getElementById('printArea').innerHTML;
+        var win = window.open('', '', 'width=900,height=650');
+
+        win.document.write(`
+                  <html>
+                  <head>
+                     
+                      <style>
+                          @page { size: A4; margin: 10mm; }
+
+                          body {
+                              font-family: Arial, sans-serif;
+                              font-size: 14px;
+                              padding: 10px;
+                          }
+
+                          table {
+                              width: 100%;
+                              border-collapse: collapse;
+                              margin-bottom: 10px;
+                          }
+
+                          th, td {
+                              border: 1px solid #000;
+                              padding: 5px;
+                              text-align: left;
+                          }
+
+                          th {
+                              background: #f2f2f2;
+                              /*text-align: center;*/
+                          }
+
+                          .print-header {
+                              /*text-align: center;*/
+                              margin-bottom: 10px;
+                          }
+
+                          .print-header h3 {
+                              margin: 0;
+                              font-size: 18px;
+                          }
+
+                          .no-print { display:none; }
+                          .overpaid { background:#f8d7da; }
+                          .table-success { background:#d4edda; }
+                      </style>
+                  </head>
+                  <body>
+                      ${content}
+                  </body>
+                  </html>
+              `);
+
+        win.document.close();
+        win.focus();
+        win.print();
+      }
+
 </script>

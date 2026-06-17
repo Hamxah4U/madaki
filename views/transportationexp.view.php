@@ -307,11 +307,11 @@ if (isset($_POST['save'])) {
           </div>
           <div class="mb-3">
             <br>
-            <button class="btn btn-info" onclick="printDiv('printArea')">
+            <button class="btn btn-secondary" onclick="printDiv('printArea')">
               Print all
             </button> |
 
-            <button class="btn btn-secondary" onclick="printHead('headArea')">Print head</button>
+            <button class="btn btn-dark" onclick="printHead('headArea')">Print head</button>
           </div>
 
           <?php
@@ -361,7 +361,7 @@ if (isset($_POST['save'])) {
               </div>
 
               <!-- Driver Info -->
-              <a href="/edittransportation?id=<?= $_GET['id'] ?>" class="btn btn-info">Edit Driver Info.</a><br />
+              <a href="/edittransportation?id=<?= $_GET['id'] ?>" class="btn btn-info no-print">Edit Driver Info.</a><br />
               <table class="table table-bordered text-nowrap mb-3" width="100%">
                 <tr>
                   <th>Driver</th>
@@ -553,7 +553,7 @@ if (isset($_POST['save'])) {
                                     ?>
                   <tr class="table-dark text-primary">
                     <td colspan="12"><strong>
-                        <button type="button" class="btn btn-primary btn-sm printGroupBtn"
+                        <button type="button" class="btn btn-dark btn-sm printGroupBtn no-print"
                           data-group="<?= $row['name'] ?>">
                           Print
                         </button>
@@ -784,7 +784,7 @@ if (isset($_POST['save'])) {
                       <button class="btn btn-primary" type="button" data-target="#modalUser"
                         data-toggle="modal"><strong>Expenses</strong></button>
                       <?php endif ?>
-                      <button class="btn btn-secondary" onclick="expenses('expenses')">Print head</button>
+                      <button class="btn btn-dark no-print" onclick="expenses('expenses')">Print head</button>
                     </tr>
                     <tr>
                       <th>#</th>
@@ -840,7 +840,7 @@ if (isset($_POST['save'])) {
                     <tr> <button type="button" data-target="#modelOtherExpenses" data-toggle="modal"
                         class="btn btn-primary"><strong>Other Expenses</strong></button> </tr>
                     <?php endif ?>
-                    <button class="btn btn-secondary" onclick="other_expenses('other_expenses')">Print</button>
+                    <button class="btn btn-dark no-print" onclick="other_expenses('other_expenses')">Print</button>
                     <tr>
                       <th>#</th>
                       <th>Reason</th>
@@ -898,7 +898,7 @@ if (isset($_POST['save'])) {
                     <thead>
                       <tr><button type="button" data-target="#modelComment" data-toggle="modal"
                           class="btn btn-primary"><strong>Comments</strong></button>
-                        <button class="btn btn-secondary" onclick="comments('comments')">Print</button>
+                        <button class="btn btn-dark no-print" onclick="comments('comments')">Print</button>
 
                       </tr>
                       <tr>
@@ -956,7 +956,7 @@ if (isset($_POST['save'])) {
                         <button type="button" data-target="#modelotherComment" data-toggle="modal"
                           class="btn btn-primary"><strong>Other Comments</strong></button>
                         <?php endif ?>
-                        <button class="btn btn-secondary" onclick="other_comments('other_comments')">Print</button>
+                        <button class="btn btn-dark no-print" onclick="other_comments('other_comments')">Print</button>
                       </tr>
                       <tr>
                         <th>#</th>
@@ -1007,7 +1007,7 @@ if (isset($_POST['save'])) {
                     <thead>
                       <tr><button type="button" data-target="#modeldiary" data-toggle="modal"
                           class="btn btn-primary"><strong>Diary</strong></button>
-                        <button class="btn btn-secondary" onclick="diary('diary')">Print</button>
+                        <button class="btn btn-dark no-print" onclick="diary('diary')">Print</button>
                       </tr>
                       <tr>
                         <th>#</th>
@@ -1812,65 +1812,65 @@ if (isset($_POST['save'])) {
     </script>
 
     <script>
-    function printDiv() {
-      var content = document.getElementById('printArea').innerHTML;
-      var win = window.open('', '', 'width=900,height=650');
+      function printDiv() {
+        var content = document.getElementById('printArea').innerHTML;
+        var win = window.open('', '', 'width=900,height=650');
 
-      win.document.write(`
-                <html>
-                <head>
-                    <title><?= $driverInfo['driver_name'] ?>>Transportation Record</title>
-                    <style>
-                        @page { size: A4; margin: 10mm; }
+        win.document.write(`
+                  <html>
+                  <head>
+                      <title><?= $driverInfo['driver_name'] ?>>Transportation Record</title>
+                      <style>
+                          @page { size: A4; margin: 10mm; }
 
-                        body {
-                            font-family: Arial, sans-serif;
-                            font-size: 14px;
-                            padding: 10px;
-                        }
+                          body {
+                              font-family: Arial, sans-serif;
+                              font-size: 14px;
+                              padding: 10px;
+                          }
 
-                        table {
-                            width: 100%;
-                            border-collapse: collapse;
-                            margin-bottom: 10px;
-                        }
+                          table {
+                              width: 100%;
+                              border-collapse: collapse;
+                              margin-bottom: 10px;
+                          }
 
-                        th, td {
-                            border: 1px solid #000;
-                            padding: 5px;
-                            text-align: left;
-                        }
+                          th, td {
+                              border: 1px solid #000;
+                              padding: 5px;
+                              text-align: left;
+                          }
 
-                        th {
-                            background: #f2f2f2;
-                            /*text-align: center;*/
-                        }
+                          th {
+                              background: #f2f2f2;
+                              /*text-align: center;*/
+                          }
 
-                        .print-header {
-                            /*text-align: center;*/
-                            margin-bottom: 10px;
-                        }
+                          .print-header {
+                              /*text-align: center;*/
+                              margin-bottom: 10px;
+                          }
 
-                        .print-header h3 {
-                            margin: 0;
-                            font-size: 18px;
-                        }
+                          .print-header h3 {
+                              margin: 0;
+                              font-size: 18px;
+                          }
 
-                        .no-print { display:none; }
-                        .overpaid { background:#f8d7da; }
-                        .table-success { background:#d4edda; }
-                    </style>
-                </head>
-                <body>
-                    ${content}
-                </body>
-                </html>
-            `);
+                          .no-print { display:none; }
+                          .overpaid { background:#f8d7da; }
+                          .table-success { background:#d4edda; }
+                      </style>
+                  </head>
+                  <body>
+                      ${content}
+                  </body>
+                  </html>
+              `);
 
-      win.document.close();
-      win.focus();
-      win.print();
-    }
+        win.document.close();
+        win.focus();
+        win.print();
+      }
 
     function printHead() {
       var content = document.getElementById('headArea').innerHTML;

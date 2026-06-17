@@ -26,8 +26,10 @@
       <div class="container-fluid">
         <div class="row mb-4">
           <div class="col-md-12 col-lg-12">
-            <button class="btn btn-primary" id="printBtn">
-              <i class="fa fa-print"></i> Print
+           
+
+            <button class="btn btn-dark" onclick="printDiv('printTableContainer')">
+             <i class="fa fa-print"></i> Print
             </button>
             <div class="table-responsive" id="printTableContainer">
               <table class="table table-bordered text-nowrap" width="100%" id="driverTable">
@@ -62,7 +64,7 @@
                     <!-- <th>Market</th> -->
                     <th>Date</th>
                     <th>Time</th>
-                    <th>Action</th>
+                    <th class="no-print">Action</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -79,12 +81,12 @@
                     <td>₦<?= number_format((float)$money['amount']) ?></td>
                     <td><?= $money['date_in'] ?></td>
                     <td><?= $money['timerecorded'] ?></td>
-                    <td>
+                    <td class="no-print">
                       <button class="btn btn-danger deleteBtn" data-id="<?= $money['id'] ?>">Delete</button>
                       <button class="btn btn-info editBtn" data-id="<?= $money['id'] ?>">
                         Edit
                       </button>
-                      <button class="btn btn-success printBtn" data-id="<?= $money['id'] ?>">Print</button>
+                      <button class="btn btn-dark printBtn" data-id="<?= $money['id'] ?>">Print</button>
                     </td>
                   </tr>
                   <?php endforeach ?>
@@ -138,74 +140,118 @@
     <?php require 'partials/footer.php'; ?>
 
     <script>
-    $(document).on('click', '.printBtn', function() {
-      let id = $(this).data('id');
+      $(document).on('click', '.printBtn', function() {
+          let id = $(this).data('id');
 
-      $.ajax({
-        url: 'model/get_moneyin.php',
-        type: 'POST',
-        data: {
-          id: id
-        },
-        dataType: 'json',
-        success: function(data) {
+          $.ajax({
+            url: 'model/get_moneyin.php',
+            type: 'POST',
+            data: { id: id },
+            dataType: 'json',
+            success: function(data) {
 
-          let originalContent = document.body.innerHTML;
+              // Open a clean blank window
+              let printWindow = window.open('', '_blank', 'width=600,height=600');
 
-          let printContent = `
-                <div style="text-align:center;">
-                    <strong>
-                        <?php if($marketInfo): ?>
-                            <?= $marketInfo['market_name'] ?><br>
-                            Market with Agent:
-                            <?= $marketInfo['Fullname'] ?>
-                        <?php else: ?>
-                            Market information not found
-                        <?php endif; ?>
-                    </strong>
-                </div>
+              let printContent = `
+                <html>
+                  <head><title>Print Receipt</title></head>
+                  <body style="font-family: Arial, sans-serif; padding: 20px;">
+                    <div style="text-align:center;">
+                        <strong>
+                            <?php if($marketInfo): ?>
+                                <?= $marketInfo['market_name'] ?><br>
+                                Market with Agent: <?= $marketInfo['Fullname'] ?>
+                            <?php else: ?>
+                                Market information not found
+                            <?php endif; ?>
+                        </strong>
+                    </div>
+                    <hr>
+                    <h3>Money In Details</h3>
+                    <p><strong>Amount:</strong> ₦${parseFloat(data.amount).toLocaleString()}</p>
+                    <p><strong>Date:</strong> ${data.date_in}</p>
+                    <p><strong>Time:</strong> ${data.timerecorded}</p>
+                  </body>
+                </html>
+              `;
 
-                <hr>
-
-                <h3>Money In Details</h3>
-
-                <p><strong>Amount:</strong>
-                    ₦${parseFloat(data.amount).toLocaleString()}
-                </p>
-
-                <p><strong>Date:</strong>
-                    ${data.date_in}
-                </p>
-
-                <p><strong>Time:</strong>
-                    ${data.timerecorded}
-                </p>
-            `;
-
-          document.body.innerHTML = printContent;
-
-          window.print();
-
-          document.body.innerHTML = originalContent;
-
-          location.reload(); // restore events and page state
-        }
+              printWindow.document.write(printContent);
+              printWindow.document.close();
+              
+              // Wait for content to load, then print and close the popup automatically
+              printWindow.focus();
+              printWindow.print();
+              printWindow.close();
+            }
+          });
       });
-    });
     </script>
 
     <script>
-        document.getElementById('printBtn').addEventListener('click', function() {
-        var printContents = document.getElementById('printTableContainer').innerHTML;
-        var originalContents = document.body.innerHTML;
+      function printDiv() {
+      var content = document.getElementById('printTableContainer').innerHTML;
+      var win = window.open('', '', 'width=900,height=650');
 
-        document.body.innerHTML = printContents;
-        window.print();
-        document.body.innerHTML = originalContents;
-        });
-        </script>
+      win.document.write(`
+                <html>
+                <head>
+                    
+                    <style>
+                        @page { size: A4; margin: 10mm; }
 
-        <script>
+                        body {
+                            font-family: Arial, sans-serif;
+                            font-size: 14px;
+                            padding: 10px;
+                        }
+
+                        table {
+                            width: 100%;
+                            border-collapse: collapse;
+                            margin-bottom: 10px;
+                        }
+
+                        th, td {
+                            border: 1px solid #000;
+                            padding: 5px;
+                            text-align: left;
+                        }
+
+                        th {
+                            background: #f2f2f2;
+                            /*text-align: center;*/
+                        }
+
+                        .print-header {
+                            /*text-align: center;*/
+                            margin-bottom: 10px;
+                        }
+
+                        .print-header h3 {
+                            margin: 0;
+                            font-size: 18px;
+                        }
+
+                        .no-print { display:none; }
+                        .overpaid { background:#f8d7da; }
+                        .table-success { background:#d4edda; }
+                    </style>
+                </head>
+                <body>
+                    ${content}
+                </body>
+                </html>
+            `);
+
+      win.document.close();
+      win.focus();
+      win.print();
+     }
+      
+    </script>
+
+      <script>
         $(document).ready(function() {
         $('#driverTable').DataTable({
             pageLength: 20
@@ -214,136 +260,134 @@
     </script>
 
     <script>
-    $(document).on('click', '.deleteBtn', function() {
+      $(document).on('click', '.deleteBtn', function() {
 
-      let id = $(this).data('id');
+        let id = $(this).data('id');
 
-      Swal.fire({
-        title: 'Delete this record?',
-        text: "This record will be permanently deleted.",
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#d33',
-        cancelButtonColor: '#6c757d',
-        confirmButtonText: 'Yes, Delete It'
-      }).then((result) => {
+        Swal.fire({
+          title: 'Delete this record?',
+          text: "This record will be permanently deleted.",
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonColor: '#d33',
+          cancelButtonColor: '#6c757d',
+          confirmButtonText: 'Yes, Delete It'
+        }).then((result) => {
 
-        if (result.isConfirmed) {
+          if (result.isConfirmed) {
 
-          $.ajax({
-            url: 'model/delete_moneyin_history.php',
-            type: 'POST',
-            data: {
-              id: id
-            },
+            $.ajax({
+              url: 'model/delete_moneyin_history.php',
+              type: 'POST',
+              data: {
+                id: id
+              },
 
-            success: function(response) {
+              success: function(response) {
 
-              $('#row' + id).remove();
+                $('#row' + id).remove();
 
-              Swal.fire({
-                toast: true,
-                position: 'top-end',
-                icon: 'success',
-                title: response,
-                timer: 2000,
-                showConfirmButton: false
-              });
+                Swal.fire({
+                  toast: true,
+                  position: 'top-end',
+                  icon: 'success',
+                  title: response,
+                  timer: 2000,
+                  showConfirmButton: false
+                });
 
-            },
+              },
 
-            error: function() {
+              error: function() {
 
-              Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: 'Failed to delete record.'
-              });
+                Swal.fire({
+                  icon: 'error',
+                  title: 'Error',
+                  text: 'Failed to delete record.'
+                });
 
-            }
-          });
+              }
+            });
 
-        }
+          }
+
+        });
 
       });
-
-    });
     </script>
 
     <script>
-    $(document).on('click', '.editBtn', function() {
+      $(document).on('click', '.editBtn', function() {
 
-      let id = $(this).data('id');
+        let id = $(this).data('id');
 
-      console.log(id); // check if id is coming
-
-
-      $.ajax({
-
-        url: 'model/get_moneyin.php',
-
-        type: 'POST',
-
-        data: {
-          id: id
-        },
-
-        dataType: 'json',
-
-        success: function(data) {
+        console.log(id); // check if id is coming
 
 
-          $('#edit_id').val(data.id);
+        $.ajax({
 
-          $('#edit_amount').val(data.amount);
+          url: 'model/get_moneyin.php',
 
-          $('#edit_date').val(data.date_in);
+          type: 'POST',
+
+          data: {
+            id: id
+          },
+
+          dataType: 'json',
+
+          success: function(data) {
 
 
-          let modal = new bootstrap.Modal(
-            document.getElementById('editModal')
-          );
+            $('#edit_id').val(data.id);
 
-          modal.show();
+            $('#edit_amount').val(data.amount);
+
+            $('#edit_date').val(data.date_in);
 
 
-        }
+            let modal = new bootstrap.Modal(
+              document.getElementById('editModal')
+            );
+
+            modal.show();
+
+
+          }
+
+
+        });
 
 
       });
 
+      $('#editForm').submit(function(e) {
 
-    });
+        e.preventDefault();
 
+        $.ajax({
+          url: 'model/update_moneyin.php',
+          type: 'POST',
+          data: $(this).serialize(),
 
+          success: function(response) {
 
-    $('#editForm').submit(function(e) {
+            // alert(response);
 
-      e.preventDefault();
+            Swal.fire({
+              toast: true,
+              position: 'top-end',
+              icon: 'info',
+              title: 'Record updated successfully',
+              timer: 2000,
+              showConfirmButton: false
+            }).then(() => location.reload());
 
-      $.ajax({
-        url: 'model/update_moneyin.php',
-        type: 'POST',
-        data: $(this).serialize(),
+            $('#editModal').modal('hide');
 
-        success: function(response) {
+            location.reload();
+          }
+        });
 
-          // alert(response);
-
-          Swal.fire({
-            toast: true,
-            position: 'top-end',
-            icon: 'info',
-            title: 'Record updated successfully',
-            timer: 2000,
-            showConfirmButton: false
-          }).then(() => location.reload());
-
-          $('#editModal').modal('hide');
-
-          location.reload();
-        }
       });
-
-    });
     </script>
