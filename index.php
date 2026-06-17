@@ -31,7 +31,8 @@ if(!isset($_SESSION['userID']) &&
   $uri != '/completed' &&
   $uri != '/over' &&
   $uri != '/short' &&
-  $uri != '/money-history'
+  $uri != '/money-history' &&
+  $uri != '/closed-market'
   ) {
   header('Location: /');
   exit();
@@ -65,6 +66,7 @@ $routes = [
     '/over' => 'controllers/over.php',
     '/short' => 'controllers/short.php',
     '/money-history' => 'controllers/moneyhistory.php',
+    '/closed-market' => 'controllers/closedmarket.php',
     
     // agent
     '/manage-agent' => 'controllers/manageagent.php',

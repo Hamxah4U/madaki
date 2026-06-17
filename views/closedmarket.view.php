@@ -25,13 +25,13 @@
       <div class="container-fluid">
 
         <!-- Page Heading -->
-        <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <!-- <div class="d-sm-flex align-items-center justify-content-between mb-4">
           <h1 class="h3 mb-0 text-gray-800"></h1>
           <button type="button" data-target="#modelUnit" data-toggle="modal" class="btn btn-primary"><strong>Add
               Market</strong></button>
-        </div>
+        </div> -->
         <!-- Content Row -->
-
+        <strong>List of Closed Markets</strong>
         <div class="table-responsive">
           <table id="departmentTable" class="table table-striped text-nowrap" style="width: 100%;">
             <thead>
@@ -143,17 +143,17 @@
       let button = $(this);
 
       Swal.fire({
-        title: 'Close this market?',
-        text: "This market will be marked as closed.",
-        icon: 'warning',
+        title: 'Open this market?',
+        text: "This market will be marked as open.",
+        icon: 'info',
         showCancelButton: true,
-        confirmButtonText: 'Yes, Close It'
+        confirmButtonText: 'Yes, Open It'
       }).then((result) => {
 
         if (result.isConfirmed) {
 
           $.ajax({
-            url: "model/close_market.php",
+            url: "model/open_market.php",
             type: "POST",
             data: {
               id: marketId
@@ -167,8 +167,8 @@
                 Swal.fire({
                   toast: true,
                   position: 'top-end',
-                  icon: 'info',
-                  title: 'Market Closed',
+                  icon: 'success',
+                  title: 'Market opened',
                   timer: 2000,
                   showConfirmButton: false
                 }).then(() => location.reload());
@@ -305,7 +305,7 @@
     $(document).ready(function() {
       $('#departmentTable').DataTable({
         ajax: {
-          url: 'model/market.table.php',
+          url: 'model/closedmarket.table.php',
           dataSrc: '',
         },
         columns: [{
@@ -366,10 +366,10 @@
             data: null,
             render: function(data, type, row) {
               return `
-                    <button class="btn btn-info" data-id="${row.id}" id="editDepartment">Edit</button>
+                    <!-- <button class="btn btn-info" data-id="${row.id}" id="editDepartment">Edit</button> -->
                     <a href="view-market?marketId=${row.id}" class="btn btn-success">View market</a>
-										<button class="btn btn-warning closeMarket" data-id="${row.id}">Close market</button>
-										<button type="button" data-id="${row.id}" data-target="#addmoney" data-toggle="modal" class="btn btn-primary"><strong>Money In</strong></button>
+										<button class="btn btn-warning closeMarket" data-id="${row.id}">Open market</button>
+										<!-- <button type="button" data-id="${row.id}" data-target="#addmoney" data-toggle="modal" class="btn btn-primary"><strong>Money In</strong></button>-->
 										<a href="money-history?marketId=${row.id}" class="btn btn-info">Money History</a>
                 `;
             }

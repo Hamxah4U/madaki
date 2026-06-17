@@ -99,6 +99,14 @@
                     </a>
                 </li>   
 
+                 <li class="nav-item active">
+                    <a class="nav-link" href="/closed-market">
+                        <i class="fas fa-warehouse"></i>
+                       <strong>Closed Market</strong>
+                    </a>
+                </li>   
+
+
             <?php else: ?>
                 <li class="nav-item active">
                      <a class="nav-link" href="#" onclick="denyAccess(); return false;">
