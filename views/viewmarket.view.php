@@ -749,34 +749,57 @@
 
     let id = $(this).data('id');
 
-    if (confirm('Are you sure you want to delete this record?')) {
-      $.ajax({
-        url: 'model/delete_market_transaction.php',
-        type: 'POST',
-        data: {
-          id: id
-        },
-        success: function(response) {
+    Swal.fire({
+        title: 'Delete this record?',
+        text: "This transaction will be permanently deleted.",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Yes, Delete It',
+        cancelButtonText: 'Cancel'
+    }).then((result) => {
 
-          // alert(response);
+        if (result.isConfirmed) {
 
-          Swal.fire({
-            toast: true,
-            position: 'top-end',
-            icon: 'warning',
-            title: response,
-            timer: 2000,
-            showConfirmButton: false
-          });
+            $.ajax({
+                url: 'model/delete_market_transaction.php',
+                type: 'POST',
+                data: {
+                    id: id
+                },
 
-          $('#row'+id).remove();
+                success: function(response) {
 
-          // location.reload();
+                    $('#row' + id).remove();
+
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: 'success',
+                        title: response,
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+
+                },
+
+                error: function() {
+
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Failed to delete record.'
+                    });
+
+                }
+            });
+
         }
-      });
-    }
 
-  });
+    });
+
+});
 </script>
 
 
