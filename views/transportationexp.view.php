@@ -922,7 +922,7 @@ if (isset($_POST['save'])) {
                       <tr>
                         <td><?= $index + 1 ?></td>
                         <td><?= $row_comment['reason'] ?></td>
-                        <td><?= $row_comment['amount'] ?></td>
+                        <td><?= number_format($row_comment['amount']) ?></td>
                         <td><?= date('d M Y', strtotime($row_comment['daterecorded'])) ?></td>
                         <td><?= date('h:i A', strtotime($row_comment['timerecorded'])) ?></td>
                         <td class="no-print">
@@ -938,9 +938,12 @@ if (isset($_POST['save'])) {
                         </td>
                       </tr>
                       <?php endforeach ?>
-                      <tr></tr>
-                      <td colspan="2">Total</td>
-                      <td colspan="4">₦<?= number_format($totalAmountForComment) ?></td>
+                      <tfoot>
+                        <tr style="background:#f1f1f1; font-weight:bold;">
+                          <td colspan="2">Total</td>
+                          <td colspan="4">₦<?= number_format($totalAmountForComment) ?></td>
+                        </tr>
+                      </tfoot>
                     </tbody>
                   </table>
                 </div>
