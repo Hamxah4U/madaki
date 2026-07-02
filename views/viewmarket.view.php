@@ -104,12 +104,9 @@
                   </thead>
                   <tbody id="tableBody">
                     <tr>
-                      <!-- <td>1</td> -->
-                      <!-- <td><?php //echo count($rowmarkets) + 1 ?></td> -->
                       <td><input required type="number" name="number[]" style="width: 100px;" class="form-control"></td>
-
                       <td>
-                        <select name="market_id[]" id="market_id" class="form-control market-select">
+                        <select name="market_id[]" class="form-control market-select">
                           <option value="">--select market--</option>
                           <?php foreach($rowMarket3 as $rowMarket3_1): ?>
                           <option value="<?= $rowMarket3_1['id'] ?>"><?= $rowMarket3_1['name'] ?></option>
@@ -117,20 +114,19 @@
                         </select>
                       </td>
                       <td>
-                        <select name="animal[]" id="animal" class="form-control animal-select">
+                        <select name="animal[]" class="form-control animal-select">
                           <option value="">--select--</option>
                           <?php
-                                            $stmt = $db->conn->prepare("SELECT * FROM `department_tbl` ORDER BY Department");
-                                            $stmt->execute();
-                                            $rows = $stmt->fetchAll();
-                                            foreach($rows as $row) : ?>
+                            $stmt = $db->conn->prepare("SELECT * FROM `department_tbl` ORDER BY Department");
+                            $stmt->execute();
+                            $rows = $stmt->fetchAll();
+                            foreach($rows as $row) : ?>
                           <option value="<?= $row['deptID'] ?>"><?= $row['Department'] ?></option>
                           <?php endforeach ?>
                         </select>
                         <span class="text-danger" id="animalError"></span>
                       </td>
-                      <td><input type="number" name="amount[]" style="width: 100px;"
-                          value="<?= $editData['total'] ?? '' ?>" class="form-control"></td>
+                      <td><input type="number" name="amount[]" style="width: 100px;" value="<?= $editData['total'] ?? '' ?>" class="form-control"></td>
                       <td><button style="width: 32px;" type="button" class="btn btn-danger removeRow">X</button></td>
                     </tr>
                   </tbody>
@@ -494,17 +490,74 @@
 
     <?php require 'partials/footer.php'; ?>
 
-
-
     <script>
-    function expenses() {
-      var content = document.getElementById('expenses').innerHTML;
-      var win = window.open('', '', 'width=900,height=650');
+      function expenses() {
+        var content = document.getElementById('expenses').innerHTML;
+        var win = window.open('', '', 'width=900,height=650');
 
-      win.document.write(`
+        win.document.write(`
+                    <html>
+                    <head>
+                      
+                        <style>
+                            @page { size: A4; margin: 10mm; }
+
+                            body {
+                                font-family: Arial, sans-serif;
+                                font-size: 14px;
+                                padding: 10px;
+                            }
+
+                            table {
+                                width: 100%;
+                                border-collapse: collapse;
+                                margin-bottom: 10px;
+                            }
+
+                            th, td {
+                                border: 1px solid #000;
+                                padding: 5px;
+                                text-align: left;
+                            }
+
+                            th {
+                                background: #f2f2f2;
+                                /*text-align: center;*/
+                            }
+
+                            .print-header {
+                                /*text-align: center;*/
+                                margin-bottom: 10px;
+                            }
+
+                            .print-header h3 {
+                                margin: 0;
+                                font-size: 18px;
+                            }
+
+                            .no-print { display:none; }
+                            .overpaid { background:#f8d7da; }
+                            .table-success { background:#d4edda; }
+                        </style>
+                    </head>
+                    <body>
+                        ${content}
+                    </body>
+                    </html>
+                `);
+
+        win.document.close();
+        win.focus();
+        win.print();
+      }
+
+      function other_expenses() {
+        var content = document.getElementById('other_expenses').innerHTML;
+        var win = window.open('', '', 'width=900,height=650');
+
+        win.document.write(`
                   <html>
                   <head>
-                     
                       <style>
                           @page { size: A4; margin: 10mm; }
 
@@ -552,279 +605,214 @@
                   </html>
               `);
 
-      win.document.close();
-      win.focus();
-      win.print();
-    }
-
-    function other_expenses() {
-      var content = document.getElementById('other_expenses').innerHTML;
-      var win = window.open('', '', 'width=900,height=650');
-
-      win.document.write(`
-                <html>
-                <head>
-                    <style>
-                        @page { size: A4; margin: 10mm; }
-
-                        body {
-                            font-family: Arial, sans-serif;
-                            font-size: 14px;
-                            padding: 10px;
-                        }
-
-                        table {
-                            width: 100%;
-                            border-collapse: collapse;
-                            margin-bottom: 10px;
-                        }
-
-                        th, td {
-                            border: 1px solid #000;
-                            padding: 5px;
-                            text-align: left;
-                        }
-
-                        th {
-                            background: #f2f2f2;
-                            /*text-align: center;*/
-                        }
-
-                        .print-header {
-                            /*text-align: center;*/
-                            margin-bottom: 10px;
-                        }
-
-                        .print-header h3 {
-                            margin: 0;
-                            font-size: 18px;
-                        }
-
-                        .no-print { display:none; }
-                        .overpaid { background:#f8d7da; }
-                        .table-success { background:#d4edda; }
-                    </style>
-                </head>
-                <body>
-                    ${content}
-                </body>
-                </html>
-            `);
-
-      win.document.close();
-      win.focus();
-      win.print();
-    }
+        win.document.close();
+        win.focus();
+        win.print();
+      }
     </script>
 
     <script>
-    function resetForm() {
-      $('#userForm')[0].reset();
-      $('#edit_id').val('');
+      function resetForm() {
+        $('#userForm')[0].reset();
+        $('#edit_id').val('');
 
-      $('#action-btn')
-        .text('Save')
-        .removeClass('btn-info')
-        .addClass('btn-primary')
-        .data('mode', 'add');
+        $('#action-btn')
+          .text('Save')
+          .removeClass('btn-info')
+          .addClass('btn-primary')
+          .data('mode', 'add');
 
-      $('#errorAmount').text('');
-      $('#errorReason').text('');
-    }
+        $('#errorAmount').text('');
+        $('#errorReason').text('');
+      }
 
-    $(document).ready(function() {
-      $('#userForm').on('submit', function(e) {
-        e.preventDefault();
-        const mode = $('#action-btn').data('mode');
-        // const mode = $('#action-btn').data('mode');
-        $.ajax({
-          url: 'model/expenses.form.php',
-          dataType: 'JSON',
-          // data: $(this).serialize(),
-          data: $(this).serialize() + '&mode=' + mode,
-          type: 'POST',
-          success: function(response) {
-            if (response.status === false) {
-              $('#errorAmount').text(response.errors.amount || '');
-              $('#errorReason').text(response.errors.reason || '');
-            } else {
-              const Toast = Swal.mixin({
-                toast: true,
-                position: "top-end",
-                showConfirmButton: false,
-                timer: 2000,
-                timerProgressBar: true,
-                didOpen: (toast) => {
-                  toast.onmouseenter = Swal.stopTimer;
-                  toast.onmouseleave = Swal.resumeTimer;
-                }
-              });
-              Toast.fire({
-                icon: "success",
-                title: response.success.message
-              }).then(() => {
-                location.reload(); // refresh page
-              });
-
-              // $('#usersTable').DataTable().ajax.reload();
-              $('#modalUser').modal('hide');
-              resetForm();
-            }
-          },
-          error: function(xhr, status, error) {
-            alert('Error: ' + xhr.status + ' - ' + error);
-          }
-        });
-      });
-
-      $('#modalUser').on('hidden.bs.modal', function() {
-        resetForm();
-      });
-    });
-    </script>
-
-    <script>
-     let existingRows = <?= count($rowmarkets); ?>;
-    </script>
-
-    <script>
       $(document).ready(function() {
-
-        let rowCount = existingRows + 1;
-
-        // Function to renumber rows
-        function renumberRows() {
-          let count = existingRows + 1;
-
-          $("#tableBody tr").each(function() {
-            $(this).find("td:first").text(count);
-            count++;
-          });
-
-          rowCount = count - 1;
-        }
-
-        // Add Row
-        $("#addRow").click(function() {
-          //   rowCount++;
-          //   <td>${rowCount}</td>
-
-          let row = `
-              <tr>
-                  
-                    <td><input required type="number" name="number[]" style="width: 100px;" class="form-control" ></td>
-                  <td>
-                    <select name="market_id[]" id="market_id" class="form-control">
-                        <option value="">--select market--</option>
-                        <?php foreach($rowMarket3 as $rowMarket3_1): ?>
-                        <option value="<?= $rowMarket3_1['id'] ?>"><?= $rowMarket3_1['name'] ?></option>
-                        <?php endforeach ?>
-                    </select>
-                  </td>
-                  <td>
-                      <select name="animal[]" class="form-control">
-                          <option value="">--select--</option>
-                          <?php
-                            $stmt = $db->conn->prepare("SELECT * FROM department_tbl ORDER BY Department");
-                            $stmt->execute();
-                            $rows = $stmt->fetchAll();
-                            foreach($rows as $row) : ?>
-                            <option value="<?= $row['deptID'] ?>"><?= $row['Department'] ?></option>
-                          <?php endforeach ?>
-                      </select>
-                  </td>
-                  <td>
-                      <input type="number" name="amount[]" class="form-control" style="width:100px;">
-                  </td>
-                  <td>
-                      <button type="button" class="btn btn-danger removeRow" style="width:32px;">X</button>
-                  </td>
-              </tr>`;
-
-          rowCount++;
-
-          $("#tableBody").append(row);
-        });
-
-        // Remove Row
-        $(document).on("click", ".removeRow", function() {
-          $(this).closest("tr").remove();
-          renumberRows(); // auto renumber
-        });
-
-        // Form Submit with Validation
-        $("#animalForm").submit(function(e) {
+        $('#userForm').on('submit', function(e) {
           e.preventDefault();
-
-          $("#animalError").text("");
-          let isValid = true;
-
-          // Check at least one row
-          if ($("#tableBody tr").length == 0) {
-            $("#animalError").text("Please add at least one animal.");
-            return;
-          }
-
-          // Validate each row
-          $("#tableBody tr").each(function() {
-            let animal = $(this).find("select[name='animal[]']").val();
-            let amount = $(this).find("input[name='amount[]']").val();
-
-            // if (animal == "" || amount == "" || amount <= 0) {
-            //   isValid = false;
-            // }
-          });
-
-          // if (!isValid) {
-          //   $("#animalError").text("All rows must have animal selected and valid amount.");
-          //   return;
-          // }
-
-          // If validation passed → AJAX submit
-          let isUpdate = $("#edit_id").val() !== "";
+          const mode = $('#action-btn').data('mode');
+          // const mode = $('#action-btn').data('mode');
           $.ajax({
-            url: "model/add_animalrecord.php",
-            type: "POST",
-            data: $(this).serialize(),
+            url: 'model/expenses.form.php',
+            dataType: 'JSON',
+            // data: $(this).serialize(),
+            data: $(this).serialize() + '&mode=' + mode,
+            type: 'POST',
             success: function(response) {
-
-              if (response.trim() == "success") {
-
-                Swal.fire({
-                  toast: true,
-                  position: 'top-end',
-                  icon: 'success',
-                  title: 'Data saved successfully',
-                  timer: 2000,
-                  showConfirmButton: false
-                }).then(() => location.reload());
-
-              } else if (response.trim() == "updated") {
-
-                Swal.fire({
-                  toast: true,
-                  position: 'top-end',
-                  icon: 'info',
-                  title: 'Data updated successfully',
-                  timer: 2000,
-                  showConfirmButton: false
-                }).then(() => location.reload());
-
+              if (response.status === false) {
+                $('#errorAmount').text(response.errors.amount || '');
+                $('#errorReason').text(response.errors.reason || '');
               } else {
+                const Toast = Swal.mixin({
+                  toast: true,
+                  position: "top-end",
+                  showConfirmButton: false,
+                  timer: 2000,
+                  timerProgressBar: true,
+                  didOpen: (toast) => {
+                    toast.onmouseenter = Swal.stopTimer;
+                    toast.onmouseleave = Swal.resumeTimer;
+                  }
+                });
+                Toast.fire({
+                  icon: "success",
+                  title: response.success.message
+                }).then(() => {
+                  location.reload(); // refresh page
+                });
 
-                $("#animalError").text("Failed to save data.");
-
+                // $('#usersTable').DataTable().ajax.reload();
+                $('#modalUser').modal('hide');
+                resetForm();
               }
             },
-            error: function() {
-              $("#animalError").text("Server error occurred.");
+            error: function(xhr, status, error) {
+              alert('Error: ' + xhr.status + ' - ' + error);
             }
           });
-
         });
 
+        $('#modalUser').on('hidden.bs.modal', function() {
+          resetForm();
+        });
       });
     </script>
+
+    <script>
+      let existingRows = <?= count($rowmarkets); ?>;
+    </script>
+
+    <script>
+  $(document).ready(function() {
+
+    let rowCount = existingRows + 1;
+
+    // Helper definition to initialize Select2 safely 
+    function initSelect2(selector) {
+      $(selector).select2({
+          placeholder: "--select--",
+          allowClear: true,
+          width: '100%'
+      });
+    }
+
+    // 1. Initialize Select2 on the baseline row already in the HTML layout
+    initSelect2('.market-select, .animal-select');
+
+    // Function to renumber rows
+    function renumberRows() {
+      let count = existingRows + 1;
+
+      $("#tableBody tr").each(function() {
+        $(this).find("td:first").text(count);
+        count++;
+      });
+
+      rowCount = count - 1;
+    }
+
+    // Add Row
+    $("#addRow").click(function() {
+      // Build row as an un-appended jQuery selector node structure
+      let $row = $(`
+          <tr>
+              <td><input required type="number" name="number[]" style="width: 100px;" class="form-control" ></td>
+              <td>
+                <select name="market_id[]" class="form-control market-select">
+                    <option value="">--select market--</option>
+                    <?php foreach($rowMarket3 as $rowMarket3_1): ?>
+                    <option value="<?= $rowMarket3_1['id'] ?>"><?= $rowMarket3_1['name'] ?></option>
+                    <?php endforeach ?>
+                </select>
+              </td>
+              <td>
+                  <select name="animal[]" class="form-control animal-select">
+                      <option value="">--select--</option>
+                      <?php
+                        $stmt = $db->conn->prepare("SELECT * FROM department_tbl ORDER BY Department");
+                        $stmt->execute();
+                        $rows = $stmt->fetchAll();
+                        foreach($rows as $row) : ?>
+                        <option value="<?= $row['deptID'] ?>"><?= $row['Department'] ?></option>
+                      <?php endforeach ?>
+                  </select>
+              </td>
+              <td>
+                  <input type="number" name="amount[]" class="form-control" style="width:100px;">
+              </td>
+              <td>
+                  <button type="button" class="btn btn-danger removeRow" style="width:32px;">X</button>
+              </td>
+          </tr>`);
+
+      rowCount++;
+
+      // Append row directly into the DOM
+      $("#tableBody").append($row);
+
+      // 2. Initialize Select2 only within this newly appended row node tree layout
+      initSelect2($row.find('.market-select, .animal-select'));
+    });
+
+    // Remove Row
+    $(document).on("click", ".removeRow", function() {
+      // Clear Select2 instances context tracking on destroy before raw element drops out
+      $(this).closest("tr").find('.market-select, .animal-select').select2('destroy');
+      $(this).closest("tr").remove();
+      renumberRows(); // auto renumber
+    });
+
+    // Form Submit with Validation
+    $("#animalForm").submit(function(e) {
+      e.preventDefault();
+
+      $("#animalError").text("");
+      let isValid = true;
+
+      // Check at least one row
+      if ($("#tableBody tr").length == 0) {
+        $("#animalError").text("Please add at least one animal.");
+        return;
+      }
+
+      // If validation passed → AJAX submit
+      let isUpdate = $("#edit_id").val() !== "";
+      $.ajax({
+        url: "model/add_animalrecord.php",
+        type: "POST",
+        data: $(this).serialize(),
+        success: function(response) {
+
+          if (response.trim() == "success") {
+            Swal.fire({
+              toast: true,
+              position: 'top-end',
+              icon: 'success',
+              title: 'Data saved successfully',
+              timer: 2000,
+              showConfirmButton: false
+            }).then(() => location.reload());
+
+          } else if (response.trim() == "updated") {
+            Swal.fire({
+              toast: true,
+              position: 'top-end',
+              icon: 'info',
+              title: 'Data updated successfully',
+              timer: 2000,
+              showConfirmButton: false
+            }).then(() => location.reload());
+
+          } else {
+            $("#animalError").text("Failed to save data.");
+          }
+        },
+        error: function() {
+          $("#animalError").text("Server error occurred.");
+        }
+      });
+    });
+  });
+</script>
 
     <script>
       function resetForm() {

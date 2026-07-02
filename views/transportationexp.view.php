@@ -222,12 +222,13 @@ if (isset($_POST['save'])) {
                     <td><input type="text" name="fullname[]" class="form-control"
                         value="<?= $editData['fullname'] ?? '' ?>" <?= $ro ?> required></td>
                     <td>
-                      <select name="market[]" id="" class="form-control" required>
+                      <select name="market[]" id="" class="form-control select-market" required>
                         <option value="">--select--</option>
-                        <?php
-                                                $stmt = $db->query('SELECT * FROM `market_2`');
-                                                $markets2 = $stmt->fetchAll(PDO::FETCH_ASSOC);
-                                                foreach ($markets2 as $market2): ?>
+                          <?php
+                            $stmt = $db->query('SELECT * FROM `market_2` ORDER BY `name` ');
+                            $markets2 = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                            foreach ($markets2 as $market2): 
+                          ?>
                         <option value="<?= $market2['id'] ?>"
                           <?= ($editData['market'] ?? '') == $market2['id'] ? 'selected' : '' ?>>
                           <?= htmlspecialchars($market2['name']) ?>
@@ -774,9 +775,10 @@ if (isset($_POST['save'])) {
                 </tfoot>
               </div>
             </table>
-
+            
             <div class="row">
               <div class="col-sm-6" id="expenses">
+                <div class="table-responsive">
                 <table class="table table-bordered text-nowrap">
                   <thead>
                     <tr>
@@ -831,9 +833,11 @@ if (isset($_POST['save'])) {
                     </tr>
                   </tfoot>
                 </table>
+                </div>
               </div>
 
               <div class="col-sm-6" id="other_expenses">
+                <div class="table-responsive">
                 <table class="table table-bordered text-nowrap">
                   <thead>
                     <?php if ($_SESSION['role'] == 'Admin'): ?>
@@ -887,6 +891,7 @@ if (isset($_POST['save'])) {
                     </tr>
                   </tfoot>
                 </table>
+                </div>
               </div>
             </div>
 
@@ -1748,70 +1753,94 @@ if (isset($_POST['save'])) {
 
 
     <script>
-    let markets = <?= json_encode($markets2) ?>;
-    let rowCount = 1;
+      let markets = <?= json_encode($markets2) ?>;
+      let rowCount = 1;
 
-    document.getElementById('addRow').addEventListener('click', function() {
-      rowCount++;
-
-      let marketOptions = '<option value="">--select--</option>';
-
-      markets.forEach(function(market) {
-        marketOptions += `<option value="${market.id}">${market.name}</option>`;
+      // Initialize Select2 on the very first row already present on page load
+      $(document).ready(function() {
+        $('.select-market').select2({
+            placeholder: "--select--",
+            allowClear: true,
+            width: '100%'
+        });
       });
-      let row = `
-            <tr>
-                <td>${rowCount}</td>
-                <td><input type="text" name="fullname[]" class="form-control" required></td>
-                <td>
-                    <select name="market[]" class="form-control" required>
-                    ${marketOptions}
-                </select>
-                </td>       
-                <td><input type="number" style="width: 66px;" name="total_animal[]" class="form-control"></td>
-                <td><input type="number" style="width: 66px;" name="death_animal[]" class="form-control"></td>
-                <td><input type="number" style="width: 66px;" name="surviving_animal[]" class="form-control"></td>
-            
-                <td><input type="number" name="first_payment[]" style="width: 85px;" class="form-control"></td>
-                <td><input type="number" name="second_payment[]" style="width: 85px;" class="form-control"></td>
-                <td><input type="number" name="third_payment[]" style="width: 85px;" class="form-control"></td>
-                <td><input type="number" name="total[]" class="form-control" style="width: 86px;"></td>
-                <td><button type="button" style="width: 32px;" class="btn btn-danger removeRow">X</button></td>
-            </tr>`;
-      document.getElementById('tableBody').insertAdjacentHTML('beforeend', row);
-    });
 
+      document.getElementById('addRow').addEventListener('click', function() {
+        rowCount++;
 
+        let marketOptions = '<option value="">--select--</option>';
+        markets.forEach(function(market) {
+          marketOptions += `<option value="${market.id}">${market.name}</option>`;
+        });
 
-    // Remove row
-    document.addEventListener('click', function(e) {
-      if (e.target.classList.contains('removeRow')) {
-        e.target.closest('tr').remove();
-      }
-    });
+        let row = `
+              <tr>
+                  <td>${rowCount}</td>
+                  <td><input type="text" name="fullname[]" class="form-control" required></td>
+                  <td>
+                      <select name="market[]" class="form-control select-market" required>
+                      ${marketOptions}
+                  </select>
+                  </td>       
+                  <td><input type="number" style="width: 66px;" name="total_animal[]" class="form-control"></td>
+                  <td><input type="number" style="width: 66px;" name="death_animal[]" class="form-control"></td>
+                  <td><input type="number" style="width: 66px;" name="surviving_animal[]" class="form-control"></td>
+              
+                  <td><input type="number" name="first_payment[]" style="width: 85px;" class="form-control"></td>
+                  <td><input type="number" name="second_payment[]" style="width: 85px;" class="form-control"></td>
+                  <td><input type="number" name="third_payment[]" style="width: 85px;" class="form-control"></td>
+                  <td><input type="number" name="total[]" class="form-control" style="width: 86px;"></td>
+                  <td><button type="button" style="width: 32px;" class="btn btn-danger removeRow">X</button></td>
+              </tr>`;
+
+        // 1. Insert the row into the table layout
+        document.getElementById('tableBody').insertAdjacentHTML('beforeend', row);
+
+        // 2. Find the last inserted row inside #tableBody using jQuery
+        let $newRow = $('#tableBody tr').last();
+
+        // 3. Initialize Select2 on the .select-market element within this exact row
+        $newRow.find('.select-market').select2({
+            placeholder: "--select--",
+            allowClear: true,
+            width: '100%'
+        });
+
+        // 4. Auto-focus and pop open the list instantly for typing
+        // $newRow.find('.select-market').select2('open');
+      });
+
+      // Remove row
+      document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('removeRow')) {
+          // Safely destroy the Select2 instance first before deleting the row
+          $(e.target).closest('tr').find('.select-market').select2('destroy');
+          e.target.closest('tr').remove();
+        }
+      });
     </script>
 
     <script>
-    // Auto calculate total for each row
-    document.addEventListener('input', function(e) {
+      // Auto calculate total for each row
+      document.addEventListener('input', function(e) {
 
-      if (
-        e.target.name === 'first_payment[]' ||
-        e.target.name === 'second_payment[]' ||
-        e.target.name === 'third_payment[]'
-      ) {
-        let row = e.target.closest('tr');
+        if (
+          e.target.name === 'first_payment[]' ||
+          e.target.name === 'second_payment[]' ||
+          e.target.name === 'third_payment[]'
+        ) {
+          let row = e.target.closest('tr');
 
-        let first = parseFloat(row.querySelector('[name="first_payment[]"]').value) || 0;
-        let second = parseFloat(row.querySelector('[name="second_payment[]"]').value) || 0;
-        let third = parseFloat(row.querySelector('[name="third_payment[]"]').value) || 0;
+          let first = parseFloat(row.querySelector('[name="first_payment[]"]').value) || 0;
+          let second = parseFloat(row.querySelector('[name="second_payment[]"]').value) || 0;
+          let third = parseFloat(row.querySelector('[name="third_payment[]"]').value) || 0;
 
-        let total = first + second + third;
+          let total = first + second + third;
 
-        row.querySelector('[name="total[]"]').value = total;
-      }
+          row.querySelector('[name="total[]"]').value = total;
+        }
 
-    });
+      });
     </script>
 
     <script>
@@ -2331,4 +2360,17 @@ if (isset($_POST['save'])) {
 
       $('#modeldiary').modal('show');
     });
+    </script>
+
+    <script>
+      $(document).ready(function() {
+    // Initialize Select2 with a placeholder and clear button
+    $('.select-market').select2({
+        placeholder: "--select market--",
+        allowClear: true,
+        width: '100%'
+    });
+
+   
+});
     </script>
