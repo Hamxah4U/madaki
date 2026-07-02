@@ -1,10 +1,11 @@
 <?php
+
   require 'Database.php';
   if($_SERVER['REQUEST_METHOD'] == 'POST'){
     $errors = [];
     $success = [];
     $unit = trim($_POST['unit']); 
-    $agent = trim($_POST['agent']);
+    $agent = (!empty($_POST['agent']) && trim($_POST['agent']) !== '') ? trim($_POST['agent']) : null;
 
 
 
@@ -19,9 +20,9 @@
       $errors['unit'] = 'Market name is required!';
     }
 
-    if(empty($agent )){
-      $errors['agent'] = 'Agent is required!';
-    }
+    // if(empty($agent )){
+    //   $errors['agent'] = 'Agent is required!';
+    // }
 
     if(empty($errors)){
       session_start();
