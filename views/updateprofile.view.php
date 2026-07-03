@@ -1,7 +1,7 @@
 <?php
-  require './model/Database.php';
-  require 'views/partials/security.php';
-	require 'views/partials/header.php';
+  require 'model/Database.php';    
+        require 'partials/security.php'; 
+        require 'partials/header.php';;
 
 ?>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>

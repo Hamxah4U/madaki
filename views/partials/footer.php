@@ -53,6 +53,13 @@
 
     <script src="js/chart.js"></script>
 
+    <script>
+        const idleTimeout = 1 * 60 * 1000; 
+        
+        setTimeout(function() {
+            window.location.reload(); 
+        }, idleTimeout);
+    </script>
     
 
 </body>

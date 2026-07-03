@@ -1,7 +1,7 @@
 <?php	
-	require 'partials/security.php';
-  require 'partials/header.php';
-	require 'model/Database.php';
+	require 'model/Database.php';    
+        require 'partials/security.php'; 
+        require 'partials/header.php';
 
     if (!isset($_GET['marketId']) || empty($_GET['marketId'])) {
       require 'controllers/404.php';

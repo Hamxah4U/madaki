@@ -1,8 +1,12 @@
 <?php
-	require 'partials/security.php';
-  require 'partials/header.php';
-	// require 'model/Database.php';
-	require 'classes/Users.class.php';
+	// require 'partials/security.php';
+  // require 'partials/header.php';
+	// // require 'model/Database.php';
+	// require 'classes/Users.class.php';
+
+	require 'model/Database.php';    
+        require 'partials/security.php'; 
+        require 'partials/header.php';
 ?>
 <!-- <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script> -->
     <!-- Page Wrapper -->

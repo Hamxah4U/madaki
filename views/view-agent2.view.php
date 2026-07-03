@@ -1,8 +1,8 @@
 
 <?php
-	require 'partials/security.php';
-  require 'partials/header.php';
-  require 'model/Database.php';
+	require 'model/Database.php';    
+        require 'partials/security.php'; 
+        require 'partials/header.php';
 
   if(!isset($_GET['id']) || empty($_GET['id'])) {
     require 'controllers/404.php';
