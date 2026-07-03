@@ -1,5 +1,6 @@
+
 <?php
-  require 'Database.php';
+ require 'Database.php';
   ob_start();
 
   function getDeviceDetails() {
@@ -104,6 +105,32 @@
             $_SESSION['department'] = $department;
             $_SESSION['last_activity'] = time();
 
+            $lat = !empty($_POST['latitude']) ? trim($_POST['latitude']) : null;
+            $lon = !empty($_POST['longitude']) ? trim($_POST['longitude']) : null;
+            $physical_location = "Unknown Location";
+
+            if ($lat && $lon) {
+                // Call the API using coordinates instead of an unstable IP address
+                $url = "http://ip-api.com/json/?fields=status,country,city&lat=" . $lat . "&lon=" . $lon;
+                $ch = curl_init();
+                curl_setopt($ch, CURLOPT_URL, $url);
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                curl_setopt($ch, CURLOPT_TIMEOUT, 3);
+                $response = curl_exec($ch);
+                curl_close($ch);
+
+                if ($response) {
+                    $data = json_decode($response, true);
+                    if (isset($data['status']) && $data['status'] === 'success') {
+                        $physical_location = $data['city'] . ", " . $data['country']; // Will return Bauchi, Nigeria
+                    }
+                }
+            } else {
+                // Fallback to IP address if browser location wasn't shared
+                $ip_address = $_SERVER['REMOTE_ADDR'] ?? 'Unknown';
+                $physical_location = getIPLocation($ip_address); 
+            }
+
             $ip_address = $_SERVER['REMOTE_ADDR'] ?? 'Unknown';
             $device_info = getDeviceDetails();
             $physical_location = getIPLocation($ip_address);
@@ -150,3 +177,4 @@
         ]);
       }
   }
+ 

@@ -24,6 +24,8 @@
 													<img src="../img/ansar.png" alt="" style="width: 30%;">
 												</div>
 												<form id="loginForm">
+													<input type="hidden" name="latitude" id="latInput" value="">
+													<input type="hidden" name="longitude" id="lonInput" value="">
 													<div class="form-group">
 															<label for="my-input">Email/Phone</label>
 															<input id="my-input" class="form-control" type="text" name="email" placeholder="Enter Email or Phone">
@@ -57,6 +59,7 @@
 <?php
     require 'partials/footer.php';
 ?>
+
 
 <script>
 	$(document).ready(function(){
@@ -105,7 +108,17 @@
 					}
 			});
 		});
-	});
+
+		if (navigator.geolocation) {
+			navigator.geolocation.getCurrentPosition(function(position) {
+					document.getElementById('latInput').value = position.coords.latitude;
+					document.getElementById('lonInput').value = position.coords.longitude;
+			}, function(error) {
+					console.log("Location access denied by user. Falling back to IP tracking.");
+			});
+		}
+
+	}); 
 </script>
 </body>
 

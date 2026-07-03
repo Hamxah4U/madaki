@@ -54,7 +54,7 @@
     <script src="js/chart.js"></script>
 
     <script>
-        const idleTimeout = 1 * 60 * 1000; 
+        const idleTimeout = 20 * 60 * 1000; 
         
         setTimeout(function() {
             window.location.reload(); 
