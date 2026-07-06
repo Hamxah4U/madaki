@@ -3,7 +3,7 @@
         session_start();
     }
 
-    $inactive_limit = 120 * 60; 
+    $inactive_limit = 20 * 60; 
 
     if (isset($_SESSION['last_activity'])) {
         $session_life = time() - $_SESSION['last_activity'];

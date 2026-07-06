@@ -42,6 +42,7 @@ if($_SERVER['REQUEST_METHOD'] === 'POST'){
       ]);
 
       if($result){
+            logUserActivity('CREATE', 'users table', "New agent: $agent_name.");
         $success['message'] = 'Agent added successfully';
       }
     }

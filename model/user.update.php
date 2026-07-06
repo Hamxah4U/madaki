@@ -43,6 +43,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
       $result = $stmt->execute();
       if($result){
         // $success['message'] = 'Record updated!';
+        logUserActivity('UPDATE', 'users table', "updated user info: $fname.");
         echo json_encode([
         'status' => true,
         'success' => ['message' => 'User successfully updated.']

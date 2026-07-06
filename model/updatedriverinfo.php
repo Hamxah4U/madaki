@@ -30,6 +30,7 @@ if(isset($_POST['driverID'])){
   ]);
 
   if($result){
+    logUserActivity('UPDATE', 'transportation table', "updated driver info: $driverID.");
     echo json_encode([
       'status' => true,
       'message' => 'Driver info updated successfully'

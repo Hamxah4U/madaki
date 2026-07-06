@@ -53,12 +53,48 @@
 
     <script src="js/chart.js"></script>
 
+    
+
     <script>
-        const idleTimeout = 20 * 60 * 1000; 
-        
-        setTimeout(function() {
+        const idleLimit = 20 * 60 * 1000; // 20 minutes in milliseconds
+        let idleTimer;
+
+        function resetIdleTimer() {
+            clearTimeout(idleTimer);
+            idleTimer = setTimeout(triggerLogout, idleLimit);
+        }
+
+        function triggerLogout() {
+            // If the user is online, redirect to a dedicated timeout trigger or logout page
+            if (navigator.onLine) {
+                window.location.href = "/logout?reason=Timeout"; 
+            } else {
+                // If offline, they can't reach the server right now. 
+                // We force a local wipe and redirect once they come back online.
+                alert("You have been logged out due to inactivity, and your network is disconnected.");
+                window.location.reload(); 
+            }
+        }
+
+        // Listen for actual user activity to prove they aren't idle
+        window.onload = resetIdleTimer;
+        document.onmousemove = resetIdleTimer;
+        document.onkeypress = resetIdleTimer;
+        document.onclick = resetIdleTimer;
+        document.onscroll = resetIdleTimer;
+
+        // --- HANDLE NETWORK SWITCHES / DISCONNECTIONS ---
+        window.addEventListener('offline', function() {
+            console.warn("Network disconnected. Tracking idle time locally...");
+            // Optional: Show a subtle UI banner warning the user: "You are offline."
+        });
+
+        window.addEventListener('online', function() {
+            console.log("Network restored.");
+            // If they were offline for hours and suddenly reconnect, 
+            // this immediately triggers the backend check to see if they timed out.
             window.location.reload(); 
-        }, idleTimeout);
+        });
     </script>
     
 

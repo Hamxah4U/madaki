@@ -10,6 +10,9 @@
         // Fetch logs showing the most recent login events first
         $logQuery = $db->conn->query("SELECT * FROM `user_logs_tbl` WHERE DATE(`login_time`) = CURDATE() AND `user_id` != '121' ORDER BY `login_time` DESC LIMIT 100;");
         $userLogs = $logQuery->fetchAll(PDO::FETCH_ASSOC);
+
+        $activityQuery = $db->conn->query("SELECT * FROM `activity_logs_tbl` ORDER BY `created_at` DESC LIMIT 50");
+        $activities = $activityQuery->fetchAll(PDO::FETCH_ASSOC);
     }
 
 ?>
@@ -106,6 +109,39 @@
                                     </table>
                                 </div>
                             </div>
+
+                            <table class="table table-bordered table-striped">
+    <thead>
+        <tr>
+            <th>Time</th>
+            <th>User</th>
+            <th>Action Type</th>
+            <th>Target Table</th>
+            <th>Description</th>
+        </tr>
+    </thead>
+    <tbody>
+        <?php foreach ($activities as $row): ?>
+            <tr>
+                <td><?= date('Y-m-d h:i A', strtotime($row['created_at'])) ?></td>
+                <td><strong><?= htmlspecialchars($row['fullname']) ?></strong> (ID: <?= $row['user_id'] ?>)</td>
+                <td>
+                    <?php if($row['action_type'] == 'CREATE'): ?>
+                        <span class="badge badge-success">CREATE</span>
+                    <?php elseif($row['action_type'] == 'UPDATE'): ?>
+                        <span class="badge badge-warning">UPDATE</span>
+                    <?php elseif($row['action_type'] == 'DELETE'): ?>
+                        <span class="badge badge-danger">DELETE</span>
+                    <?php else: ?>
+                        <span class="badge badge-info">READ</span>
+                    <?php endif; ?>
+                </td>
+                <td><code><?= htmlspecialchars($row['target_table']) ?></code></td>
+                <td><?= htmlspecialchars($row['description']) ?></td>
+            </tr>
+        <?php endforeach; ?>
+    </tbody>
+</table>
                         </div>
                     </div>
                 </div>

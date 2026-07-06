@@ -164,7 +164,15 @@
 $(document).ready(function(){
 
     // Open modal and set driver ID
-    $('.btn-warning').click(function(){
+    // $('.btn-warning').click(function(){
+
+    //     let driverID = $(this).data('id');
+
+    //     $('#driverID').val(driverID);
+
+    // });
+
+    $('#driverTable').on('click', '.btn-warning', function(){
 
         let driverID = $(this).data('id');
 

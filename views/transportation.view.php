@@ -119,7 +119,6 @@
 <?php
     $statusList = $db->conn->prepare("SELECT * FROM `status`");
     $statusList->execute();
-
 ?>
 
 <div class="modal fade" id="modelStatus" tabindex="-1" role="dialog">
@@ -159,84 +158,92 @@
 </div>
 
 <script>
-$(document).ready(function(){
+    $(document).ready(function(){
 
-    // Open modal and set driver ID
-    $('.btn-warning').click(function(){
+        // Open modal and set driver ID
+       /*  $('.btn-warning').click(function(){
 
-        let driverID = $(this).data('id');
+            let driverID = $(this).data('id');
 
-        $('#driverID').val(driverID);
+            $('#driverID').val(driverID);
 
-    });
+        }); */
+
+        $('#driverTable').on('click', '.btn-warning', function(){
+
+            let driverID = $(this).data('id');
+
+            $('#driverID').val(driverID);
+
+        });
 
 
-    // Submit form
-    $('#statusForm').submit(function(e){
+        // Submit form
+        $('#statusForm').submit(function(e){
 
-        e.preventDefault();
+            e.preventDefault();
 
-        // clear old errors
-        $('#errorStatus').text('');
+            // clear old errors
+            $('#errorStatus').text('');
 
-        $.ajax({
+            $.ajax({
 
-            url: 'model/updatestatus.php',
-            type: 'POST',
-            data: $(this).serialize(),
-            dataType: 'json',
+                url: 'model/updatestatus.php',
+                type: 'POST',
+                data: $(this).serialize(),
+                dataType: 'json',
 
-            success: function(response){
+                success: function(response){
 
-                if(response.status == true){
+                    if(response.status == true){
 
-                    Swal.mixin({
-                        toast: true,
-                        position: "top-end",
-                        showConfirmButton: false,
-                        timer: 3000,
-                        timerProgressBar: true,
-                        didOpen: (toast) => {
-                            toast.onmouseenter = Swal.stopTimer;
-                            toast.onmouseleave = Swal.resumeTimer;
+                        Swal.mixin({
+                            toast: true,
+                            position: "top-end",
+                            showConfirmButton: false,
+                            timer: 3000,
+                            timerProgressBar: true,
+                            didOpen: (toast) => {
+                                toast.onmouseenter = Swal.stopTimer;
+                                toast.onmouseleave = Swal.resumeTimer;
+                            }
+                            }).fire({
+                            icon: "success",
+                            title: response.success.message
+                        });
+
+                        $('#modelStatus').modal('hide');
+
+                        $('#statusForm')[0].reset();
+
+                        setTimeout(() => {
+
+                            location.reload();
+
+                        }, 3000);
+
+                    }else{
+
+                        if(response.errors.status){
+
+                            $('#errorStatus').text(response.errors.status);
+
                         }
-                        }).fire({
-                        icon: "success",
-                        title: response.success.message
-                    });
-
-                    $('#modelStatus').modal('hide');
-
-                    $('#statusForm')[0].reset();
-
-                    setTimeout(() => {
-
-                        location.reload();
-
-                    }, 3000);
-
-                }else{
-
-                    if(response.errors.status){
-
-                        $('#errorStatus').text(response.errors.status);
 
                     }
 
+                },
+
+                error: function(xhr){
+
+                    console.log(xhr.responseText);
+
                 }
 
-            },
-
-            error: function(xhr){
-
-                console.log(xhr.responseText);
-
-            }
+            });
 
         });
 
     });
-
-});
 </script>
 

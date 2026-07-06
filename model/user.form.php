@@ -55,7 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
   if(empty($errors)){
     try{
-      $db = new Database();
+      // $db = new Database();
       $stmt = $db->conn->prepare('INSERT INTO `users_tbl` (`Fullname`,`Email`,`Phone`,`UserPassword`,`Department`,`Role`) VALUES (:fname, :email, :phone, :pass ,:department, :userrole) ');
       $stmt->bindParam(':fname', $fname, PDO::PARAM_STR);
       $stmt->bindParam(':email', $email, PDO::PARAM_STR);
@@ -66,6 +66,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
       $result = $stmt->execute();
 
       if ($result) {
+        logUserActivity('CREATE', 'users table', "Added a new user named '$fname'.");
         $success['message'] = 'User successfully added, and email sent.';
 
         // Send Email

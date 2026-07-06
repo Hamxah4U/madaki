@@ -16,9 +16,9 @@ $records = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 $transport_id = (int)$_GET['id'];
 $stmt = $db->conn->prepare("SELECT u.Fullname AS agentname, u.Phone AS agentphone, t.agent, t.deliverydate, t.balance, t.first_payment, t.second_payment, t.third_payment, yan_waju, amount_per_animal, t.driver_name, t.bossno, t.driver_amount,other_cost FROM transportation_expenses te
-        LEFT JOIN transportation t ON t.id = te.transportation_id
-        LEFT JOIN users_tbl u ON u.userID = t.agent 
-        WHERE transportation_id = :id LIMIT 1");
+    LEFT JOIN transportation t ON t.id = te.transportation_id
+    LEFT JOIN users_tbl u ON u.userID = t.agent 
+    WHERE transportation_id = :id LIMIT 1");
 $stmt->execute(['id' => $transport_id]);
 $driverInfo = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -71,6 +71,7 @@ $ro = ($_SESSION['role'] == 'Agent') ? 'readonly' : '';
 if (isset($_POST['save'])) {
     // UPDATE (single row edit)
     if (!empty($_POST['edit_id'])) {
+      $fname = $_POST['fullname'];
 
         $stmt = $db->conn->prepare(" UPDATE transportation_expenses SET
                 fullname = :fullname,
@@ -93,6 +94,8 @@ if (isset($_POST['save'])) {
             'market' => $_POST['market'][0],
             'id'       => $_POST['edit_id']
         ]);
+        logUserActivity('UPDATE', 'transportation_expenses table', "Updated expense for Transportation ID: $transport_id");
+
     } else {
 
         $stmt = $db->conn->prepare("
@@ -129,6 +132,9 @@ if (isset($_POST['save'])) {
                 'third'        => $_POST['third_payment'][$key] ?? null,
                 'market'       => $_POST['market'][$key] ?? null,
             ]);
+
+            logUserActivity('CREATE', 'transportation_expenses table', "New customer: $name.");
+
         }
     }
     echo "

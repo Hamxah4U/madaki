@@ -54,7 +54,9 @@ if($_SERVER['REQUEST_METHOD'] === 'POST'){
         ':other_cost' => $other_cost
       ]);
 
+
       if($result){
+        logUserActivity('CREATE', 'transportation table', "Added a new driver named '$driver_name'.");
         $success['message'] = 'Driver added successfully';
       }
     }

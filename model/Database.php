@@ -35,3 +35,43 @@
     $phone = '07051383610';
     
 ?>
+
+
+
+
+
+
+
+
+
+
+
+<?php
+    function logUserActivity($action_type, $target_table, $description) {
+    global $db; // Pulls the global $db instance automatically
+
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+
+    $userID = $_SESSION['userID'] ?? 0;
+    $fullname = $_SESSION['fname'] ?? 'System/Guest';
+    $ip_address = $_SERVER['REMOTE_ADDR'] ?? 'Unknown';
+
+    try {
+        // Use $db->conn directly here
+        $stmt = $db->conn->prepare("INSERT INTO `activity_logs_tbl` (`user_id`, `fullname`, `action_type`, `target_table`, `description`, `ip_address`) 
+                                    VALUES (:user_id, :fullname, :action_type, :target_table, :description, :ip_address)");
+        $stmt->execute([
+            'user_id'      => $userID,
+            'fullname'     => $fullname,
+            'action_type'  => strtoupper($action_type),
+            'target_table' => $target_table,
+            'description'  => $description,
+            'ip_address'   => $ip_address
+        ]);
+    } catch (PDOException $e) {
+        error_log("Failed to write activity audit log: " . $e->getMessage());
+    }
+  }
+?>

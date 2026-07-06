@@ -29,7 +29,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST'){
 
     $stmt = $db->conn->prepare("
         UPDATE transportation 
-        SET status_id = :status_id 
+        SET status_id = :status_id, status_date = CURDATE() 
         WHERE id = :id
     ");
 

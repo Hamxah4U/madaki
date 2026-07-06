@@ -1,30 +1,20 @@
-
 <?php	
 		require 'model/Database.php';    
         require 'partials/security.php'; 
         require 'partials/header.php';
 ?>
 
-    <!-- Page Wrapper -->
-<div id="wrapper">
-    <!-- Sidebar -->
+    <div id="wrapper">
     <?php require 'partials/sidebar.php' ?>
 
-    <!-- End of Sidebar -->
-
-    <!-- Content Wrapper -->
     <div id="content-wrapper" class="d-flex flex-column">
 
-        <!-- Main Content -->
         <div id="content">
 
-            <!-- Topbar -->
             <?php
                 require 'partials/nav.php';
             ?>
-            <!-- Begin Page Content -->
-
-					<div class="container-fluid">                     
+            <div class="container-fluid">                     
 						<div class="row mb-4">
 							<div class="col-md-12 col-lg-12">
 								<div class="table-responsive">
@@ -35,68 +25,137 @@
                             <th>#</th>
                             <th>Driver Name</th>
                             <th>Agent</th>
-                            <th>Yan waju</th>
-                            <th>Delivery Date</th>
-                            <th>Driver Cost (₦)</th>
-                            <th>Cost per Animal (₦)</th>
-                            <!-- <th>Date</th> -->
+                            <th>Yan waju</th>                           
+                            <th>Other Paid Bal. (₦)</th>                            
                             <th>Action</th>
                           </tr>
                         </thead>
-                        <tbody>
+                       
                         <?php
-                            $stmt = $db->query('SELECT * FROM transportation LEFT JOIN users_tbl u ON `agent` = u.userID WHERE status_id = 3 ORDER BY `id` DESC');
+                            $stmt = $db->query("SELECT 
+                                COALESCE(e_total.total_other_exp, 0) AS total_other_exp, 
+                                t.amount_per_animal, 
+                                COALESCE(SUM(tx.surviving_animal), 0) AS total_surving_animal, 
+                                t.id AS TID, 
+                                t.status_date, 
+                                COALESCE(SUM(tx.total), 0) AS total_paid,  
+                                u.Fullname, 
+                                tx.transportation_id, 
+                                t.driver_name, 
+                                t.yan_waju 
+                            FROM transportation_expenses tx 
+                            LEFT JOIN transportation t ON t.id = tx.transportation_id 
+                            LEFT JOIN users_tbl u ON u.userID = t.agent
+                            LEFT JOIN (
+                                SELECT driver_id, SUM(amount) AS total_other_exp
+                                FROM expenses 
+                                WHERE status = 'other_exp'
+                                GROUP BY driver_id
+                            ) e_total ON e_total.driver_id = t.id
+                            WHERE t.status_id = 3
+                            GROUP BY tx.transportation_id, t.status_date
+                            ORDER BY u.Fullname ASC, t.status_date DESC;");
+                            
                             $drivers = $stmt->fetchAll(PDO::FETCH_ASSOC);
-                            foreach($drivers as $index => $driver):
                         ?>
 
-                        <tr class="clickable-row" data-href="/transportationexp?id=<?= $driver['id'] ?>">
-                            <td><?= $index + 1 ?></td>                            
-                            <td>
-                                <?= $driver['driver_name'] ?><br/>
-                            </td>
-                            <td><?= $driver['Fullname'] ?></td>
-                            <td><?= $driver['yan_waju'] ?></td>
-                            <td><?= $driver['deliverydate'] ?></td>
-                            <td><?= number_format($driver['driver_amount']) ?></td>
-                            <td><?=number_format( $driver['amount_per_animal']) ?></td>
-                            <!-- <td><?php // $driver['date_record'] ?></td> -->
-                            <td>
-                              <button 
-                                    type="button"
-                                    class="btn btn-warning"
-                                    data-toggle="modal"
-                                    data-target="#modelStatus"
-                                    data-id="<?= $driver['id'] ?>"
-                                    >
-                                    <strong>Status</strong>
-                                </button> |
-                                
-                                <a href="/transportationexp?id=<?= $driver['id'] ?>" class="btn btn-primary">View</a> |
-                                <a href="/edittransportation?id=<?= $driver['id'] ?>" class="btn btn-info">Edit</a> 
-                            </td>
-                        </tr>
-                        <?php endforeach ?>
-                        </tbody>
+                        <tbody>
+<?php
+    $currentCategory = ""; 
+    $serialNumber = 1; 
+    $subTotalOPB = 0; // Tracks the subtotal calculation per group
+    $isFirstRow = true;
+
+    foreach($drivers as $driver):
+        $formattedDate = !empty($driver['status_date']) ? date('Y-m-d', strtotime($driver['status_date'])) : 'No Date';
+        $categoryKey = $driver['Fullname'] . " - " . $formattedDate;
+
+        // Row Math Calculations
+        $totalOtherExp = $driver['total_other_exp'];
+        $totalPaid = $driver['total_paid'];
+        $OPB =  $totalPaid - $totalOtherExp;
+
+        // Check if we are changing groups
+        if ($currentCategory !== $categoryKey): 
+            
+            // If it's not the first record, print the sub-total for the PREVIOUS group
+            if (!$isFirstRow): 
+?>
+                <tr class="table-light font-weight-bold text-right text-dark">
+                    <td colspan="4">Sub-total:</td>
+                    <td class="text-left text-danger"><strong>₦ <?= number_format($subTotalOPB); ?></strong></td>
+                    <td></td>
+                </tr>
+<?php 
+                // Reset subtotal counter for the new category block
+                $subTotalOPB = 0; 
+            endif;
+
+            $currentCategory = $categoryKey;
+            $isFirstRow = false;
+?>
+            <tr class="table-secondary font-weight-bold">
+                <td colspan="6" class="text-dark py-2">
+                    <i class="fas fa-user-tie mr-1"></i> <?= htmlspecialchars($driver['Fullname']) ?> 
+                    <span class="badge badge-primary ml-2"><i class="fas fa-calendar-alt"></i> <?= $formattedDate ?></span>
+                </td>
+            </tr>
+<?php 
+        endif; 
+
+        // Add to active group running sub-total
+        $subTotalOPB += $OPB;
+?>
+
+        <tr class="clickable-row" data-href="/transportationexp?id=<?= $driver['TID'] ?>">
+            <td><?= $serialNumber++ ?></td>                            
+            <td><?= htmlspecialchars($driver['driver_name']) ?></td>
+            <td><?= htmlspecialchars($driver['Fullname']) ?></td>
+            <td><?= htmlspecialchars($driver['yan_waju']) ?></td>
+           
+            <td>
+                <strong><?= number_format($OPB); ?></strong>
+            </td>
+           
+            <td>
+              <button 
+                    type="button"
+                    class="btn btn-warning btn-sm"
+                    data-toggle="modal"
+                    data-target="#modelStatus"
+                    data-id="<?= $driver['TID'] ?>"
+                    >
+                    <strong>Status</strong>
+                </button> |
+                
+                <a href="/transportationexp?id=<?= $driver['TID'] ?>" class="btn btn-primary btn-sm">View</a> |
+                <a href="/edittransportation?id=<?= $driver['TID'] ?>" class="btn btn-info btn-sm">Edit</a> 
+            </td>
+        </tr>
+<?php endforeach; ?>
+
+<?php 
+// Render the final trailing sub-total row for the very last category in the array
+if (!empty($drivers)): 
+?>
+    <tr class="table-light font-weight-bold text-right text-dark">
+        <td colspan="4">Sub-total:</td>
+        <td class="text-left text-danger">₦ <strong><?= number_format($subTotalOPB); ?></strong></td>
+        <td></td>
+    </tr>
+<?php endif; ?>
+</tbody>
+
+                      
                       </table>
                     </div>
 								</div>
 						</div>    
 					</div>       
 	 </div>
-        <!-- End of Main Content -->
-<?php
+        <?php
     require 'partials/footer.php';
 ?>
-
-<script>   
-  $(document).ready(function(){
-      $('#driverTable').DataTable({
-          pageLength: 20
-      });
-  });
-</script>
-
 
 <script>
     document.querySelectorAll(".clickable-row").forEach(row => {
@@ -161,84 +220,82 @@
 </div>
 
 <script>
-$(document).ready(function(){
+    $(document).ready(function(){
 
-    // Open modal and set driver ID
-    $('.btn-warning').click(function(){
+        // Open modal and set driver ID
+        $('#driverTable').on('click', '.btn-warning', function(){
 
-        let driverID = $(this).data('id');
+            let driverID = $(this).data('id');
 
-        $('#driverID').val(driverID);
+            $('#driverID').val(driverID);
 
-    });
+        });
 
+        // Submit form
+        $('#statusForm').submit(function(e){
 
-    // Submit form
-    $('#statusForm').submit(function(e){
+            e.preventDefault();
 
-        e.preventDefault();
+            // clear old errors
+            $('#errorStatus').text('');
 
-        // clear old errors
-        $('#errorStatus').text('');
+            $.ajax({
 
-        $.ajax({
+                url: 'model/updatestatus.php',
+                type: 'POST',
+                data: $(this).serialize(),
+                dataType: 'json',
 
-            url: 'model/updatestatus.php',
-            type: 'POST',
-            data: $(this).serialize(),
-            dataType: 'json',
+                success: function(response){
 
-            success: function(response){
+                    if(response.status == true){
 
-                if(response.status == true){
+                        Swal.mixin({
+                            toast: true,
+                            position: "top-end",
+                            showConfirmButton: false,
+                            timer: 3000,
+                            timerProgressBar: true,
+                            didOpen: (toast) => {
+                                toast.onmouseenter = Swal.stopTimer;
+                                toast.onmouseleave = Swal.resumeTimer;
+                            }
+                            }).fire({
+                            icon: "success",
+                            title: response.success.message
+                        });
 
-                    Swal.mixin({
-                        toast: true,
-                        position: "top-end",
-                        showConfirmButton: false,
-                        timer: 3000,
-                        timerProgressBar: true,
-                        didOpen: (toast) => {
-                            toast.onmouseenter = Swal.stopTimer;
-                            toast.onmouseleave = Swal.resumeTimer;
+                        $('#modelStatus').modal('hide');
+
+                        $('#statusForm')[0].reset();
+
+                        setTimeout(() => {
+
+                            location.reload();
+
+                        }, 3000);
+
+                    }else{
+
+                        if(response.errors.status){
+
+                            $('#errorStatus').text(response.errors.status);
+
                         }
-                        }).fire({
-                        icon: "success",
-                        title: response.success.message
-                    });
-
-                    $('#modelStatus').modal('hide');
-
-                    $('#statusForm')[0].reset();
-
-                    setTimeout(() => {
-
-                        location.reload();
-
-                    }, 3000);
-
-                }else{
-
-                    if(response.errors.status){
-
-                        $('#errorStatus').text(response.errors.status);
 
                     }
 
+                },
+
+                error: function(xhr){
+
+                    console.log(xhr.responseText);
+
                 }
 
-            },
-
-            error: function(xhr){
-
-                console.log(xhr.responseText);
-
-            }
+            });
 
         });
 
     });
-
-});
 </script>
-
