@@ -132,10 +132,13 @@
                   </tbody>
                 </table>
               </div>
-              <button type="button" class="btn btn-success" id="addRow">Add Animal</button>
-              <br><br>
+             
+                <button type="button" class="btn btn-success" id="addRow">Add Animal</button>
+             
+              <br /> <br/>
               <!-- Admin can submit or update -->
               <button type="submit" name="save" class="btn btn-primary" id="saveBtn">Submit</button>
+              
             </form>
           </div>
           <div class="mb-3">
@@ -774,6 +777,9 @@
         return;
       }
 
+      let $submitBtn = $("#saveBtn");
+      $submitBtn.prop("disabled", true).text("Saving...");
+
       // If validation passed → AJAX submit
       let isUpdate = $("#edit_id").val() !== "";
       $.ajax({
@@ -932,6 +938,8 @@
           .text("Update")
           .removeClass("btn-primary")
           .addClass("btn-info");
+
+          $("#addRow").hide();
 
         // Clear old rows
         $("#tableBody").html("");
