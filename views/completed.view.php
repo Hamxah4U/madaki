@@ -27,13 +27,14 @@
                             <!-- <th>Agent</th> -->
                             <th>Yan waju</th>                           
                             <th>Other Paid Bal. (₦)</th>   
-                            <th>Other Cost</th>                         
+                            <th>Other Cost (₦)</th>   
+                            <th>GGT (₦)</th>                      
                             <th>Action</th>
                           </tr>
                         </thead>
                        
                         <?php
-                            $stmt = $db->query("SELECT 
+                            /* $stmt = $db->query("SELECT 
                                 COALESCE(e_total.total_other_exp, 0) AS total_other_exp, t.other_cost, 
                                 t.amount_per_animal, 
                                 COALESCE(SUM(tx.surviving_animal), 0) AS total_surving_animal, 
@@ -55,7 +56,52 @@
                             ) e_total ON e_total.driver_id = t.id
                             WHERE t.status_id = 3
                             GROUP BY tx.transportation_id, t.status_date
-                            ORDER BY u.Fullname ASC, t.status_date DESC;");
+                            ORDER BY u.Fullname ASC, t.status_date DESC;"); */
+                            $stmt = $db->query("SELECT                            
+                                t.other_cost, 
+                                t.driver_amount,
+                                COALESCE(e_other.total_other_exp, 0) AS total_other_exp, 
+                                COALESCE(e_exp.total_exp, 0) AS total_exp, -- Now available cleanly if you need to display it
+                                t.amount_per_animal, 
+                                COALESCE(SUM(tx.surviving_animal), 0) AS total_surving_animal, 
+                                t.id AS TID, 
+                                t.status_date, 
+                                COALESCE(SUM(tx.total), 0) AS total_paid,  
+                                u.Fullname, 
+                                tx.transportation_id,
+                                t.driver_name, 
+                                t.yan_waju 
+                            FROM transportation_expenses tx 
+                            LEFT JOIN transportation t ON t.id = tx.transportation_id 
+                            LEFT JOIN users_tbl u ON u.userID = t.agent
+                            -- Changed alias name here to e_other
+                            LEFT JOIN (
+                                SELECT driver_id, SUM(amount) AS total_other_exp
+                                FROM expenses 
+                                WHERE status = 'other_exp'
+                                GROUP BY driver_id
+                            ) e_other ON e_other.driver_id = t.id
+                            -- Changed alias name here to e_exp
+                            LEFT JOIN (
+                                SELECT driver_id, SUM(amount) AS total_exp
+                                FROM expenses 
+                                WHERE status = 'exp'
+                                GROUP BY driver_id
+                            ) e_exp ON e_exp.driver_id = t.id
+                            WHERE t.status_id = 3
+                            GROUP BY 
+                                tx.transportation_id, 
+                                t.id, 
+                                t.other_cost, 
+                                t.driver_amount, 
+                                e_other.total_other_exp, 
+                                e_exp.total_exp,
+                                t.amount_per_animal, 
+                                t.status_date, 
+                                u.Fullname, 
+                                t.driver_name, 
+                                t.yan_waju
+                            ");
                             
                             $drivers = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         ?>
@@ -66,6 +112,8 @@
                                 $serialNumber = 1; 
                                 $subTotalOPB = 0; // Tracks the subtotal calculation per group
                                 $isFirstRow = true;
+                                $otheExp = 0;
+                                $otherCost = 0;
 
                                 foreach($drivers as $driver):
                                     $formattedDate = !empty($driver['status_date']) ? date('Y-m-d', strtotime($driver['status_date'])) : 'No Date';
@@ -75,6 +123,7 @@
                                     $totalOtherExp = $driver['total_other_exp'];
                                     $totalPaid = $driver['total_paid'];
                                     $OPB =  $totalPaid - $totalOtherExp;
+                                    $GGTF = 0;
 
                                     // Check if we are changing groups
                                     if ($currentCategory !== $categoryKey): 
@@ -85,15 +134,14 @@
                             <tr class="table-light font-weight-bold text-right text-dark">
                                 <td colspan="4">Sub-total:</td>
                                 <td class="text-left text-danger"><strong>₦ <?= number_format($subTotalOPB); ?></strong></td>
-                                <td></td>
                             </tr>
                                 <?php 
-                                                // Reset subtotal counter for the new category block
-                                                $subTotalOPB = 0; 
-                                            endif;
+                                        // Reset subtotal counter for the new category block
+                                        $subTotalOPB = 0; 
+                                    endif;
 
-                                            $currentCategory = $categoryKey;
-                                            $isFirstRow = false;
+                                    $currentCategory = $categoryKey;
+                                    $isFirstRow = false;
                                 ?>
                             <tr class="table-secondary font-weight-bold">
                                 <td colspan="6" class="text-dark py-2">
@@ -106,6 +154,8 @@
 
                                         // Add to active group running sub-total
                                         $subTotalOPB += $OPB;
+                                        $otherCost +=  $driver['other_cost'];
+
                                 ?>
 
                             <tr class="clickable-row" data-href="/transportationexp?id=<?= $driver['TID'] ?>">
@@ -117,6 +167,15 @@
                                     <strong><?= number_format($OPB); ?></strong>
                                 </td>
                                 <td><?= $driver['other_cost'] ? number_format($driver['other_cost'], 2) : '0.00' ?></td>
+                                <td>
+                                    <?php
+                                        $cost = $driver['driver_amount'] ? $driver['driver_amount'] : '0';
+                                        $ex = $driver['total_exp'] ? $driver['total_exp'] : '0';
+                                        $GGT = $cost + $ex;
+                                        $GGTF += $GGT;
+                                    ?>
+                                    <strong><?= number_format($GGT, 2) ?></strong>
+                                </td>
                                 <td>
                                 <button 
                                         type="button"
@@ -140,9 +199,11 @@
                                 if (!empty($drivers)): 
                             ?>
                             <tr class="table-light font-weight-bold text-right text-dark">
-                                <td colspan="4"><strong>Sub-total:</strong></td>
+                                <td colspan="3"><strong>Sub-total:</strong></td>
                                 <td class="text-left text-danger"><strong>₦<?= number_format($subTotalOPB); ?></strong></td>
-                                <td></td>
+                                <td>₦<?= number_format($otherCost) ?></td>
+                               <td></td>
+                               <td></td>
                             </tr>
                             <?php endif; ?>
                         </tbody>                      
