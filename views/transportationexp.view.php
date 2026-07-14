@@ -1,5 +1,5 @@
 <?php
-  require 'model/Database.php';    
+  require_once 'model/Database.php';    
   require 'partials/security.php'; 
   require 'partials/header.php';
 
@@ -509,7 +509,14 @@ $next = $nextStmt->fetch(PDO::FETCH_ASSOC);
                     </td>
                     <td class="no-print">
                       <?php if ($_SESSION['role'] == 'Admin' || $_SESSION['role'] == 'Agent'): ?>
-                      <button class="btn btn-sm btn-info receiptBtn" data-id="<?= $row['id'] ?>" data-phone="<?= $row['phone'] ?>" data-tid="<?= $transport_id ?>" data-bs-toggle="modal" data-bs-target="#receiptModal">Receipt</button>
+                      <button class="btn btn-sm btn-info receiptBtn" 
+                        data-id="<?= $row['id'] ?>"
+                        data-phone="<?= $row['phone'] ?>" 
+                        data-tid="<?= $transport_id ?>" 
+                        data-toggle="modal"
+                        data-target="#receiptModal">
+                        Receipt
+                      </button>
                       <?php if($row['status_id'] == 1 && $_SESSION['role'] == 'Agent') : ?>
                       <a href="?id=<?= $transport_id ?>&edit=<?= $row['id'] ?>" class="btn btn-sm btn-primary">Receive Money</a>
                       <?php elseif($_SESSION['role'] == 'Admin') : ?>
@@ -557,16 +564,16 @@ $next = $nextStmt->fetch(PDO::FETCH_ASSOC);
                   <tr>
                     <td colspan="12">&nbsp;</td>
                   </tr>
-                  <tr style="background:#343a40; color:#fff;">
+                  <tr class="bg-primary text-white">
                     <td colspan="12"><strong>Duplicate Names Details (Across Markets)</strong></td>
                   </tr>
 
                   <?php foreach ($nameRecords as $name => $rows): ?>
                   <?php if (count($rows) > 1): ?>
-
-                  <tr style="background:#6c757d; color:#fff;">
+                  
+                  <tr class="bg-secondary text-white" data-duplicate-group="<?= htmlspecialchars($name, ENT_QUOTES) ?>">
                     <td colspan="12">
-                      <strong><?= $name ?></strong>
+                     
                       <button type="button" class="btn btn-dark btn-sm printDuplicate no-print" onclick="printDuplicateSection('<?= htmlspecialchars($name, ENT_QUOTES) ?>')">Print</button>
                     </td>
                   </tr>
@@ -899,477 +906,845 @@ $next = $nextStmt->fetch(PDO::FETCH_ASSOC);
     </div>
 </div>
 
-<div class="modal fade" id="receiptModal" tabindex="-1">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Payment Receipt</h5>
-        <button type="button" class="close text-danger" data-dismiss="modal"><span>&times;</span></button>
-      </div>
-      <div class="modal-body" id="receiptContent">Loading...</div>
-      <div class="modal-footer">
-        <button onclick="printReceipt()" class="btn btn-primary">Print and share receipt</button>
-      </div>
-    </div>
-  </div>
-</div>
+    <div class="modal fade" id="receiptModal" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content">
 
-<div class="modal fade" id="modeldiary" tabindex="-1">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header bg-primary text-white">
-        <h5 class="modal-title"><i class="fas fa-comment"></i> Add Diary</h5>
-        <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
-      </div>
-      <div class="modal-body">
-        <form id="diarForm">
-          <input type="hidden" name="id" id="diary_id">
-          <div class="form-group">
-            <label><strong>Diary</strong></label>
-            <textarea id="diary_text" name="diary_text" class="form-control" rows="4" required></textarea>
+          <div class="modal-header">
+            <h5 class="modal-title">Payment Receipt</h5>
+            <!-- <button type="button" class="btn-close" data-bs-dismiss="modal"><span>&times;</span></button> -->
+            <button type="button" class="close text-danger" data-dismiss="modal"><span>&times;</span></button>
           </div>
-          <button type="button" id="diary-btn" class="btn btn-success btn-block">Save Note</button>
-        </form>
+
+          <div class="modal-body" id="receiptContent">
+            Loading...
+          </div>
+
+          <div class="modal-footer">
+            <button onclick="printReceipt()" class="btn btn-primary">Print and share receipt</button>
+            <!-- <button onclick="shareWhatsApp()" class="btn btn-success">WhatsApp</button> -->
+            <!-- <button class="btn btn-success" id="whatsappPdfBtn">
+                            WhatsApp PDF <span id="phoneLabel"></span>
+                        </button> -->
+          </div>
+        </div>
       </div>
     </div>
-  </div>
-</div>
+
+<!-- mpdal -->
+    <div class="modal fade" id="modeldiary" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content">
+
+          <div class="modal-header bg-primary text-white">
+            <h5 class="modal-title">
+              <i class="fas fa-comment"></i> Add Diary
+            </h5>
+            <button type="button" class="close text-white" data-dismiss="modal">
+              <span>&times;</span>
+            </button>
+          </div>
+
+          <div class="modal-body">
+            <form id="diarForm">
+              <input type="hidden" name="id" id="diary_id">
+
+              <div class="form-group">
+                <label><strong>Diary</strong></label>
+                <textarea id="diary_text" name="comment" class="form-control" rows="4" required></textarea>
+                <small class="text-danger" id="errorComment"></small>
+              </div>
+
+              <input type="hidden" name="transport_id" value="<?= $transport_id ?? '' ?>">
+
+              <div class="modal-footer p-0 pt-3">
+                <button type="submit" class="btn btn-success">
+                  <i class="fas fa-save"></i> Save Diary
+                </button>
+                
+              </div>
+
+            </form>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="modelotherComment" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content">
+
+          <div class="modal-header bg-primary text-white">
+            <h5 class="modal-title">
+              <i class="fas fa-comment"></i> Add Other Comment
+            </h5>
+            <button type="button" class="close text-white" data-dismiss="modal">
+              <span>&times;</span>
+            </button>
+          </div>
+
+          <div class="modal-body">
+            <form id="othercommentForm">
+
+              <input type="hidden" name="id" id="othercomment_id">
+
+              <div class="form-group">
+                <label><strong>Other Comment</strong></label>
+                <textarea name="comment" id="othercomment_text" class="form-control" rows="4" required></textarea>
+                <small class="text-danger" id="errorComment"></small>
+              </div>
+
+              <input type="hidden" name="transport_id" value="<?= $transport_id ?? '' ?>">
+
+              <div class="modal-footer p-0 pt-3">
+                <button type="submit" class="btn btn-success" id="othercomment-btn" data-mode="add">
+                  <i class="fas fa-save"></i> Save Comment
+                </button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                  Close
+                </button>
+              </div>
+
+            </form>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="modelComment" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content">
+
+          <div class="modal-header bg-primary text-white">
+            <h5 class="modal-title">
+              <i class="fas fa-comment"></i> Add Comment
+            </h5>
+            <button type="button" class="close text-white" data-dismiss="modal">
+              <span>&times;</span>
+            </button>
+          </div>
+
+          <div class="modal-body">
+            <form id="commentForm">
+              <input type="text" name="id" id="comment_id" hidden>
+
+              <div class="form-group">
+                <label><strong>Amount</strong></label>
+                <input type="number" id="commentAmount" name="amount" class="form-control" required>
+              </div>
+              <div class="form-group">
+                <label><strong>Comment</strong></label>
+                <textarea name="comment" id="comment_text" class="form-control" required></textarea>
+                <small class="text-danger" id="errorComment"></small>
+              </div>
+
+              <input type="hidden" name="transport_id" value="<?= $transport_id ?? '' ?>">
+
+              <div class="modal-footer p-0 pt-3">
+                <button type="submit" class="btn btn-success" id="comment-btn" data-mode="add">
+                  <i class="fas fa-save"></i> Save Comment
+                </button>
+               
+              </div>
+
+            </form>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="modalUser" tabindex="-1" role="dialog" aria-labelledby="modelTitleId"
+      aria-hidden="true">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title text-primary"><strong>Expenses Window</strong></h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true" class="text-danger"><strong>&times;</strong></span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <form id="userForm">
+              <input type="text" name="id" id="edit_id" hidden>
+              <input type="text" name="userID" id="userID" value="<?= $transport_id ?>" hidden>
+              <input type="text" name="agent_id" id="" hidden>
+
+              <div class="form-group">
+                <label for="my-input">Amount</label>
+                <input id="Amount" class="form-control" type="number" name="amount">
+                <small class="text-danger" id="errorAmount"></small>
+              </div>
+
+              <div class="form-group">
+                <label for="my-input">Reason</label>
+                <textarea name="reason" id="reason" class="form-control" rows="3"></textarea>
+                <small class="text-danger" id="errorReason"></small>
+              </div>
+              <button type="submit" class="btn btn-primary" id="action-btn"
+                data-mode='add'><strong>Save</strong></button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="modelOtherExpenses" tabindex="-1" role="dialog" aria-labelledby="modelTitleId"
+      aria-hidden="true">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title text-primary"><strong>Other Expenses</strong></h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true" class="text-danger">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <form id="formUnit">
+              <input type="text" name="id" id="edit_id" hidden>
+
+              <input type="text" name="userID" id="userID" value="<?= $transport_id ?>" hidden>
+
+              <input type="text" name="agent_id" id="" hidden>
+
+
+
+              <div class="form-group">
+                <label for="my-input">Amount</label>
+                <input id="amount" class="form-control" type="number" name="amount" required>
+                <small class="text-danger" id="errorAmount"></small>
+              </div>
+              <input type="hidden" name="transport_id" value="<?= $transport_id ?? '' ?>">
+              <div class="form-group">
+                <label for="my-input">Reason</label>
+                <textarea name="reason" id="reason" class="form-control" rows="3" required></textarea>
+                <small class="text-danger" id="errorReason"></small>
+              </div>
+              <button type="submit" class="btn btn-primary" id="action-btn"
+                data-mode='add'><strong>Save</strong></button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
 
 <?php require 'partials/footer.php'; ?>
 
-<script type="text/javascript">
-$(document).ready(function() {
-    let rowCount = 1;
-    
-    // 🔸 RESTORE DYNAMIC ADD PERSON ROWS LISTENERS 
-    $('#addRow').click(function() {
-        rowCount++;
-        let newRow = `
-        <tr>
-            <td>${rowCount}</td>
-            <td><input type="text" name="fullname[]" class="form-control" required></td>
-            <td>
-                <select name="market[]" class="form-control select-market" required>
-                    <option value="">--select--</option>
-                    <?php foreach ($markets2 as $market2): ?>
-                    <option value="<?= $market2['id'] ?>"><?= htmlspecialchars($market2['name']) ?></option>
-                    <?php endforeach; ?>
-                </select>
-            </td>
-            <td><input type="number" name="total_animal[]" style="width: 66px;" class="form-control"></td>
-            <td><input type="number" name="death_animal[]" style="width: 66px;" class="form-control"></td>
-            <td><input type="number" name="surviving_animal[]" style="width: 66px;" class="form-control"></td>
-            <td><input type="number" name="first_payment[]" style="width: 85px;" class="form-control"></td>
-            <td><input type="number" name="second_payment[]" style="width: 85px;" class="form-control"></td>
-            <td><input type="number" name="third_payment[]" style="width: 85px;" class="form-control"></td>
-            <td><input type="number" name="total[]" style="width: 86px;" class="form-control"></td>
-            <td><button style="width: 32px;" type="button" class="btn btn-danger removeRow">X</button></td>
-        </tr>`;
-        $('#tableBody').append(newRow);
-    });
+<!-- model receipt -->
+<script>
+	    let currentId = '';
+	    let currentPhone = '';
+	    let currentTid = '';
 
-    $(document).on('click', '.removeRow', function() {
-        if ($('#tableBody tr').length > 1) {
-            $(this).closest('tr').remove();
-        } else {
-            alert("At least one row must remain.");
-        }
-    });
-});
+	    document.querySelectorAll('.receiptBtn').forEach(btn => {
+	      btn.addEventListener('click', function() {
 
-// 🔸 HANDLE PRINTING FOR UNIQUE DUPLICATE NAMES
-function printDuplicateSection(customerName) {
-    // 1. Extract the table header
-    let headerRow = document.querySelector("#printGroupMarket thead") || document.querySelector("table thead");
-    let tableHeader = headerRow ? headerRow.innerHTML : "";
-    
-    // 2. Extract rows matching the specific duplicate customer group
-    let rowsHtml = "";
-    let matchingRows = document.querySelectorAll(`tr[data-duplicate-group="${customerName}"]`);
-    
-    matchingRows.forEach(row => {
-        rowsHtml += row.outerHTML;
-    });
+	        currentId = this.dataset.id;
+	        currentPhone = this.dataset.phone;
+	        currentTid = this.dataset.tid;
 
-    // Fallback if no matching data is found
-    if (!rowsHtml) {
-        alert("Could not extract printable data matching: " + customerName);
-        return;
-    }
+	        // Show phone in modal
+	        document.getElementById('phoneLabel').innerText = currentPhone;
 
-    // 3. Extract the top header content if it exists
-    let headArea = document.getElementById("headArea") ? document.getElementById("headArea").innerHTML : "";
+	        // Load receipt content via AJAX
+	        fetch('/receipt?id=' + currentId + '&tid=' + currentTid)
+	          .then(res => res.text())
+	          .then(data => {
+	            document.getElementById('receiptContent').innerHTML = data;
+	          });
+	      });
+	    });
 
-    // 4. Wrap the data into a structured layout
-    let fullContent = `
-        <div class="print-header">
-            ${headArea}
-            <h3>Group: ${customerName}</h3>
-        </div>
-        <table>
-            <thead>
-                ${tableHeader}
-            </thead>
-            <tbody>
-                ${rowsHtml}
-            </tbody>
-        </table>
-    `;
+      document.querySelectorAll('.receiptBtn').forEach(button => {
+	      button.addEventListener('click', function() {
+	        let id = this.dataset.id;
+	        let tid = this.dataset.tid;
 
-    // 5. Open the print window using the reliable mobile approach
-    var win = window.open('', '', 'width=900,height=650');
+	        fetch(`/receipt-modal?id=${id}&tid=${tid}`)
+	          .then(response => response.text())
+	          .then(data => {
+	            document.getElementById('receiptContent').innerHTML = data;
+	            let modal = new bootstrap.Modal(document.getElementById('receiptModal'));
+	            modal.show();
+	          });
+	      });
+	    });
 
-    win.document.write(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>Duplicate Group Ledger - ${customerName}</title>
-            <style>
-                @page { size: A4; margin: 10mm; }
+      function printReceipt() {
+	      let content = document.getElementById('receiptPrintArea').innerHTML;
 
-                body {
-                    font-family: Arial, sans-serif;
-                    font-size: 14px;
-                    padding: 10px;
-                }
-
-                table {
-                    width: 100%;
-                    border-collapse: collapse;
-                    margin-bottom: 10px;
-                }
-
-                th, td {
-                    border: 1px solid #000;
-                    padding: 5px;
-                    text-align: left;
-                }
-
-                th {
-                    background: #f2f2f2;
-                }
-
-                .print-header {
-                    margin-bottom: 10px;
-                }
-
-                .print-header h3 {
-                    margin: 10px 0 0 0;
-                    font-size: 18px;
-                }
-
-                .no-print { display:none; }
-                .overpaid { background:#f8d7da; }
-                .table-success { background:#d4edda; }
-            </style>
-        </head>
-        <body>
-            ${fullContent}
-        </body>
-        </html>
-    `);
-
-    win.document.close();
-    win.focus();
-    win.print();
-}
-
-// 🔸 HANDLE PRINTING FOR MARKET GROUPS
-function printMarketSection(marketName) {
-    // 1. Extract the table header
-    let headerRow = document.querySelector("#printGroupMarket thead") || document.querySelector("table thead");
-    let tableHeader = headerRow ? headerRow.innerHTML : "";
-    
-    // 2. Extract only the rows matching the specific market
-    let rowsHtml = "";
-    let matchingRows = document.querySelectorAll(`tr[data-market-group="${marketName}"]`);
-    
-    matchingRows.forEach(row => {
-        rowsHtml += row.outerHTML;
-    });
-
-    // Fallback if no data is found
-    if (!rowsHtml) {
-        alert("Could not extract printable data for market: " + marketName);
-        return;
-    }
-
-    // 3. Extract the top head area content if it exists
-    let headArea = document.getElementById("headArea") ? document.getElementById("headArea").innerHTML : "";
-
-    // 4. Combine the extracted parts into a single structured table
-    let fullContent = `
-        <div class="print-header">
-            ${headArea}
-            <h3>Market: ${marketName}</h3>
-        </div>
-        <table>
-            <thead>
-                ${tableHeader}
-            </thead>
-            <tbody>
-                ${rowsHtml}
-            </tbody>
-        </table>
-    `;
-
-    // 5. Open the print window using your preferred mobile-friendly approach
-    var win = window.open('', '', 'width=900,height=650');
-
-    win.document.write(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>Market Summary Report - ${marketName}</title>
-            <style>
-                @page { size: A4; margin: 10mm; }
-
-                body {
-                    font-family: Arial, sans-serif;
-                    font-size: 14px;
-                    padding: 10px;
-                }
-
-                table {
-                    width: 100%;
-                    border-collapse: collapse;
-                    margin-bottom: 10px;
-                }
-
-                th, td {
-                    border: 1px solid #000;
-                    padding: 5px;
-                    text-align: left;
-                }
-
-                th {
-                    background: #f2f2f2;
-                }
-
-                .print-header {
-                    margin-bottom: 10px;
-                }
-
-                .print-header h3 {
-                    margin: 10px 0 0 0;
-                    font-size: 18px;
-                }
-
-                .no-print { display:none; }
-                .overpaid { background:#f8d7da; }
-                .table-success { background:#d4edda; }
-            </style>
-        </head>
-        <body>
-            ${fullContent}
-        </body>
-        </html>
-    `);
-
-    win.document.close();
-    win.focus();
-    win.print();
-}
-
-// Helper window layout function
-function openPrintWindow(title, headArea, labelText, tableHeader, rowsHtml) {
-    let printWindow = window.open('', '', 'height=750,width=1050');
-    printWindow.document.write('<html><head><title>' + title + '</title>');
-    
-    document.querySelectorAll('link[rel="stylesheet"]').forEach(link => {
-        printWindow.document.write('<link rel="stylesheet" href="' + link.href + '">');
-    });
-    
-    printWindow.document.write('<style>@media print { .no-print { display: none !important; } } body { padding: 30px; }</style>');
-    printWindow.document.write('</head><body>');
-    printWindow.document.write(headArea); 
-    printWindow.document.write('<br><h4 class="text-center" style="margin: 20px 0;">Summary Statement: <b>' + labelText + '</b></h4>');
-    printWindow.document.write('<table class="table table-bordered text-nowrap"><thead>' + tableHeader + '</thead><tbody>' + rowsHtml + '</tbody></table>');
-    printWindow.document.write('</body></html>');
-    printWindow.document.close();
-    
-    printWindow.onload = function() {
-        printWindow.focus();
-        printWindow.print();
-        printWindow.close();
-    };
-}
-
-// Existing fallback global triggers
-function printDiv(divName) {
-    // 1. Grab the content of the full print area
-    var content = document.getElementById(divName) ? document.getElementById(divName).innerHTML : "";
-    
-    if (!content) {
-        alert("Could not find the printable section: " + divName);
-        return;
-    }
-
-    // 2. Open the clean pop-up window setup for mobile
-    var win = window.open('', '', 'width=900,height=650');
-
-    win.document.write(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>Print All Documents</title>
-            <style>
-                @page { size: A4; margin: 10mm; }
-
-                body {
-                    font-family: Arial, sans-serif;
-                    font-size: 14px;
-                    padding: 10px;
-                }
-
-                table {
-                    width: 100%;
-                    border-collapse: collapse;
-                    margin-bottom: 10px;
-                }
-
-                th, td {
-                    border: 1px solid #000;
-                    padding: 5px;
-                    text-align: left;
-                }
-
-                th {
-                    background: #f2f2f2;
-                }
-
-                .print-header {
-                    margin-bottom: 10px;
-                }
-
-                .print-header h3 {
-                    margin: 0;
-                    font-size: 18px;
-                }
-
-                .no-print { display:none; }
-                .overpaid { background:#f8d7da; }
-                .table-success { background:#d4edda; }
-            </style>
-        </head>
-        <body>
-            ${content}
-        </body>
-        </html>
-    `);
-
-    win.document.close();
-    win.focus();
-    win.print();
-}
-
-function printHead(divName) {
-    // 1. Grab the content of the target area ('headArea')
-    var content = document.getElementById(divName) ? document.getElementById(divName).innerHTML : "";
-    
-    if (!content) {
-        alert("Could not find the printable section: " + divName);
-        return;
-    }
-
-    // 2. Open the clean window setup that works flawlessly on mobile browsers
-    var win = window.open('', '', 'width=900,height=650');
-
-    win.document.write(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>Print Document</title>
-            <style>
-                @page { size: A4; margin: 10mm; }
-
-                body {
-                    font-family: Arial, sans-serif;
-                    font-size: 14px;
-                    padding: 10px;
-                }
-
-                table {
-                    width: 100%;
-                    border-collapse: collapse;
-                    margin-bottom: 10px;
-                }
-
-                th, td {
-                    border: 1px solid #000;
-                    padding: 5px;
-                    text-align: left;
-                }
-
-                th {
-                    background: #f2f2f2;
-                }
-
-                .print-header {
-                    margin-bottom: 10px;
-                }
-
-                .print-header h3 {
-                    margin: 0;
-                    font-size: 18px;
-                }
-
-                .no-print { display:none; }
-                .overpaid { background:#f8d7da; }
-                .table-success { background:#d4edda; }
-            </style>
-        </head>
-        <body>
-            ${content}
-        </body>
-        </html>
-    `);
-
-    win.document.close();
-    win.focus();
-    win.print();
-}
-
-// Back-end binding modals handlers
-$(document).on('click', '.btn-edit-comment', function() {
-  let id = $(this).data('id');
-  let comment = $(this).data('comment');
-  let commentAmount = $(this).data('amount');
-
-  $('#comment_id').val(id);
-  $('#comment_text').val(comment);
-  $('#commentAmount').val(commentAmount);
-
-  $('#comment-btn').text('Update Comment').removeClass('btn-success').addClass('btn-info').data('mode', 'edit');
-  $('#modelComment').modal('show');
-});
-
-$(document).on('click', '.btn-edit-othercomment', function() {
-  let id = $(this).data('id');
-  let comment = $(this).data('comment');
-
-  $('#othercomment_id').val(id);
-  $('#othercomment_text').val(comment);
-
-  $('#othercomment-btn').text('Update Comment').removeClass('btn-success').addClass('btn-info').data('mode', 'edit');
-  $('#modelotherComment').modal('show');
-});
-
-$(document).on('click', '.btn-edit-diary', function() {
-  let id = $(this).data('id');
-  let comment = $(this).data('comment');
-
-  $('#diary_id').val(id);
-  $('#diary_text').val(comment);
-
-  $('#diary-btn').text('Update Diary').removeClass('btn-success').addClass('btn-info').data('mode', 'edit');
-  $('#modeldiary').modal('show');
-});
+	      let win = window.open('', '', 'width=700,height=700');
+	      win.document.write(`
+	            <html>
+	            <head>
+	                <title>Receipt</title>
+	                <style>
+	                    body { font-family: Arial; padding:20px; }
+	                    table { width:100%; border-collapse: collapse; }
+	                    th, td { border:1px solid #000; padding:6px; }
+	                </style>
+	            </head>
+	            <body onload="window.print();window.close();">
+	                ${content}
+	            </body>
+	            </html>
+	            `);
+	      win.document.close();
+	    }
 </script>
+<!-- model receipt -->
 
 
 <script>
- function expenses() {
+    $(document).ready(function() {
+      
+      // Function to completely clear validation messages and reset form
+      function resetDiaryForm() {
+          $('#diarForm')[0].reset();
+          $('#diary_id').val('');
+          $('#errorComment').text('');
+          
+          // Reset save button back to defaults
+          $('#diary-btn')
+              .text('Save Diary')
+              .removeClass('btn-info')
+              .addClass('btn-success')
+              .data('mode', 'add');
+              
+          $('.modal-title').html('<i class="fas fa-comment"></i> Add Diary');
+      }
+
+      // Reset when modal gets closed
+      $('#modeldiary').on('hidden.bs.modal', function () {
+          resetDiaryForm();
+      });
+
+      // Form Submission (Handles both Add & Edit)
+      $('#diarForm').on('submit', function(e) {
+          e.preventDefault();
+          
+          // Clear previous error messages
+          $('#errorComment').text('');
+
+          // Get current mode from the button data attribute
+          let currentMode = $('#diary-btn').data('mode') || 'add';
+          
+          // Serialize form values and append the current operation mode
+          let formData = $(this).serialize() + '&mode=' + currentMode;
+
+          $.ajax({
+              url: 'model/add_diary.php', // *** Make sure this path matches your file structure ***
+              type: 'POST',
+              dataType: 'JSON',
+              data: formData,
+              success: function(response) {
+                  if (response.status) {
+                      // Success notifications via SweetAlert (matching your other views)
+                      const Toast = Swal.mixin({
+                          toast: true,
+                          position: "top-end",
+                          showConfirmButton: false,
+                          timer: 2000
+                      });
+
+                      Toast.fire({
+                          icon: "success",
+                          title: response.success.message
+                      }).then(() => {
+                          location.reload(); // Reload page to view updates
+                      });
+
+                      $('#modeldiary').modal('hide');
+                      resetDiaryForm();
+                  } else {
+                      // Validation errors returned from PHP handler
+                      if (response.errors.comment) {
+                          $('#errorComment').text(response.errors.comment);
+                      }
+                      if (response.errors.general) {
+                          alert(response.errors.general);
+                      }
+                  }
+              },
+              error: function(xhr, status, error) {
+                  console.error("XHR response: ", xhr.responseText);
+                  alert('An error occurred while saving the diary: ' + error);
+              }
+          });
+      });
+
+      // Event handler when you click your table/list "Edit" button
+      // It populates the inputs and flips the form mode seamlessly
+      $(document).on('click', '.edit-diary-btn', function() {
+          let diaryId = $(this).data('id');
+          let diaryText = $(this).data('reason'); // Adjust data-attributes to whatever you name them in your list row
+
+          // Fill inputs
+          $('#diary_id').val(diaryId);
+          $('#diary_text').val(diaryText);
+
+          // Transform modal headers & save buttons to edit configuration
+          $('.modal-title').html('<i class="fas fa-edit"></i> Edit Diary');
+          $('#diary-btn')
+              .text('Update Diary')
+              .removeClass('btn-success')
+              .addClass('btn-info')
+              .data('mode', 'edit');
+
+          // Open the modal
+          $('#modeldiary').modal('show');
+      });
+  });
+</script>
+
+<script type="text/javascript">
+  $(document).ready(function() {
+      let rowCount = 1;
+      
+      // 🔸 RESTORE DYNAMIC ADD PERSON ROWS LISTENERS 
+      $('#addRow').click(function() {
+          rowCount++;
+          let newRow = `
+          <tr>
+              <td>${rowCount}</td>
+              <td><input type="text" name="fullname[]" class="form-control" required></td>
+              <td>
+                  <select name="market[]" class="form-control select-market" required>
+                      <option value="">--select--</option>
+                      <?php foreach ($markets2 as $market2): ?>
+                      <option value="<?= $market2['id'] ?>"><?= htmlspecialchars($market2['name']) ?></option>
+                      <?php endforeach; ?>
+                  </select>
+              </td>
+              <td><input type="number" name="total_animal[]" style="width: 66px;" class="form-control"></td>
+              <td><input type="number" name="death_animal[]" style="width: 66px;" class="form-control"></td>
+              <td><input type="number" name="surviving_animal[]" style="width: 66px;" class="form-control"></td>
+              <td><input type="number" name="first_payment[]" style="width: 85px;" class="form-control"></td>
+              <td><input type="number" name="second_payment[]" style="width: 85px;" class="form-control"></td>
+              <td><input type="number" name="third_payment[]" style="width: 85px;" class="form-control"></td>
+              <td><input type="number" name="total[]" style="width: 86px;" class="form-control"></td>
+              <td><button style="width: 32px;" type="button" class="btn btn-danger removeRow">X</button></td>
+          </tr>`;
+          $('#tableBody').append(newRow);
+      });
+
+      $(document).on('click', '.removeRow', function() {
+          if ($('#tableBody tr').length > 1) {
+              $(this).closest('tr').remove();
+          } else {
+              alert("At least one row must remain.");
+          }
+      });
+  });
+
+  // 🔸 HANDLE PRINTING FOR UNIQUE DUPLICATE NAMES
+  function printDuplicateSection(customerName) {
+      // 1. Extract the table header
+      let headerRow = document.querySelector("#printGroupMarket thead") || document.querySelector("table thead");
+      let tableHeader = headerRow ? headerRow.innerHTML : "";
+      
+      // 2. Extract rows matching the specific duplicate customer group
+      let rowsHtml = "";
+      let matchingRows = document.querySelectorAll(`tr[data-duplicate-group="${customerName}"]`);
+      
+      matchingRows.forEach(row => {
+          rowsHtml += row.outerHTML;
+      });
+
+      // Fallback if no matching data is found
+      if (!rowsHtml) {
+          alert("Could not extract printable data matching: " + customerName);
+          return;
+      }
+
+      // 3. Extract the top header content if it exists
+      let headArea = document.getElementById("headArea") ? document.getElementById("headArea").innerHTML : "";
+
+      // 4. Wrap the data into a structured layout  /*${headArea}*/
+      let fullContent = `
+          <div class="print-header">
+             <center><h1>BASHIR MADAKI TRANSPORTATION  RECEIPT</h1></center>
+              <h3>Group: ${customerName}</h3>
+              <table>
+                <tr>
+                    <th>Driver</th>
+                    <th>Yan Waju</th>
+                    <th>Motor No</th>
+                    <th>Date</th>
+                </tr>
+                <tr>
+                    <td><?= !empty($driverInfo['driver_name']) ? $driverInfo['driver_name'] : '' ?></td>
+                    <td><?= !empty($driverInfo['yan_waju']) ? $driverInfo['yan_waju'] : '' ?></td>
+                    <td><?= !empty($driverInfo['bossno']) ? $driverInfo['bossno'] : '' ?></td>
+                    <td><?= !empty($driverInfo['deliverydate']) ? $driverInfo['deliverydate'] : '' ?></td>
+                </tr>
+              </table>
+          </div>
+          <table>
+              <thead>
+                  ${tableHeader}
+              </thead>
+              <tbody>
+                  ${rowsHtml}
+              </tbody>
+          </table>
+      `;
+
+      // 5. Open the print window using the reliable mobile approach
+      var win = window.open('', '', 'width=900,height=650');
+
+      win.document.write(`
+          <!DOCTYPE html>
+          <html>
+          <head>
+              <title>Duplicate Group Ledger - ${customerName}</title>
+              <style>
+                  @page { size: A4; margin: 10mm; }
+
+                  body {
+                      font-family: Arial, sans-serif;
+                      font-size: 14px;
+                      padding: 10px;
+                  }
+
+                  table {
+                      width: 100%;
+                      border-collapse: collapse;
+                      margin-bottom: 10px;
+                  }
+
+                  th, td {
+                      border: 1px solid #000;
+                      padding: 5px;
+                      text-align: left;
+                  }
+
+                  th {
+                      background: #f2f2f2;
+                  }
+
+                  .print-header {
+                      margin-bottom: 10px;
+                  }
+
+                  .print-header h3 {
+                      margin: 10px 0 0 0;
+                      font-size: 18px;
+                  }
+
+                  .no-print { display:none; }
+                  .overpaid { background:#f8d7da; }
+                  .table-success { background:#d4edda; }
+              </style>
+          </head>
+          <body>
+              ${fullContent}
+          </body>
+          </html>
+      `);
+
+      win.document.close();
+      win.focus();
+      win.print();
+  }
+
+  // 🔸 HANDLE PRINTING FOR MARKET GROUPS
+  function printMarketSection(marketName) {
+      // 1. Extract the table header
+      let headerRow = document.querySelector("#printGroupMarket thead") || document.querySelector("table thead");
+      let tableHeader = headerRow ? headerRow.innerHTML : "";
+      
+      // 2. Extract only the rows matching the specific market
+      let rowsHtml = "";
+      let matchingRows = document.querySelectorAll(`tr[data-market-group="${marketName}"]`);
+      
+      matchingRows.forEach(row => {
+          rowsHtml += row.outerHTML;
+      });
+
+      // Fallback if no data is found
+      if (!rowsHtml) {
+          alert("Could not extract printable data for market: " + marketName);
+          return;
+      }
+
+      // 3. Extract the top head area content if it exists
+      let headArea = document.getElementById("headArea") ? document.getElementById("headArea").innerHTML : "";
+
+      // 4. Combine the extracted parts into a single structured table
+      let fullContent = `
+          <div class="print-header">
+              ${headArea}
+              <h3>Market: ${marketName}</h3>
+          </div>
+          <table>
+              <thead>
+                  ${tableHeader}
+              </thead>
+              <tbody>
+                  ${rowsHtml}
+              </tbody>
+          </table>
+      `;
+
+      // 5. Open the print window using your preferred mobile-friendly approach
+      var win = window.open('', '', 'width=900,height=650');
+
+      win.document.write(`
+          <!DOCTYPE html>
+          <html>
+          <head>
+              <title>Market Summary Report - ${marketName}</title>
+              <style>
+                  @page { size: A4; margin: 10mm; }
+
+                  body {
+                      font-family: Arial, sans-serif;
+                      font-size: 14px;
+                      padding: 10px;
+                  }
+
+                  table {
+                      width: 100%;
+                      border-collapse: collapse;
+                      margin-bottom: 10px;
+                  }
+
+                  th, td {
+                      border: 1px solid #000;
+                      padding: 5px;
+                      text-align: left;
+                  }
+
+                  th {
+                      background: #f2f2f2;
+                  }
+
+                  .print-header {
+                      margin-bottom: 10px;
+                  }
+
+                  .print-header h3 {
+                      margin: 10px 0 0 0;
+                      font-size: 18px;
+                  }
+
+                  .no-print { display:none; }
+                  .overpaid { background:#f8d7da; }
+                  .table-success { background:#d4edda; }
+              </style>
+          </head>
+          <body>
+              ${fullContent}
+          </body>
+          </html>
+      `);
+
+      win.document.close();
+      win.focus();
+      win.print();
+  }
+
+  // Helper window layout function
+  function openPrintWindow(title, headArea, labelText, tableHeader, rowsHtml) {
+      let printWindow = window.open('', '', 'height=750,width=1050');
+      printWindow.document.write('<html><head><title>' + title + '</title>');
+      
+      document.querySelectorAll('link[rel="stylesheet"]').forEach(link => {
+          printWindow.document.write('<link rel="stylesheet" href="' + link.href + '">');
+      });
+      
+      printWindow.document.write('<style>@media print { .no-print { display: none !important; } } body { padding: 30px; }</style>');
+      printWindow.document.write('</head><body>');
+      printWindow.document.write(headArea); 
+      printWindow.document.write('<br><h4 class="text-center" style="margin: 20px 0;">Summary Statement: <b>' + labelText + '</b></h4>');
+      printWindow.document.write('<table class="table table-bordered text-nowrap"><thead>' + tableHeader + '</thead><tbody>' + rowsHtml + '</tbody></table>');
+      printWindow.document.write('</body></html>');
+      printWindow.document.close();
+      
+      printWindow.onload = function() {
+          printWindow.focus();
+          printWindow.print();
+          printWindow.close();
+      };
+  }
+
+  // Existing fallback global triggers
+  function printDiv(divName) {
+      // 1. Grab the content of the full print area
+      var content = document.getElementById(divName) ? document.getElementById(divName).innerHTML : "";
+      
+      if (!content) {
+          alert("Could not find the printable section: " + divName);
+          return;
+      }
+
+      // 2. Open the clean pop-up window setup for mobile
+      var win = window.open('', '', 'width=900,height=650');
+
+      win.document.write(`
+          <!DOCTYPE html>
+          <html>
+          <head>
+              <title>Print All Documents</title>
+              <style>
+                  @page { size: A4; margin: 10mm; }
+
+                  body {
+                      font-family: Arial, sans-serif;
+                      font-size: 14px;
+                      padding: 10px;
+                  }
+
+                  table {
+                      width: 100%;
+                      border-collapse: collapse;
+                      margin-bottom: 10px;
+                  }
+
+                  th, td {
+                      border: 1px solid #000;
+                      padding: 5px;
+                      text-align: left;
+                  }
+
+                  th {
+                      background: #f2f2f2;
+                  }
+
+                  .print-header {
+                      margin-bottom: 10px;
+                  }
+
+                  .print-header h3 {
+                      margin: 0;
+                      font-size: 18px;
+                  }
+
+                  .no-print { display:none; }
+                  .overpaid { background:#f8d7da; }
+                  .table-success { background:#d4edda; }
+              </style>
+          </head>
+          <body>
+              ${content}
+          </body>
+          </html>
+      `);
+
+      win.document.close();
+      win.focus();
+      win.print();
+  }
+
+  function printHead(divName) {
+      // 1. Grab the content of the target area ('headArea')
+      var content = document.getElementById(divName) ? document.getElementById(divName).innerHTML : "";
+      
+      if (!content) {
+          alert("Could not find the printable section: " + divName);
+          return;
+      }
+
+      // 2. Open the clean window setup that works flawlessly on mobile browsers
+      var win = window.open('', '', 'width=900,height=650');
+
+      win.document.write(`
+          <!DOCTYPE html>
+          <html>
+          <head>
+              <title>Print Document</title>
+              <style>
+                  @page { size: A4; margin: 10mm; }
+
+                  body {
+                      font-family: Arial, sans-serif;
+                      font-size: 14px;
+                      padding: 10px;
+                  }
+
+                  table {
+                      width: 100%;
+                      border-collapse: collapse;
+                      margin-bottom: 10px;
+                  }
+
+                  th, td {
+                      border: 1px solid #000;
+                      padding: 5px;
+                      text-align: left;
+                  }
+
+                  th {
+                      background: #f2f2f2;
+                  }
+
+                  .print-header {
+                      margin-bottom: 10px;
+                  }
+
+                  .print-header h3 {
+                      margin: 0;
+                      font-size: 18px;
+                  }
+
+                  .no-print { display:none; }
+                  .overpaid { background:#f8d7da; }
+                  .table-success { background:#d4edda; }
+              </style>
+          </head>
+          <body>
+              ${content}
+          </body>
+          </html>
+      `);
+
+      win.document.close();
+      win.focus();
+      win.print();
+  }
+
+  // Back-end binding modals handlers
+  $(document).on('click', '.btn-edit-comment', function() {
+    let id = $(this).data('id');
+    let comment = $(this).data('comment');
+    let commentAmount = $(this).data('amount');
+
+    $('#comment_id').val(id);
+    $('#comment_text').val(comment);
+    $('#commentAmount').val(commentAmount);
+
+    $('#comment-btn').text('Update Comment').removeClass('btn-success').addClass('btn-info').data('mode', 'edit');
+    $('#modelComment').modal('show');
+  });
+
+  $(document).on('click', '.btn-edit-othercomment', function() {
+    let id = $(this).data('id');
+    let comment = $(this).data('comment');
+
+    $('#othercomment_id').val(id);
+    $('#othercomment_text').val(comment);
+
+    $('#othercomment-btn').text('Update Comment').removeClass('btn-success').addClass('btn-info').data('mode', 'edit');
+    $('#modelotherComment').modal('show');
+  });
+
+  $(document).on('click', '.btn-edit-diary', function() {
+    let id = $(this).data('id');
+    let comment = $(this).data('comment');
+
+    $('#diary_id').val(id);
+    $('#diary_text').val(comment);
+
+    $('#diary-btn').text('Update Diary').removeClass('btn-success').addClass('btn-info').data('mode', 'edit');
+    $('#modeldiary').modal('show');
+  });
+</script>
+
+<script>
+    function expenses() {
       var content = document.getElementById('expenses').innerHTML;
       var win = window.open('', '', 'width=900,height=650');
 
@@ -1669,3 +2044,252 @@ $(document).on('click', '.btn-edit-diary', function() {
       win.print();
     }
 </script>
+
+<script>
+  function resetForm() {
+    $('#formUnit')[0].reset();
+    $('#errorAmount').text('');
+    $('#errorReason').text('');
+  }
+  $(document).ready(function() {
+    $('#formUnit').on('submit', function(e) {
+        e.preventDefault();
+        $.ajax({
+        url: 'model/other_exp.form.php',
+        dataType: 'JSON',
+        data: $(this).serialize(),
+        type: 'POST',
+        success: function(response) {
+            if (response.status) {
+            const Toast = Swal.mixin({
+                toast: true,
+                position: "top-end",
+                showConfirmButton: false,
+                timer: 2000
+            });
+
+            Toast.fire({
+                icon: "success",
+                title: response.success.message
+            }).then(() => {
+                location.reload(); // refresh page
+            });
+
+            $('#modelUnit').modal('hide');
+            resetForm();
+            } else {
+            alert('Failed to add expense. Please check your input.');
+            $('#errorAmount').text(response.errors.amount || '');
+            $('#errorReason').text(response.errors.reason || '');
+            }
+        },
+        error: function(xhr, status, error) {
+            alert('Error__:' + xhr + status + error);
+        }
+        });
+    });
+  });
+</script>
+
+
+<script>
+  function resetForm() {
+  $('#userForm')[0].reset();
+  $('#edit_id').val('');
+
+  $('#action-btn')
+      .text('Save')
+      .removeClass('btn-info')
+      .addClass('btn-primary')
+      .data('mode', 'add');
+
+  $('#errorAmount').text('');
+  $('#errorReason').text('');
+  }
+
+
+  $(document).ready(function() {
+  $('#userForm').on('submit', function(e) {
+      e.preventDefault();
+      const mode = $('#action-btn').data('mode');
+      // const mode = $('#action-btn').data('mode');
+      $.ajax({
+      url: 'model/expenses.form.php',
+      dataType: 'JSON',
+      // data: $(this).serialize(),
+      data: $(this).serialize() + '&mode=' + mode,
+      type: 'POST',
+      success: function(response) {
+          if (response.status === false) {
+          $('#errorAmount').text(response.errors.amount || '');
+          $('#errorReason').text(response.errors.reason || '');
+          } else {
+          const Toast = Swal.mixin({
+              toast: true,
+              position: "top-end",
+              showConfirmButton: false,
+              timer: 2000,
+              timerProgressBar: true,
+              didOpen: (toast) => {
+              toast.onmouseenter = Swal.stopTimer;
+              toast.onmouseleave = Swal.resumeTimer;
+              }
+          });
+          Toast.fire({
+              icon: "success",
+              title: response.success.message
+          }).then(() => {
+              location.reload(); // refresh page
+          });
+
+          // $('#usersTable').DataTable().ajax.reload();
+          $('#modalUser').modal('hide');
+          resetForm();
+          }
+      },
+      error: function(xhr, status, error) {
+          alert('Error: ' + xhr.status + ' - ' + error);
+      }
+      });
+  });
+
+  $('#modalUser').on('hidden.bs.modal', function() {
+      resetForm();
+  });
+  });
+</script>
+     
+<script>
+        // comment form submission commentForm othercommentForm
+        $('#diaryForm').on('submit', function(e) {
+        e.preventDefault();
+
+        let mode = $('#diary-btn').data('mode');
+
+        $.ajax({
+            url: 'model/add_diary.php',
+            type: 'POST',
+            dataType: 'JSON',
+            data: $(this).serialize() + '&mode=' + mode,
+
+            success: function(response) {
+            if (response.status) {
+
+                const Toast = Swal.mixin({
+                toast: true,
+                position: "top-end",
+                showConfirmButton: false,
+                timer: 2000
+                });
+
+                Toast.fire({
+                icon: "success",
+                title: response.success.message
+                }).then(() => {
+                location.reload();
+                });
+
+                $('#modeldiary').modal('hide');
+                resetDiaryForm();
+
+            } else {
+                $('#errorComment').text(response.errors.comment || '');
+            }
+            }
+        });
+        });
+        // other comment
+        $('#othercommentForm').on('submit', function(e) {
+        e.preventDefault();
+        let mode = $('#othercomment-btn').data('mode');
+        $.ajax({
+            url: 'model/add_othercomment.php',
+            dataType: 'JSON',
+            data: $(this).serialize() + '&mode=' + mode,
+            type: 'POST',
+            success: function(response) {
+            if (response.status) {
+                const Toast = Swal.mixin({
+                toast: true,
+                position: "top-end",
+                showConfirmButton: false,
+                timer: 2000
+                });
+
+                Toast.fire({
+                icon: "success",
+                title: response.success.message
+                }).then(() => {
+                location.reload(); // refresh page
+                });
+
+                $('#modelotherComment').modal('hide');
+                resetForm();
+            } else {
+                // alert('Failed to add expense. Please check your input.');
+                $('#errorReason').text(response.errors.reason || '');
+                $('#errorComment')
+            }
+            },
+            error: function(xhr, status, error) {
+            alert('Error__:' + xhr + status + error);
+            }
+        });
+        });
+
+        $(document).on('click', '.editExpenseBtn', function() {
+
+        let id = $(this).data('id');
+        let amount = $(this).data('amount');
+        let reason = $(this).data('reason');
+
+        $('#expense_id').val(id);
+        $('#Amount').val(amount);
+        $('#reason').val(reason);
+
+        $('#action-btn')
+            .text('Update')
+            .removeClass('btn-primary')
+            .addClass('btn-info')
+            .attr('data-mode', 'edit');
+        });
+        //comment
+        $('#commentForm').on('submit', function(e) {
+        e.preventDefault();
+        let mode = $('#comment-btn').data('mode');
+        $.ajax({
+            url: 'model/add_comment.php',
+            dataType: 'JSON',
+            data: $(this).serialize() + '&mode=' + mode,
+            type: 'POST',
+            success: function(response) {
+            if (response.status) {
+                const Toast = Swal.mixin({
+                toast: true,
+                position: "top-end",
+                showConfirmButton: false,
+                timer: 2000
+                });
+
+                Toast.fire({
+                icon: "success",
+                title: response.success.message
+                }).then(() => {
+                location.reload(); // refresh page
+                });
+
+                $('#modelComment').modal('hide');
+                resetForm();
+            } else {
+                // alert('Failed to add expense. Please check your input.');
+                $('#errorReason').text(response.errors.reason || '');
+            }
+            },
+            error: function(xhr, status, error) {
+            alert('Error__:' + xhr + status + error);
+            }
+        });
+        });
+        // });
+    </script>
+
