@@ -218,7 +218,7 @@ $next = $nextStmt->fetch(PDO::FETCH_ASSOC);
               <?php if ($_SESSION['role'] == 'Admin'): ?>
                 <?php if (!$editMode): ?>
                   <button type="button" class="btn btn-success" id="addRow">Add Person</button>
-                  <br><br>
+                 
                 <?php endif; ?>
                 <button type="submit" name="save" class="btn <?= $editMode ? 'btn-info' : 'btn-primary' ?>">
                   <?= $editMode ? 'Update' : 'Submit' ?>
@@ -1132,6 +1132,17 @@ $next = $nextStmt->fetch(PDO::FETCH_ASSOC);
 
 <?php require 'partials/footer.php'; ?>
 
+<script>
+  function initSelect2(selector) {
+      $(selector).select2({
+          placeholder: "--select--",
+          allowClear: true,
+          width: '100%'
+      });
+    }
+    initSelect2('.market-select, .select-market');
+</script>
+
 <!-- model receipt -->
 <script>
 	    let currentId = '';
@@ -1306,7 +1317,9 @@ $next = $nextStmt->fetch(PDO::FETCH_ASSOC);
       // 🔸 RESTORE DYNAMIC ADD PERSON ROWS LISTENERS 
       $('#addRow').click(function() {
           rowCount++;
-          let newRow = `
+          
+          // 1. Create the new row as a jQuery object
+          let $newRow = $(`
           <tr>
               <td>${rowCount}</td>
               <td><input type="text" name="fullname[]" class="form-control" required></td>
@@ -1326,8 +1339,13 @@ $next = $nextStmt->fetch(PDO::FETCH_ASSOC);
               <td><input type="number" name="third_payment[]" style="width: 85px;" class="form-control"></td>
               <td><input type="number" name="total[]" style="width: 86px;" class="form-control"></td>
               <td><button style="width: 32px;" type="button" class="btn btn-danger removeRow">X</button></td>
-          </tr>`;
-          $('#tableBody').append(newRow);
+          </tr>`);
+          
+          // 2. Append the new row to the table body
+          $('#tableBody').append($newRow);
+          
+          // 3. Find ONLY the select element in this specific new row and initialize Select2 on it
+          initSelect2($newRow.find('.select-market'));
       });
 
       $(document).on('click', '.removeRow', function() {

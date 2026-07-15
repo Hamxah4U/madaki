@@ -21,9 +21,9 @@
         LEFT JOIN market_3 m3 ON m3.id = mt.market_id
         LEFT JOIN department_tbl d ON d.deptID = mt.animal_id
         WHERE mt.market_code = :market_code
-        ORDER BY m3.name, mt.date_create, mt.sn_number
+        ORDER BY mt.date_create DESC, m3.name, mt.sn_number
         
-    ");  
+    ");  //ORDER BY m3.name, mt.date_create, mt.sn_number
 
     $stmtmarket->execute([
         ':market_code' => $code
@@ -104,7 +104,7 @@
                   </thead>
                   <tbody id="tableBody">
                     <tr>
-                      <td><input required type="number" name="number[]" style="width: 100px;" class="form-control"></td>
+                      <td><input required type="number" name="number[]" style="width: 100px" class="form-control"></td>
                       <td>
                         <select name="market_id[]" class="form-control market-select">
                           <option value="">--select market--</option>
@@ -132,22 +132,18 @@
                   </tbody>
                 </table>
               </div>
-             
-                <button type="button" class="btn btn-success" id="addRow">Add Animal</button>
-             
-              <br /> <br/>
-              <!-- Admin can submit or update -->
-              <button type="submit" name="save" class="btn btn-primary" id="saveBtn">Submit</button>
-              
+
+              <div class="d-flex align-items-center mb-3" style="gap: 10px;">
+                  <button type="button" class="btn btn-success" id="addRow">Add Animal</button>
+                  <input type="date" name="created_date[]" class="form-control" style="width: 220px;" required value="<?= $editData['date_create'] ?? null ?>">
+              </div>
+             <div class="d-flex align-items-center mb-3" style="gap: 10px;">
+                <button type="submit" name="save" class="btn btn-primary" id="saveBtn">Submit</button>
+                <button class="btn btn-dark no-print" onclick="printDiv('printArea')">Print Page</button>
+             </div>              
             </form>
           </div>
-          <div class="mb-3">
-            <br>
-            <button class="btn btn-dark no-print" onclick="printDiv('printArea')">
-              Print
-            </button>
-          </div>
-
+          
           <div class="print-container" id="printArea">
             <!-- Header -->
             <div class="print-header">
@@ -226,6 +222,7 @@
                   <td class="no-print">
                     <button type="button" class="btn btn-info btn-sm editBtn" data-id="<?= $rowmarket['id'] ?>"
                       data-animal="<?= $rowmarket['animal_id'] ?>" data-amount="<?= $rowmarket['amount'] ?>"
+                      data-date="<?= date('Y-m-d', strtotime($rowmarket['date_create'])) ?>"
                       data-market="<?= $rowmarket['market_id'] ?>" data-number="<?= $rowmarket['sn_number'] ?>">
                       Edit
                     </button>
@@ -247,7 +244,24 @@
                 <tr style="background:#f1f1f1; font-weight:bold;">
                   <td colspan="1">Grand Total</td>
                   <td>₦<?= number_format($grandTotal, 2) ?></td>
-                  <td colspan="2"></td>
+                  <td colspan="2">
+                    <?php
+                        $stmtEx = $db->conn->prepare('SELECT COALESCE(SUM(`amount`), 0) AS tt_ex FROM `expenses` WHERE `status` = \'exp\' AND driver_id = :id AND agent_id IS NOT NULL AND agent_id != 0;');
+                        $stmtEx->execute(['id' => $_GET['marketId']]);
+                        $agentExpenses = $stmtEx->fetch(PDO::FETCH_ASSOC);
+
+                        $over_or_short = $agentExpenses['tt_ex'] - $grandTotal;
+                        // echo $over_or_short < 0 ? 'Over' : 'Short';
+                        if($over_or_short < 0) {
+                            echo '<span class="text-danger">Over: ₦' . number_format(abs($over_or_short), 2) . '</span>';
+                        } elseif ($over_or_short > 0) {
+                            echo '<span class="text-success">Short: ₦' . number_format($over_or_short, 2) . '</span>';
+                        } else {
+                            echo '<span class="text-primary">Balanced</span>';
+                        }
+
+                    ?>
+                  </td>
                 </tr>
 
               </tbody>
@@ -932,6 +946,7 @@
         let amount = $(this).data("amount");
         let market = $(this).data("market");
         let number = $(this).data("number");
+        let dateVal = $(this).data("date");
         $("button[name='save']").text("Update");
 
         $("#saveBtn")
