@@ -72,6 +72,20 @@ $routes = [
     '/manage-agent' => 'controllers/manageagent.php',
     '/view-agent' => 'controllers/view-agent2.php',
 
+    '/approved-exp' => 'controllers/approved-exp.php',
+
+
+
+
+
+
+
+
+
+
+
+
+
 
   '/unit' => 'controllers/unit.php',
   '/product' => 'controllers/product.php',

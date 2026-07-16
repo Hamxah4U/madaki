@@ -10,6 +10,21 @@
     $code = (int)$_GET['marketId'];
 
   
+    // $stmtmarket = $db->conn->prepare("
+    //     SELECT 
+    //         d.Department AS animal_name,
+    //         m3.name AS currentMarketName,
+    //         m.market_name AS oldmarket,
+    //         mt.*
+    //     FROM market_transaction mt
+    //     LEFT JOIN market m ON m.id = mt.market_code 
+    //     LEFT JOIN market_3 m3 ON m3.id = mt.market_id
+    //     LEFT JOIN department_tbl d ON d.deptID = mt.animal_id
+    //     WHERE mt.market_code = :market_code
+    //     ORDER BY mt.date_create DESC, m3.name, mt.sn_number
+        
+    // ");  //ORDER BY m3.name, mt.date_create, mt.sn_number
+
     $stmtmarket = $db->conn->prepare("
         SELECT 
             d.Department AS animal_name,
@@ -21,9 +36,8 @@
         LEFT JOIN market_3 m3 ON m3.id = mt.market_id
         LEFT JOIN department_tbl d ON d.deptID = mt.animal_id
         WHERE mt.market_code = :market_code
-        ORDER BY mt.date_create DESC, m3.name, mt.sn_number
-        
-    ");  //ORDER BY m3.name, mt.date_create, mt.sn_number
+        ORDER BY m3.name ASC, mt.date_create DESC, mt.sn_number ASC
+    ");
 
     $stmtmarket->execute([
         ':market_code' => $code
@@ -293,12 +307,19 @@
                     </thead>
                     <tbody>
                       <?php
-                            $exponly = 0;
-                            $exp = $db->conn->prepare("SELECT * FROM `expenses` WHERE `status` = 'exp' AND driver_id = :id AND agent_id IS NOT NULL AND agent_id != 0 ");
-                            $exp->execute(['id' => $_GET['marketId']]);
-                            $row_exps = $exp->fetchALL();
-                            foreach ($row_exps as $index => $row_exp) :
-                                $exponly  += $row_exp['amount']; ?>
+                        $exponly = 0;
+                        $pending_total = 0;
+                        $exp = $db->conn->prepare("SELECT * FROM `expenses` WHERE `status` = 'exp' AND driver_id = :id AND agent_id IS NOT NULL AND agent_id != 0 ");
+                        $exp->execute(['id' => $_GET['marketId']]);
+                        $row_exps = $exp->fetchALL();
+                        foreach ($row_exps as $index => $row_exp) :
+                          // $exponly  += $row_exp['amount'];
+                          if ($row_exp['pstatus'] == 'approved') {
+                              $exponly += $row_exp['amount'];
+                          } elseif ($row_exp['pstatus'] == 'pending') {
+                              $pending_total += $row_exp['amount'];
+                          }                                 
+                        ?>
                       <tr>
                         <td><?= $index + 1 ?></td>
                         <td><?= $row_exp['reason'] ?></td>
@@ -306,6 +327,16 @@
                         <td><?= $row_exp['daterecorded'] ?></td>
                         <td><?= $row_exp['timerecorded'] ?></td>
                         <td class="no-print">
+                          <?php
+                            if ($row_exp['pstatus'] == 'approved') {
+                                echo "<button class='btn btn-sm btn-success' disabled>Approved</button>";
+                            } elseif ($row_exp['pstatus'] == 'pending' && $_SESSION['role'] == 'Admin') {
+                                echo '<a href="/approved-exp?id=' . $row_exp['id'] . '&tid=' . $_GET['marketId'] . '" class="btn btn-sm btn-warning" onclick="return confirm(\'Mark this expense as paid?\')">Click to Approve</a>';
+                            } else {
+                                echo '<span class="badge badge-secondary">Pending Approval</span>';
+                            }
+                          ?>
+                          
                           <?php if ($_SESSION['role'] == 'Admin'): ?>
                           <a href="/delete-only-exp?id=<?= $row_exp['id'] ?>&tid=<?= $transport_id ?>"
                             class="btn btn-sm btn-danger" onclick="return confirm('Delete this record?')">Delete</a>
@@ -321,11 +352,25 @@
                       <?php endforeach ?>
                     </tbody>
                     <tfoot>
-                      <tr style="background:#f1f1f1; font-weight:bold;">
-                        <td colspan="2">Total</td>
-                        <th colspan="5">₦<?= number_format($exponly) ?></th>
+                      <!-- Approved Sum Row -->
+                      <tr class="text-success" style="font-size: 1.05rem;">
+                        <td colspan="2" class="text-right"><strong>Total Approved:</strong></td>
+                        <td colspan="4"><strong>₦<?= number_format($exponly) ?></strong></td>
+                      </tr>
+
+                      <!-- Pending Sum Row -->
+                      <tr class="text-warning" style="font-size: 1.05rem;">
+                        <td colspan="2" class="text-right"><strong>Total Pending:</strong></td>
+                        <td colspan="4"><strong>₦<?= number_format($pending_total) ?></strong></td>
+                      </tr>
+
+                      <!-- Grand Total (Combined) Row -->
+                      <tr style="background: #e9ecef; font-size: 1.1rem; border-top: 1px solid #ccc; border-bottom: 2px double #6c757d;">
+                        <td colspan="2" class="text-right text-dark"><strong>Grand Total:</strong></td>
+                        <td colspan="4" class="text-dark"><strong>₦<?= number_format($exponly + $pending_total) ?></strong></td>
                       </tr>
                     </tfoot>
+                    
                   </table>
                   </div>
                 </div>
@@ -350,13 +395,22 @@
                     </thead>
                     <tbody>
                       <?php
-                        $exponly = 0;
+                        $exponlyOtherEx = 0;
+                        $pendingExpTotal = 0;
                         // $exp = $db->conn->prepare("SELECT * FROM `expenses` WHERE `status` = 'other_exp' AND driver_id = :id");
                         $exp = $db->conn->prepare("SELECT * FROM `expenses` WHERE `status` = 'other_exp' AND driver_id = :id AND agent_id IS NOT NULL AND agent_id != 0 ");
                         $exp->execute(['id' => $_GET['marketId']]);
                         $row_exps = $exp->fetchALL();
+                        // foreach ($row_exps as $index => $row_exp) :
+                        //     $exponly  += $row_exp['amount'];
+
                         foreach ($row_exps as $index => $row_exp) :
-                            $exponly  += $row_exp['amount'];
+                          // $exponly  += $row_exp['amount'];
+                          if ($row_exp['pstatus'] == 'approved') {
+                              $exponlyOtherEx += $row_exp['amount'];
+                          } elseif ($row_exp['pstatus'] == 'pending') {
+                              $pendingExpTotal += $row_exp['amount'];
+                          } 
                         ?>
                       <tr>
                         <td><?= $index + 1 ?></td>
@@ -365,24 +419,48 @@
                         <td><?= $row_exp['daterecorded'] ?></td>
                         <td><?= $row_exp['timerecorded'] ?></td>
                         <td class="no-print">
+
+                          <?php
+                            if ($row_exp['pstatus'] == 'approved') {
+                                echo "<button class='btn btn-sm btn-success' disabled>Approved</button>";
+                            } elseif ($row_exp['pstatus'] == 'pending' && $_SESSION['role'] == 'Admin') {
+                                echo '<a href="/approved-exp?id=' . $row_exp['id'] . '&tid=' . $_GET['marketId'] . '" class="btn btn-sm btn-warning" onclick="return confirm(\'Mark this expense as paid?\')">Click to Approve</a>';
+                            } else {
+                                echo '<span class="badge badge-secondary">Pending Approval</span>';
+                            }
+                          ?>
+
                           <?php if ($_SESSION['role'] == 'Admin'): ?>
-                          <a href="/delete-other-expenses?id=<?= $row_exp['id'] ?>&tid=<?= $transport_id ?>"
-                            class="btn btn-sm btn-danger no-print"
-                            onclick="return confirm('Delete this record?')">Delete</a>
-                          <button class="btn btn-info btn-edit" data-id="<?= $row_exp['id'] ?>"
-                            data-amount="<?= $row_exp['amount'] ?>"
-                            data-reason="<?= htmlspecialchars($row_exp['reason']) ?>">
-                            Edit
-                          </button>
+                            <a href="/delete-other-expenses?id=<?= $row_exp['id'] ?>&tid=<?= $transport_id ?>"
+                              class="btn btn-sm btn-danger no-print"
+                              onclick="return confirm('Delete this record?')">Delete</a>
+                            <button class="btn btn-info btn-edit" data-id="<?= $row_exp['id'] ?>"
+                              data-amount="<?= $row_exp['amount'] ?>"
+                              data-reason="<?= htmlspecialchars($row_exp['reason']) ?>">
+                              Edit
+                            </button>
                           <?php endif ?>
                         </td>
                       </tr>
                       <?php endforeach ?>
                     </tbody>
                     <tfoot>
-                      <tr style="background:#f1f1f1; font-weight:bold;">
-                        <td colspan="2">Total</td>
-                        <th colspan="4">₦<?= number_format($exponly) ?></th>
+                     <!-- Approved Sum Row -->
+                      <tr class="text-success" style="font-size: 1.05rem;">
+                        <td colspan="2" class="text-right"><strong>Total Approved:</strong></td>
+                        <td colspan="4"><strong>₦<?= number_format($exponlyOtherEx) ?></strong></td>
+                      </tr>
+
+                      <!-- Pending Sum Row -->
+                      <tr class="text-warning" style="font-size: 1.05rem;">
+                        <td colspan="2" class="text-right"><strong>Total Pending:</strong></td>
+                        <td colspan="4"><strong>₦<?= number_format($pendingExpTotal) ?></strong></td>
+                      </tr>
+
+                      <!-- Grand Total (Combined) Row -->
+                      <tr style="background: #e9ecef; font-size: 1.1rem; border-top: 1px solid #ccc; border-bottom: 2px double #6c757d;">
+                        <td colspan="2" class="text-right text-dark"><strong>Grand Total:</strong></td>
+                        <td colspan="4" class="text-dark"><strong>₦<?= number_format($exponlyOtherEx + $pendingExpTotal) ?></strong></td>
                       </tr>
                     </tfoot>
                   </table>
