@@ -9,22 +9,6 @@
     }
     $code = (int)$_GET['marketId'];
 
-  
-    // $stmtmarket = $db->conn->prepare("
-    //     SELECT 
-    //         d.Department AS animal_name,
-    //         m3.name AS currentMarketName,
-    //         m.market_name AS oldmarket,
-    //         mt.*
-    //     FROM market_transaction mt
-    //     LEFT JOIN market m ON m.id = mt.market_code 
-    //     LEFT JOIN market_3 m3 ON m3.id = mt.market_id
-    //     LEFT JOIN department_tbl d ON d.deptID = mt.animal_id
-    //     WHERE mt.market_code = :market_code
-    //     ORDER BY mt.date_create DESC, m3.name, mt.sn_number
-        
-    // ");  //ORDER BY m3.name, mt.date_create, mt.sn_number
-
     $stmtmarket = $db->conn->prepare("
         SELECT 
             d.Department AS animal_name,
@@ -290,11 +274,18 @@
                   <table class="table table-bordered text-nowrap">
                     <thead>
                       <tr>
-                        <?php if ($_SESSION['role'] == 'Admin'): ?>
-                        <button class="btn btn-primary" type="button" data-target="#modalUser"
-                          data-toggle="modal"><strong>Expenses</strong></button>
-                        <?php endif ?>
-                        <button class="btn btn-dark no-print" onclick="expenses('expenses')">Print</button>
+                        <?php 
+                          $stmt = $db->conn->prepare('SELECT * FROM market WHERE agent_id = :agent_id ');
+                          $stmt->execute(['agent_id' => $_SESSION['userID'], ]);
+                          $market = $stmt->fetch(PDO::FETCH_ASSOC);
+                          if($market && $market['agent_id'] == $_SESSION['userID'] ||  $_SESSION['super_role'] == 'Super Admin'): ?>
+                          
+                          <button class="btn btn-primary" type="button" data-target="#modalUser"
+                            data-toggle="modal"><strong>Expenses</strong></button>
+                          <button class="btn btn-dark no-print" onclick="expenses('expenses')">Print</button>
+                        <?php else: ?>
+                          <span class="text-danger">You are not authorized to add expenses.</span>
+                        <?php endif ?>                        
                       </tr>
                       <tr>
                         <th>#</th>
@@ -328,25 +319,25 @@
                         <td><?= $row_exp['timerecorded'] ?></td>
                         <td class="no-print">
                           <?php
-                            if ($row_exp['pstatus'] == 'approved') {
-                                echo "<button class='btn btn-sm btn-success' disabled>Approved</button>";
-                            } elseif ($row_exp['pstatus'] == 'pending' && $_SESSION['role'] == 'Admin') {
-                                echo '<a href="/approved-exp?id=' . $row_exp['id'] . '&tid=' . $_GET['marketId'] . '" class="btn btn-sm btn-warning" onclick="return confirm(\'Mark this expense as paid?\')">Click to Approve</a>';
-                            } else {
-                                echo '<span class="badge badge-secondary">Pending Approval</span>';
-                            }
+                              if ($row_exp['pstatus'] == 'approved') {
+                                  echo "<button class='btn btn-sm btn-success' disabled>Approved</button>";
+                              } elseif ($row_exp['pstatus'] == 'pending' && $_SESSION['role'] == 'Admin') {
+                                  echo '<a href="/approved-exp?id=' . $row_exp['id'] . '&tid=' . $_GET['marketId'] . '" class="btn btn-sm btn-warning" onclick="return confirm(\'Mark this expense as paid?\')">Click to Approve</a>';
+                              } else {
+                                  echo '<span class="badge badge-secondary">Pending Approval</span>';
+                              }
                           ?>
-                          
-                          <?php if ($_SESSION['role'] == 'Admin'): ?>
-                          <a href="/delete-only-exp?id=<?= $row_exp['id'] ?>&tid=<?= $transport_id ?>"
-                            class="btn btn-sm btn-danger" onclick="return confirm('Delete this record?')">Delete</a>
-
-                          <button class="btn btn-info btn-edit" data-id="<?= $row_exp['id'] ?>"
-                            data-amount="<?= $row_exp['amount'] ?>"
-                            data-reason="<?= htmlspecialchars($row_exp['reason']) ?>">
-                            Edit
-                          </button>
+                                                    
+                          <?php  if($market && $market['agent_id'] == $_SESSION['userID'] ||  $_SESSION['super_role'] == 'Super Admin'):  ?>
+                            <?php if($row_exp['pstatus'] == 'pending') : ?>
+                            <a href="/delete-only-exp?id=<?= $row_exp['id'] ?>&tid=<?= $transport_id ?>" class="btn btn-sm btn-danger" onclick="return confirm('Delete this record?')">Delete</a>
+                            <button class="btn btn-info btn-edit" data-id="<?= $row_exp['id'] ?>"
+                              data-amount="<?= $row_exp['amount'] ?>"
+                              data-reason="<?= htmlspecialchars($row_exp['reason']) ?>">
+                              Edit
+                            </button>
                           <?php endif ?>
+                           <?php endif ?>
                         </td>
                       </tr>
                       <?php endforeach ?>
@@ -378,12 +369,19 @@
                 <div class="col-sm-6" id="other_expenses">
                   <div class="table-responsive">
                   <table class="table table-bordered text-nowrap">
-                    <thead>
-                      <?php if ($_SESSION['role'] == 'Admin'): ?>
-                      <tr> <button type="button" data-target="#modelOtherExpenses" data-toggle="modal"
-                          class="btn btn-primary"><strong>Other Expenses</strong></button> </tr>
-                      <?php endif ?>
-                      <button class="btn btn-dark no-print" onclick="other_expenses('other_expenses')">Print</button>
+                    <thead>                      
+                      <tr>
+                        <?php 
+                          $stmt = $db->conn->prepare('SELECT * FROM market WHERE secondagent = :secondagent ');
+                          $stmt->execute(['secondagent' => $_SESSION['userID'], ]);
+                          $market = $stmt->fetch(PDO::FETCH_ASSOC);
+                          if($market && $market['secondagent'] == $_SESSION['userID'] ||  $_SESSION['super_role'] == 'Super Admin'): ?>
+                            <button type="button" data-target="#modelOtherExpenses" data-toggle="modal" class="btn btn-primary"><strong>Other Expenses</strong></button> </tr>
+                            <button class="btn btn-dark no-print" onclick="other_expenses('other_expenses')">Print</button>
+                        <?php else: ?>
+                          <span class="text-danger">You are not authorized to add other expenses.</span>                                                    
+                        <?php endif ?>
+                      </tr>      
                       <tr>
                         <th>#</th>
                         <th>Reason</th>
@@ -430,7 +428,7 @@
                             }
                           ?>
 
-                          <?php if ($_SESSION['role'] == 'Admin'): ?>
+                          <?php if($row_exp['pstatus'] == 'pending'): ?>
                             <a href="/delete-other-expenses?id=<?= $row_exp['id'] ?>&tid=<?= $transport_id ?>"
                               class="btn btn-sm btn-danger no-print"
                               onclick="return confirm('Delete this record?')">Delete</a>

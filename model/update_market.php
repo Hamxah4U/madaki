@@ -3,6 +3,9 @@
   if($_SERVER['REQUEST_METHOD'] == 'POST') {
     $id = $_POST['unitId'];
     $department = $_POST['unit'];
+
+    $agent = (!empty($_POST['agent']) && trim($_POST['agent']) !== '') ? trim($_POST['agent']) : null;
+    $secondagent = (!empty($_POST['secondagent']) && trim($_POST['secondagent']) !== '') ? trim($_POST['secondagent']) : null;
    
     $errors = [];
     $success = [];
@@ -12,8 +15,10 @@
     }
 
     if(empty($errors)){
-      $stmt = $db->conn->prepare('UPDATE `market` SET `market_name` = :unit WHERE `market`.`id` = :DID');
+      $stmt = $db->conn->prepare('UPDATE `market` SET `agent_id` = :agent, `secondagent` = :secondagent, `market_name` = :unit WHERE `market`.`id` = :DID');
       $stmt->bindParam(':unit', $department, PDO::PARAM_STR);
+      $stmt->bindParam(':agent', $agent, PDO::PARAM_STR);
+      $stmt->bindParam(':secondagent', $secondagent, PDO::PARAM_STR);
       $stmt->bindParam(':DID', $id, PDO::PARAM_INT);
       $result = $stmt->execute();
       if($result){

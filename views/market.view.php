@@ -83,13 +83,13 @@
               </div>
 
               <div class="form-group">
-                <label for="Unit">Agent</label>
+                <label for="Unit">First Agent</label>
                 <?php
-									$stmtAgent = $db->conn->prepare("SELECT * FROM `users_tbl` WHERE `Role` = :userRole");
-									$stmtAgent->execute([':userRole' => 'Agent']);
-									$rowAgents = $stmtAgent->fetchAll(PDO::FETCH_ASSOC);
-							?>
-                <select name="agent" id="agent" class="form-control">
+                  $stmtAgent = $db->conn->prepare("SELECT * FROM `users_tbl` WHERE `Role` = :userRole");
+                  $stmtAgent->execute([':userRole' => 'Agent']);
+                  $rowAgents = $stmtAgent->fetchAll(PDO::FETCH_ASSOC);
+                ?>
+                <select name="agent" id="agent1" class="form-control">
                   <option value="">--select agent--</option>
                   <?php foreach($rowAgents as $rowAgent):?>
                   <option value="<?= $rowAgent['userID'] ?>"><?= $rowAgent['Fullname'] ?></option>
@@ -97,6 +97,23 @@
                 </select>
                 <small class="text-danger" id="errorAgent"></small>
               </div>
+
+              <div class="form-group">
+                <label for="Unit">Second Agent</label>
+                <?php
+                  $stmtAgent = $db->conn->prepare("SELECT * FROM `users_tbl` WHERE `Role` = :userRole");
+                  $stmtAgent->execute([':userRole' => 'Agent']);
+                  $rowAgents = $stmtAgent->fetchAll(PDO::FETCH_ASSOC);
+                ?>
+                <select name="secondagent" id="agent2" class="form-control">
+                  <option value="">--select agent--</option>
+                  <?php foreach($rowAgents as $rowAgent):?>
+                  <option value="<?= $rowAgent['userID'] ?>"><?= $rowAgent['Fullname'] ?></option>
+                  <?php endforeach ?>
+                </select>
+                <small class="text-danger" id="errorAgent2"></small>
+              </div>
+
               <button type="submit" class="btn btn-primary" id="action-btn" data-mode="add">Save</button>
             </form>
           </div>
@@ -439,6 +456,9 @@
         $.get(`model/market.edit.php?deptId=${id}`, function(response) {
           $('#unitId').val(response.id); // Set the department ID for update
           $('#unitName').val(response.market_name);
+          $('#agent1').val(response.agent_id);
+          $('#agent2').val(response.secondagent);
+
           $('#action-btn').removeClass('btn-primary').addClass('btn-info').text('Update').data('mode',
             'edit');
           $('#modelUnit').modal('show');

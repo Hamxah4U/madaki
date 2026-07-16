@@ -6,6 +6,7 @@
     $success = [];
     $unit = trim($_POST['unit']); 
     $agent = (!empty($_POST['agent']) && trim($_POST['agent']) !== '') ? trim($_POST['agent']) : null;
+    $secondagent = (!empty($_POST['secondagent']) && trim($_POST['secondagent']) !== '') ? trim($_POST['secondagent']) : null;
 
 
 
@@ -29,9 +30,10 @@
       $user = $_SESSION['userID'];
       $date = date('Y-m-d');
       $time = date('H:i:s');
-      $stmt = $db->conn->prepare('INSERT INTO `market` (`market_name`, `agent_id`, `created_by`, `date_create`,`time_create`) VALUES (:department, :agent_id, :registerby, curdate(), curtime())');
+      $stmt = $db->conn->prepare('INSERT INTO `market` (`market_name`, `agent_id`, `secondagent`, `created_by`, `date_create`,`time_create`) VALUES (:department, :agent_id, :secondagent, :registerby, curdate(), curtime())');
       $stmt->bindParam(':department', $unit, PDO::PARAM_STR);
       $stmt->bindParam(':agent_id', $agent);
+      $stmt->bindParam(':secondagent', $secondagent);
       $stmt->bindParam(':registerby', $user, PDO::PARAM_STR);
 
       $result = $stmt->execute();
