@@ -692,8 +692,7 @@ $next = $nextStmt->fetch(PDO::FETCH_ASSOC);
                         <td class="no-print">
                           <?php if ($_SESSION['role'] == 'Admin'): ?>
                           <a href="/delete-only-exp?id=<?= $row_exp['id'] ?>&tid=<?= $transport_id ?>" class="btn btn-sm btn-danger" onclick="return confirm('Delete this record?')">Delete</a>
-                          <button class="btn btn-info btn-edit" data-id="<?= $row_exp['id'] ?>" data-amount="<?= $row_exp['amount'] ?>" data-reason="<?= htmlspecialchars($row_exp['reason']) ?>">Edit</button>
-                          <?php endif ?>
+                          <button class="btn btn-info editExpenseBtn" data-toggle="modal" data-target="#modalUser" data-id="<?= $row_exp['id'] ?>" data-amount="<?= $row_exp['amount'] ?>" data-reason="<?= htmlspecialchars($row_exp['reason']) ?>">Edit</button>                          <?php endif ?>
                         </td>
                       </tr>
                       <?php endforeach ?>
@@ -745,8 +744,7 @@ $next = $nextStmt->fetch(PDO::FETCH_ASSOC);
                         <td class="no-print">
                           <?php if ($_SESSION['role'] == 'Admin'): ?>
                           <a href="/delete-other-expenses?id=<?= $row_exp['id'] ?>&tid=<?= $transport_id ?>" class="btn btn-sm btn-danger no-print" onclick="return confirm('Delete this record?')">Delete</a>
-                          <button class="btn btn-info btn-edit" data-id="<?= $row_exp['id'] ?>" data-amount="<?= $row_exp['amount'] ?>" data-reason="<?= htmlspecialchars($row_exp['reason']) ?>">Edit</button>
-                          <?php endif ?>
+                          <button class="btn btn-info editOtherExpenseBtn" data-toggle="modal" data-target="#modelOtherExpenses" data-id="<?= $row_exp['id'] ?>" data-amount="<?= $row_exp['amount'] ?>" data-reason="<?= htmlspecialchars($row_exp['reason']) ?>">Edit</button>                          <?php endif ?>
                         </td>
                       </tr>
                       <?php endforeach ?>
@@ -948,7 +946,8 @@ $next = $nextStmt->fetch(PDO::FETCH_ASSOC);
           <div class="modal-body">
             <form id="diarForm">
               <input type="hidden" name="id" id="diary_id">
-
+              <input type="text" name="fstatus" id="fstatus" value="transp" hidden>
+              
               <div class="form-group">
                 <label><strong>Diary</strong></label>
                 <textarea id="diary_text" name="comment" class="form-control" rows="4" required></textarea>
@@ -958,7 +957,7 @@ $next = $nextStmt->fetch(PDO::FETCH_ASSOC);
               <input type="hidden" name="transport_id" value="<?= $transport_id ?? '' ?>">
 
               <div class="modal-footer p-0 pt-3">
-                <button type="submit" class="btn btn-success">
+                <button type="submit" class="btn btn-primary">
                   <i class="fas fa-save"></i> Save Diary
                 </button>
                 
@@ -986,7 +985,7 @@ $next = $nextStmt->fetch(PDO::FETCH_ASSOC);
 
           <div class="modal-body">
             <form id="othercommentForm">
-
+              <input type="text" name="fstatus" id="fstatus" value="transp" hidden>
               <input type="hidden" name="id" id="othercomment_id">
 
               <div class="form-group">
@@ -998,7 +997,7 @@ $next = $nextStmt->fetch(PDO::FETCH_ASSOC);
               <input type="hidden" name="transport_id" value="<?= $transport_id ?? '' ?>">
 
               <div class="modal-footer p-0 pt-3">
-                <button type="submit" class="btn btn-success" id="othercomment-btn" data-mode="add">
+                <button type="submit" class="btn btn-primary" id="othercomment-btn" data-mode="add">
                   <i class="fas fa-save"></i> Save Comment
                 </button>
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">
@@ -1029,7 +1028,8 @@ $next = $nextStmt->fetch(PDO::FETCH_ASSOC);
           <div class="modal-body">
             <form id="commentForm">
               <input type="text" name="id" id="comment_id" hidden>
-
+              <input type="text" name="fstatus" id="fstatus" value="transp" hidden>
+              
               <div class="form-group">
                 <label><strong>Amount</strong></label>
                 <input type="number" id="commentAmount" name="amount" class="form-control" required>
@@ -1043,7 +1043,7 @@ $next = $nextStmt->fetch(PDO::FETCH_ASSOC);
               <input type="hidden" name="transport_id" value="<?= $transport_id ?? '' ?>">
 
               <div class="modal-footer p-0 pt-3">
-                <button type="submit" class="btn btn-success" id="comment-btn" data-mode="add">
+                <button type="submit" class="btn btn-primary" id="comment-btn" data-mode="add">
                   <i class="fas fa-save"></i> Save Comment
                 </button>
                
@@ -1071,6 +1071,8 @@ $next = $nextStmt->fetch(PDO::FETCH_ASSOC);
               <input type="text" name="id" id="edit_id" hidden>
               <input type="text" name="userID" id="userID" value="<?= $transport_id ?>" hidden>
               <input type="text" name="agent_id" id="" hidden>
+              <input type="text" name="fstatus" id="fstatus" value="transp" hidden>
+
 
               <div class="form-group">
                 <label for="my-input">Amount</label>
@@ -1102,28 +1104,32 @@ $next = $nextStmt->fetch(PDO::FETCH_ASSOC);
             </button>
           </div>
           <div class="modal-body">
+              
             <form id="formUnit">
-              <input type="text" name="id" id="edit_id" hidden>
-
+              <!-- 1. Ensure unique id attributes are present -->
+              <input type="text" name="id" id="other_edit_id" hidden>
               <input type="text" name="userID" id="userID" value="<?= $transport_id ?>" hidden>
-
               <input type="text" name="agent_id" id="" hidden>
+              <input type="text" name="fstatus" id="fstatus" value="transp" hidden>
 
-
+              
+              <!-- 2. Add a hidden mode tracking input field -->
+              <input type="hidden" name="mode" id="other_mode" value="add">
 
               <div class="form-group">
                 <label for="my-input">Amount</label>
-                <input id="amount" class="form-control" type="number" name="amount" required>
+                <input id="other_amount_field" class="form-control" type="number" name="amount" required>
                 <small class="text-danger" id="errorAmount"></small>
               </div>
               <input type="hidden" name="transport_id" value="<?= $transport_id ?? '' ?>">
               <div class="form-group">
                 <label for="my-input">Reason</label>
-                <textarea name="reason" id="reason" class="form-control" rows="3" required></textarea>
+                <textarea name="reason" id="other_reason_field" class="form-control" rows="3" required></textarea>
                 <small class="text-danger" id="errorReason"></small>
               </div>
-              <button type="submit" class="btn btn-primary" id="action-btn"
-                data-mode='add'><strong>Save</strong></button>
+              
+              <!-- 3. Changed ID from 'action-btn' to 'other-action-btn' -->
+              <button type="submit" class="btn btn-primary" id="other-action-btn" data-mode='add'><strong>Save</strong></button>
             </form>
           </div>
         </div>
@@ -2064,46 +2070,59 @@ $next = $nextStmt->fetch(PDO::FETCH_ASSOC);
 </script>
 
 <script>
-  function resetForm() {
+  function resetOtherExpensesForm() {
     $('#formUnit')[0].reset();
+    $('#other_edit_id').val('');
+    $('#other_mode').val('add');
+    $('#other-action-btn')
+        .text('Save')
+        .removeClass('btn-info')
+        .addClass('btn-primary')
+        .attr('data-mode', 'add');
     $('#errorAmount').text('');
     $('#errorReason').text('');
   }
+
   $(document).ready(function() {
+    // Clear operational configurations upon closing the window
+    $('#modelOtherExpenses').on('hidden.bs.modal', function() {
+        resetOtherExpensesForm();
+    });
+
     $('#formUnit').on('submit', function(e) {
         e.preventDefault();
         $.ajax({
-        url: 'model/other_exp.form.php',
-        dataType: 'JSON',
-        data: $(this).serialize(),
-        type: 'POST',
-        success: function(response) {
-            if (response.status) {
-            const Toast = Swal.mixin({
-                toast: true,
-                position: "top-end",
-                showConfirmButton: false,
-                timer: 2000
-            });
+          url: 'model/other_exp.form.php',
+          dataType: 'JSON',
+          data: $(this).serialize(), // Will now naturally include mode and custom IDs
+          type: 'POST',
+          success: function(response) {
+              if (response.status) {
+                const Toast = Swal.mixin({
+                    toast: true,
+                    position: "top-end",
+                    showConfirmButton: false,
+                    timer: 2000
+                });
 
-            Toast.fire({
-                icon: "success",
-                title: response.success.message
-            }).then(() => {
-                location.reload(); // refresh page
-            });
+                Toast.fire({
+                    icon: "success",
+                    title: response.success.message
+                }).then(() => {
+                    location.reload();
+                });
 
-            $('#modelUnit').modal('hide');
-            resetForm();
-            } else {
-            alert('Failed to add expense. Please check your input.');
-            $('#errorAmount').text(response.errors.amount || '');
-            $('#errorReason').text(response.errors.reason || '');
-            }
-        },
-        error: function(xhr, status, error) {
-            alert('Error__:' + xhr + status + error);
-        }
+                $('#modelOtherExpenses').modal('hide');
+                resetOtherExpensesForm();
+              } else {
+                alert('Failed to process expense: ' + (response.errors.general || 'Check inputs'));
+                $('#errorAmount').text(response.errors.amount || '');
+                $('#errorReason').text(response.errors.reason || '');
+              }
+          },
+          error: function(xhr, status, error) {
+              alert('Error processing request.');
+          }
         });
     });
   });
@@ -2256,20 +2275,40 @@ $next = $nextStmt->fetch(PDO::FETCH_ASSOC);
         });
 
         $(document).on('click', '.editExpenseBtn', function() {
+            let id = $(this).data('id');
+            let amount = $(this).data('amount');
+            let reason = $(this).data('reason');
 
-        let id = $(this).data('id');
-        let amount = $(this).data('amount');
-        let reason = $(this).data('reason');
+            // For standard expenses modal (#modalUser)
+            $('#modalUser #edit_id').val(id);
+            $('#modalUser #Amount').val(amount);
+            $('#modalUser #reason').val(reason);
 
-        $('#expense_id').val(id);
-        $('#Amount').val(amount);
-        $('#reason').val(reason);
+            $('#modalUser #action-btn')
+                .text('Update')
+                .removeClass('btn-primary')
+                .addClass('btn-info')
+                .attr('data-mode', 'edit');
+        });
 
-        $('#action-btn')
-            .text('Update')
-            .removeClass('btn-primary')
-            .addClass('btn-info')
-            .attr('data-mode', 'edit');
+        $(document).on('click', '.editOtherExpenseBtn', function() {
+          let id = $(this).data('id');
+          let amount = $(this).data('amount');
+          let reason = $(this).data('reason');
+
+          // Update target input values using the uniquely targeted selectors
+          $('#modelOtherExpenses #other_edit_id').val(id);
+          $('#modelOtherExpenses #other_amount_field').val(amount);
+          $('#modelOtherExpenses #other_reason_field').val(reason);
+          
+          // Set our hidden form variable mode to edit
+          $('#modelOtherExpenses #other_mode').val('edit');
+
+          $('#modelOtherExpenses #other-action-btn')
+              .text('Update')
+              .removeClass('btn-primary')
+              .addClass('btn-info')
+              .attr('data-mode', 'edit');
         });
         //comment
         $('#commentForm').on('submit', function(e) {
@@ -2309,5 +2348,5 @@ $next = $nextStmt->fetch(PDO::FETCH_ASSOC);
         });
         });
         // });
-    </script>
+</script>
 

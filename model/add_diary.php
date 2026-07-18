@@ -12,6 +12,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $userID  = trim($_POST['transport_id'] ?? '');
     $mode    = $_POST['mode'] ?? 'add';
     $id      = $_POST['id'] ?? null;
+    $fstatus = $_POST['fstatus'] ?? null;
 
     // =========================
     // VALIDATION
@@ -22,6 +23,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (empty($userID)) {
         $errors['transport_id'] = 'Transport ID is required!';
+    }
+
+    if (empty($fstatus)) {
+        $errors['fstatus'] = 'FStatus is required!';
     }
 
     if ($mode === 'edit' && empty($id)) {
@@ -46,13 +51,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $stmt = $db->conn->prepare("
                 INSERT INTO expenses 
-                (driver_id, reason, daterecorded, timerecorded, status) 
-                VALUES (:driver_id, :reason, CURDATE(), CURTIME(), 'diary')
+                (driver_id, reason, daterecorded, timerecorded, status, fstatus) 
+                VALUES (:driver_id, :reason, CURDATE(), CURTIME(), 'diary', :fstatus)
             ");
 
             $stmt->execute([
                 ':driver_id' => $userID,
-                ':reason'    => $comment
+                ':reason'    => $comment,
+                ':fstatus'   => $fstatus
             ]);
 
             echo json_encode([

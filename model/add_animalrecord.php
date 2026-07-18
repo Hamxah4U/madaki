@@ -46,16 +46,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Grab the batch date from the first input element since there is only one date picker in your form
         $single_batch_date = !empty($created_date[0]) ? $created_date[0] : null;
+        $single_market = !empty($market_id[0]) ? $market_id[0] : null;
 
         for ($i = 0; $i < count($animals); $i++) {
             
             $animal_val = !empty($animals[$i]) ? $animals[$i] : null;
             $amount_val = ($amounts[$i] !== '' && $amounts[$i] !== null) ? $amounts[$i] : null;
-            $market_val = !empty($market_id[$i]) ? $market_id[$i] : null;
+            // $market_val = !empty($market_id[$i]) ? $market_id[$i] : null;
             $number_val = !empty($number[$i]) ? $number[$i] : null;
             
             // Fallback: use individual row index date if it exists, otherwise use the single batch date
             $date_val   = !empty($created_date[$i]) ? $created_date[$i] : $single_batch_date;
+            $market_val = !empty($market_id[$i]) ? $market_id[$i] : $single_market;
 
             // Optional guard: Skip inserting if the row is completely empty
             if ($animal_val === null && $amount_val === null && $market_val === null && $number_val === null) {

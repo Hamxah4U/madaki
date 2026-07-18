@@ -4,6 +4,17 @@
         require 'partials/header.php';
 ?>
 
+<style>
+  /* Changes the pointer to a hand icon on row cells, except the actions column */
+  .clickable-row td:not(:last-child) {
+    cursor: pointer;
+  }
+  /* Gives a subtle color change when hovering over a clickable row */
+  .clickable-row:hover td:not(:last-child) {
+    background-color: rgba(0, 0, 0, 0.04) !important;
+  }
+</style>
+
 <!-- Page Wrapper -->
 <div id="wrapper">
   <!-- Sidebar -->
@@ -38,7 +49,8 @@
               <tr>
                 <th>#</th>
                 <!-- <th>Market</th> -->
-                <th>Agent</th>
+                <th>First Agent</th>
+                <th>Second Agent</th>
                 <th>Money In</th>
                 <th>Money Out</th>
                 <th>Diff. Bal.</th>
@@ -149,63 +161,149 @@
       </div>
     </div>
 
-    <?php
-    require 'partials/footer.php';
-?>
+    <?php require 'partials/footer.php' ?>
 
     <script>
-    $(document).on("click", ".closeMarket", function() {
+      $(document).on("click", ".closeMarket", function() {
 
-      let marketId = $(this).data("id");
-      let button = $(this);
+        let marketId = $(this).data("id");
+        let button = $(this);
 
-      Swal.fire({
-        title: 'Close this market?',
-        text: "This market will be marked as closed.",
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonText: 'Yes, Close It'
-      }).then((result) => {
+        Swal.fire({
+          title: 'Close this market?',
+          text: "This market will be marked as closed.",
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonText: 'Yes, Close It'
+        }).then((result) => {
 
-        if (result.isConfirmed) {
+          if (result.isConfirmed) {
 
-          $.ajax({
-            url: "model/close_market.php",
-            type: "POST",
-            data: {
-              id: marketId
-            },
+            $.ajax({
+              url: "model/close_market.php",
+              type: "POST",
+              data: {
+                id: marketId
+              },
 
-            success: function(response) {
+              success: function(response) {
 
-              if (response.trim() == "success") {
+                if (response.trim() == "success") {
 
-                
-                Swal.fire({
-                  toast: true,
-                  position: 'top-end',
-                  icon: 'info',
-                  title: 'Market Closed',
-                  timer: 2000,
-                  showConfirmButton: false
-                }).then(() => location.reload());
+                  
+                  Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: 'info',
+                    title: 'Market Closed',
+                    timer: 2000,
+                    showConfirmButton: false
+                  }).then(() => location.reload());
 
-                // // optional button update
-                // button
-                // 		.removeClass("btn-warning")
-                // 		.addClass("btn-secondary")
-                // 		.text("Closed")
-                // 		.prop("disabled", true);
+                  // // optional button update
+                  // button
+                  // 		.removeClass("btn-warning")
+                  // 		.addClass("btn-secondary")
+                  // 		.text("Closed")
+                  // 		.prop("disabled", true);
 
-              } else {
+                } else {
+
+                  Swal.fire({
+                    icon: 'error',
+                    title: 'Failed to close market'
+                  });
+
+                }
+
+              },
+
+              error: function(xhr) {
+
+                console.log(xhr.responseText);
 
                 Swal.fire({
                   icon: 'error',
-                  title: 'Failed to close market'
+                  title: 'Server Error'
                 });
 
               }
 
+            });
+
+          }
+
+        });
+
+      });
+    </script>
+
+    <script>
+      $('#addmoney').on('show.bs.modal', function(event) {
+        let button = $(event.relatedTarget);
+        let id = button.data('id');
+
+        $(this).find('#unitId').val(id);
+      });
+    </script>
+
+    <script>
+      $(document).ready(function() {
+
+        // Open modal and set ID
+        $('#addmoney').on('show.bs.modal', function(event) {
+          let button = $(event.relatedTarget);
+          let id = button.data('id');
+
+          $('#unitId').val(id);
+        });
+
+        // Submit form with AJAX
+        $('#formAmount').submit(function(e) {
+          e.preventDefault();
+
+          $.ajax({
+            url: 'model/add_moneyin.php',
+            type: 'POST',
+            data: $(this).serialize(),
+            dataType: 'json',
+
+            beforeSend: function() {
+              $('#action-btn').html('Saving...');
+              $('#action-btn').prop('disabled', true);
+            },
+
+            success: function(response) {
+
+              if (response.status === 'success') {
+
+                Swal.fire({
+                  icon: 'success',
+                  title: 'Success',
+                  text: response.message,
+                  timer: 2000,
+                  showConfirmButton: false
+                });
+
+                // Reset form
+                $('#formAmount')[0].reset();
+
+                // Hide modal
+                $('#addmoney').modal('hide');
+
+                // Reload only DataTable
+                $('#departmentTable').DataTable().ajax.reload(null, false);
+
+              } else {
+
+                // Swal.fire({
+                //     icon: 'error',
+                //     title: 'Error',
+                //     text: response.message
+                // });
+
+
+              }
             },
 
             error: function(xhr) {
@@ -214,261 +312,245 @@
 
               Swal.fire({
                 icon: 'error',
-                title: 'Server Error'
+                title: 'Server Error',
+                text: xhr.responseText
               });
 
+            },
+
+            complete: function() {
+              $('#action-btn').html('Save');
+              $('#action-btn').prop('disabled', false);
+            }
+          });
+        });
+
+      });
+    </script>
+
+    <script>
+      $(document).ready(function() {
+        $('#departmentTable').DataTable({
+          ajax: {
+            url: 'model/market.table.php',
+            dataSrc: '',
+          },
+          // ---- ADD THIS CALLBACK TO MAKE ROWS CLICKABLE ----
+          createdRow: function(row, data, dataIndex) {
+            // Add a CSS class so we can change the mouse pointer to a hand on hover
+            $(row).addClass('clickable-row');
+            
+            // Listen for clicks on the row, but ignore the buttons column (last column)
+            $(row).on('click', 'td:not(:last-child)', function() {
+              window.location.href = `view-market?marketId=${data.id}`;
+            });
+          },
+          // --------------------------------------------------
+          columns: [{
+              "data": null,
+              render: (data, type, row, meta) => meta.row + 1
+            },
+            {
+              "data": "agent_name"
+            },
+            {"data" : "second_agent_name"},
+            {
+              data: null,
+              render: function(data, type, row) {
+                let total = (parseFloat(row.moneyOutTotal) || 0) + (parseFloat(row.ttotherexp) || 0);
+                return '₦' + total.toLocaleString('en-NG', {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2
+                });
+              }
+            },
+            {
+              data: null,
+              render: function(data, type, row) {
+                let total = (parseFloat(row.totalMoneyInAnimal) || 0) + (parseFloat(row.ttexp) || 0);
+                return '₦' + total.toLocaleString('en-NG', {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2
+                });
+              }
+            },
+            {
+              data: null,
+              render: function(data, type, row) {
+                let total1 = (parseFloat(row.totalMoneyInAnimal) || 0) + (parseFloat(row.ttexp) || 0);
+                let total2 = (parseFloat(row.moneyOutTotal) || 0) + (parseFloat(row.ttotherexp) || 0);
+                let total = total1 - total2;
+                return '₦' + total.toLocaleString('en-NG', {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2
+                });
+              }
+            },
+            {
+              data: null,
+              render: function(data, type, row) {
+              // <a href="view-market?marketId=${row.id}" class="btn btn-success">View market</a>
+                return `
+                      <button class="btn btn-info" data-id="${row.id}" id="editDepartment">Edit</button>
+                      <button class="btn btn-warning closeMarket" data-id="${row.id}">Close market</button>
+                      <button type="button" data-id="${row.id}" data-target="#addmoney" data-toggle="modal" class="btn btn-primary"><strong>Money In</strong></button>
+                      <a href="money-history?marketId=${row.id}" class="btn btn-info">Money History</a>
+                  `;
+              }
+            }
+          ]
+        });
+      });
+      /* $(document).ready(function() {
+        $('#departmentTable').DataTable({
+          ajax: {
+            url: 'model/market.table.php',
+            dataSrc: '',
+          },
+          columns: [{
+              "data": null,
+              render: (data, type, row, meta) => meta.row + 1
+            },
+            // { "data": "market_name" },
+            {
+              "data": "agent_name"
+            },
+            {"data" : "second_agent_name"},
+            {
+              data: null,
+              render: function(data, type, row) {
+
+                let total = (parseFloat(row.moneyOutTotal) || 0) +
+                  (parseFloat(row.ttotherexp) || 0);
+
+                return '₦' + total.toLocaleString('en-NG', {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2
+                });
+              }
+            },
+
+            {
+              data: null,
+              render: function(data, type, row) {
+
+                let total = (parseFloat(row.totalMoneyInAnimal) || 0) +
+                  (parseFloat(row.ttexp) || 0);
+
+                return '₦' + total.toLocaleString('en-NG', {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2
+                });
+              }
+            },
+
+            {
+              data: null,
+              render: function(data, type, row) {
+
+                let total1 = (parseFloat(row.totalMoneyInAnimal) || 0) + (parseFloat(row.ttexp) || 0);
+                let total2 = (parseFloat(row.moneyOutTotal) || 0) + (parseFloat(row.ttotherexp) || 0);
+                let total = total1 - total2;
+
+                return '₦' + total.toLocaleString('en-NG', {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2
+                });
+              }
+            },
+
+            // { "data": "status" },
+            // { "data": "created_by" },
+            {
+              data: null,
+              render: function(data, type, row) {
+                return `
+                      <button class="btn btn-info" data-id="${row.id}" id="editDepartment">Edit</button>
+                      <a href="view-market?marketId=${row.id}" class="btn btn-success">View market</a>
+                      <button class="btn btn-warning closeMarket" data-id="${row.id}">Close market</button>
+                      <button type="button" data-id="${row.id}" data-target="#addmoney" data-toggle="modal" class="btn btn-primary"><strong>Money In</strong></button>
+                      <a href="money-history?marketId=${row.id}" class="btn btn-info">Money History</a>
+                  `;
+              }
             }
 
+
+          ]
+
+        });
+      }); */
+    </script>
+
+    <script>
+      function resetForm() {
+        $('#formUnit')[0].reset();
+        $('#unitId').val('');
+        $('#errorUnit').text('');
+        $('#action-btn').removeClass('btn-info').addClass('btn-primary').text('Save').data('mode', 'add');
+      }
+
+      $(document).ready(function() {
+        $('#formUnit').on('submit', function(e) {
+          e.preventDefault();
+          const mode = $('#action-btn').data('mode');
+          const url = mode === 'edit' ? 'model/update_market.php' : 'model/add_market.php';
+          const iconType = mode === 'edit' ? 'info' : 'success';
+          $.ajax({
+            url: url, //mode === 'edit' ? 'model/unit.edit.php' : 'model/unit.form.php', 
+            dataType: 'JSON',
+            data: $(this).serialize(),
+            type: 'POST',
+            success: function(response) {
+              if (response.status) {
+                //alert('success'+ response.message);
+                const Toast = Swal.mixin({
+                  toast: true,
+                  position: "top-end",
+                  showConfirmButton: false,
+                  timer: 2000,
+                  timerProgressBar: true,
+                  didOpen: (toast) => {
+                    toast.onmouseenter = Swal.stopTimer;
+                    toast.onmouseleave = Swal.resumeTimer;
+                  }
+                });
+                Toast.fire({
+                  icon: iconType, //"success",
+                  title: response.message || response.success
+                });
+                $('#departmentTable').DataTable().ajax.reload();
+                $('#modelUnit').modal('hide');
+                resetForm();
+              } else {
+                $('#errorUnit').text(response.errors.unit || response.errors.unitExist || '');
+                $('#errorAgent').text(response.errors.agent || '');
+              }
+            },
+            error: function(xhr, status, error) {
+              alert('Error:' + xhr + status + error);
+            }
+          });
+        });
+
+        $('body').on('click', '#editDepartment', function(e) {
+          e.preventDefault();
+          let id = $(this).data('id');
+          $.get(`model/market.edit.php?deptId=${id}`, function(response) {
+            $('#unitId').val(response.id); // Set the department ID for update
+            $('#unitName').val(response.market_name);
+            $('#agent1').val(response.agent_id);
+            $('#agent2').val(response.secondagent);
+
+            $('#action-btn').removeClass('btn-primary').addClass('btn-info').text('Update').data('mode',
+              'edit');
+            $('#modelUnit').modal('show');
+          }, 'json');
+
+          $('#modelUnit').on('hidden.bs.modal', function() {
+            resetForm();
           });
 
-        }
-
-      });
-
-    });
-    </script>
-
-    <script>
-    $('#addmoney').on('show.bs.modal', function(event) {
-      let button = $(event.relatedTarget);
-      let id = button.data('id');
-
-      $(this).find('#unitId').val(id);
-    });
-    </script>
-
-    <script>
-    $(document).ready(function() {
-
-      // Open modal and set ID
-      $('#addmoney').on('show.bs.modal', function(event) {
-        let button = $(event.relatedTarget);
-        let id = button.data('id');
-
-        $('#unitId').val(id);
-      });
-
-      // Submit form with AJAX
-      $('#formAmount').submit(function(e) {
-        e.preventDefault();
-
-        $.ajax({
-          url: 'model/add_moneyin.php',
-          type: 'POST',
-          data: $(this).serialize(),
-          dataType: 'json',
-
-          beforeSend: function() {
-            $('#action-btn').html('Saving...');
-            $('#action-btn').prop('disabled', true);
-          },
-
-          success: function(response) {
-
-            if (response.status === 'success') {
-
-              Swal.fire({
-                icon: 'success',
-                title: 'Success',
-                text: response.message,
-                timer: 2000,
-                showConfirmButton: false
-              });
-
-              // Reset form
-              $('#formAmount')[0].reset();
-
-              // Hide modal
-              $('#addmoney').modal('hide');
-
-              // Reload only DataTable
-              $('#departmentTable').DataTable().ajax.reload(null, false);
-
-            } else {
-
-              // Swal.fire({
-              //     icon: 'error',
-              //     title: 'Error',
-              //     text: response.message
-              // });
-
-
-            }
-          },
-
-          error: function(xhr) {
-
-            console.log(xhr.responseText);
-
-            Swal.fire({
-              icon: 'error',
-              title: 'Server Error',
-              text: xhr.responseText
-            });
-
-          },
-
-          complete: function() {
-            $('#action-btn').html('Save');
-            $('#action-btn').prop('disabled', false);
-          }
-        });
-      });
-
-    });
-    </script>
-
-    <script>
-    $(document).ready(function() {
-      $('#departmentTable').DataTable({
-        ajax: {
-          url: 'model/market.table.php',
-          dataSrc: '',
-        },
-        columns: [{
-            "data": null,
-            render: (data, type, row, meta) => meta.row + 1
-          },
-          // { "data": "market_name" },
-          {
-            "data": "agent_name"
-          },
-          // {"data" : "ttotherexp"},
-          {
-            data: null,
-            render: function(data, type, row) {
-
-              let total = (parseFloat(row.moneyOutTotal) || 0) +
-                (parseFloat(row.ttotherexp) || 0);
-
-              return '₦' + total.toLocaleString('en-NG', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-              });
-            }
-          },
-
-          {
-            data: null,
-            render: function(data, type, row) {
-
-              let total = (parseFloat(row.totalMoneyInAnimal) || 0) +
-                (parseFloat(row.ttexp) || 0);
-
-              return '₦' + total.toLocaleString('en-NG', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-              });
-            }
-          },
-
-          {
-            data: null,
-            render: function(data, type, row) {
-
-              let total1 = (parseFloat(row.totalMoneyInAnimal) || 0) + (parseFloat(row.ttexp) || 0);
-              let total2 = (parseFloat(row.moneyOutTotal) || 0) + (parseFloat(row.ttotherexp) || 0);
-              let total = total1 - total2;
-
-              return '₦' + total.toLocaleString('en-NG', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-              });
-            }
-          },
-
-          // { "data": "status" },
-          // { "data": "created_by" },
-          {
-            data: null,
-            render: function(data, type, row) {
-              return `
-                    <button class="btn btn-info" data-id="${row.id}" id="editDepartment">Edit</button>
-                    <a href="view-market?marketId=${row.id}" class="btn btn-success">View market</a>
-										<button class="btn btn-warning closeMarket" data-id="${row.id}">Close market</button>
-										<button type="button" data-id="${row.id}" data-target="#addmoney" data-toggle="modal" class="btn btn-primary"><strong>Money In</strong></button>
-										<a href="money-history?marketId=${row.id}" class="btn btn-info">Money History</a>
-                `;
-            }
-          }
-
-
-        ]
-
-      });
-    });
-    </script>
-
-    <script>
-    function resetForm() {
-      $('#formUnit')[0].reset();
-      $('#unitId').val('');
-      $('#errorUnit').text('');
-      $('#action-btn').removeClass('btn-info').addClass('btn-primary').text('Save').data('mode', 'add');
-    }
-
-    $(document).ready(function() {
-      $('#formUnit').on('submit', function(e) {
-        e.preventDefault();
-        const mode = $('#action-btn').data('mode');
-        const url = mode === 'edit' ? 'model/update_market.php' : 'model/add_market.php';
-        const iconType = mode === 'edit' ? 'info' : 'success';
-        $.ajax({
-          url: url, //mode === 'edit' ? 'model/unit.edit.php' : 'model/unit.form.php', 
-          dataType: 'JSON',
-          data: $(this).serialize(),
-          type: 'POST',
-          success: function(response) {
-            if (response.status) {
-              //alert('success'+ response.message);
-              const Toast = Swal.mixin({
-                toast: true,
-                position: "top-end",
-                showConfirmButton: false,
-                timer: 2000,
-                timerProgressBar: true,
-                didOpen: (toast) => {
-                  toast.onmouseenter = Swal.stopTimer;
-                  toast.onmouseleave = Swal.resumeTimer;
-                }
-              });
-              Toast.fire({
-                icon: iconType, //"success",
-                title: response.message || response.success
-              });
-              $('#departmentTable').DataTable().ajax.reload();
-              $('#modelUnit').modal('hide');
-              resetForm();
-            } else {
-              $('#errorUnit').text(response.errors.unit || response.errors.unitExist || '');
-              $('#errorAgent').text(response.errors.agent || '');
-            }
-          },
-          error: function(xhr, status, error) {
-            alert('Error:' + xhr + status + error);
-          }
-        });
-      });
-
-      $('body').on('click', '#editDepartment', function(e) {
-        e.preventDefault();
-        let id = $(this).data('id');
-        $.get(`model/market.edit.php?deptId=${id}`, function(response) {
-          $('#unitId').val(response.id); // Set the department ID for update
-          $('#unitName').val(response.market_name);
-          $('#agent1').val(response.agent_id);
-          $('#agent2').val(response.secondagent);
-
-          $('#action-btn').removeClass('btn-primary').addClass('btn-info').text('Update').data('mode',
-            'edit');
-          $('#modelUnit').modal('show');
-        }, 'json');
-
-        $('#modelUnit').on('hidden.bs.modal', function() {
-          resetForm();
         });
 
       });
-
-    });
     </script>

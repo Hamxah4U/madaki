@@ -1,15 +1,21 @@
 <?php
-    require 'Database.php';
+require 'Database.php';
+require 'vendor/autoload.php';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
+    $success = [];
     $errors = [];
 
-    $amount = trim($_POST['amount'] ?? '');
-    $reason = trim($_POST['reason'] ?? '');
-    $userID = trim($_POST['userID'] ?? '');
+    $amount  = trim($_POST['amount'] ?? '');
+    $reason  = trim($_POST['reason'] ?? '');
+    $userID  = trim($_POST['userID'] ?? '');
     $agent_id = trim($_POST['agent_id'] ?? null);
+    $mode    = $_POST['mode'] ?? 'add'; // add or edit
+    $id      = $_POST['id'] ?? null;
+    $fstatus = $_POST['fstatus'] ?? null;
 
+    // ✅ VALIDATION
     if (empty($amount)) {
         $errors['amount'] = 'Amount is required!';
     }
@@ -21,33 +27,68 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if (!empty($errors)) {
         echo json_encode([
             'status' => false,
-            'errors' => $errors
+            'errors' => $errors,
         ]);
         exit;
     }
 
     try {
-        $stmt = $db->conn->prepare("
-            INSERT INTO expenses 
-            (driver_id, amount, reason, daterecorded, timerecorded, status, agent_id)
-            VALUES (:driver_id, :amount, :reason, CURDATE(), CURTIME(), 'other_exp', :agent_id)
-        ");
+        // =========================
+        // ✅ ADD MODE (INSERT)
+        // =========================
+        if ($mode === 'add') {
 
-        $stmt->bindParam(':driver_id', $userID);
-        $stmt->bindParam(':amount', $amount);
-        $stmt->bindParam(':reason', $reason);
-        $stmt->bindParam(':agent_id', $agent_id);
+            $stmt = $db->conn->prepare('
+                INSERT INTO expenses 
+                (driver_id, amount, reason, daterecorded, timerecorded, status, agent_id,fstatus) 
+                VALUES (:driver_id, :amount, :reason, CURDATE(), CURTIME(), "other_exp", :agent_id, :fstatus)
+            ');
 
-        if ($stmt->execute()) {
+            $stmt->execute([
+                ':driver_id' => $userID,
+                ':amount'    => $amount,
+                ':reason'    => $reason,
+                ':agent_id' => $agent_id,
+                ':fstatus' => $fstatus
+            ]);
+
             echo json_encode([
                 'status' => true,
-                'success' => ['message' => 'Other expense added successfully.']
+                'success' => ['message' => 'Other Expense added successfully.']
             ]);
-        } else {
+            exit;
+        }
+
+        // =========================
+        // ✅ EDIT MODE (UPDATE)
+        // =========================
+        if ($mode === 'edit') {
+
+            if (empty($id)) {
+                echo json_encode([
+                    'status' => false,
+                    'errors' => ['general' => 'Invalid expense ID']
+                ]);
+                exit;
+            }
+
+            $stmt = $db->conn->prepare('
+                UPDATE expenses 
+                SET amount = :amount, reason = :reason 
+                WHERE id = :id
+            ');
+
+            $stmt->execute([
+                ':amount' => $amount,
+                ':reason' => $reason,
+                ':id'     => $id
+            ]);
+
             echo json_encode([
-                'status' => false,
-                'errors' => ['general' => 'Insert failed']
+                'status' => true,
+                'success' => ['message' => 'Other Expense updated successfully.']
             ]);
+            exit;
         }
 
     } catch (PDOException $e) {
@@ -55,7 +96,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             'status' => false,
             'errors' => ['general' => $e->getMessage()]
         ]);
+        exit;
     }
 }
-
 ?>
