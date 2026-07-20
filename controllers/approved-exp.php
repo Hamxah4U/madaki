@@ -3,9 +3,9 @@ require_once 'model/Database.php';
 require 'views/partials/security.php'; 
 
 // Ensure only Admins can approve
-if ($_SESSION['role'] !== 'Admin') {
-    die("Unauthorized access.");
-}
+// if ($_SESSION['role'] !== 'Admin') {
+//     die("Unauthorized access.");
+// }
 
 if (isset($_GET['id']) && isset($_GET['tid'])) {
     $expense_id = (int)$_GET['id'];

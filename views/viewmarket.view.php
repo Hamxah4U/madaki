@@ -45,15 +45,20 @@
     $market3->execute();
     $rowMarket3 = $market3->fetchAll(); 
     
-     $stmtS = $db->conn->prepare("SELECT * FROM `market` WHERE agent_id = ? OR secondagent = ?");
-      $stmtS->execute([$_SESSION['userID'], $_SESSION['userID']]);
-      $rowS = $stmtS->fetch();
-      
-      $fagent = $rowS['agent_id'] ?? null;
-      $sagent = $rowS['secondagent'] ?? null;
-      $superRole = $_SESSION['super_role'] ?? null;
 
-?>
+    $stmt = $db->conn->prepare("SELECT `id`, `agent_id`, `secondagent` FROM `market` WHERE `id` = :marketId AND (agent_id = :userId OR secondagent = :userId)");
+    $stmt->execute([
+        ':marketId' => $_GET['marketId'],
+        ':userId'   => $_SESSION['userID'],
+    ]);
+    $rowPermission = $stmt->fetch();
+
+    $currentUserId = $_SESSION['userID'] ?? null;
+    $superRole     = $_SESSION['super_role'] ?? null;
+    $isSuperAdmin  = ($superRole === 'Super Admin');
+    $isFirstAgent  = ($rowPermission && $rowPermission['agent_id'] == $currentUserId);
+    $isSecondAgent = ($rowPermission && $rowPermission['secondagent'] == $currentUserId);
+  ?>
 
 <style>
   @media print {
@@ -250,10 +255,11 @@
                         <button type="button" class="btn btn-dark-alt px-4 no-print shadow-sm" onclick="printDiv('printArea')">
                             <i class="fas fa-print mr-2"></i> Print Complete Statement
                         </button>
-                        <?php if($fagent == $_SESSION['userID'] || $superRole == 'Super Admin'): ?>
-                            <button type="submit" name="save" class="btn btn-primary px-5 shadow-sm font-weight-bold" id="saveBtn">
+                        
+                        <?php if($isSuperAdmin || $isFirstAgent): ?>
+                        <button type="submit" name="save" class="btn btn-primary px-5 shadow-sm font-weight-bold" id="saveBtn">
                                 <i class="fas fa-check-circle mr-2"></i> Submit Record
-                            </button>
+                        </button>
                         <?php endif ?>
                     </div>              
                 </form>
@@ -336,6 +342,7 @@
                   <td><?= number_format($rowmarket['amount'], 2) ?></td>
                   <td><?= $rowmarket['animal_name'] ?></td>
                   <td class="no-print">
+                    <?php if($isFirstAgent || $isSuperAdmin): ?>
                     <button type="button" class="btn btn-info btn-sm editBtn" data-id="<?= $rowmarket['id'] ?>"
                       data-animal="<?= $rowmarket['animal_id'] ?>" data-amount="<?= $rowmarket['amount'] ?>"
                       data-date="<?= date('Y-m-d', strtotime($rowmarket['date_create'])) ?>"
@@ -344,6 +351,9 @@
                     </button>
                     <button type="button" class="btn btn-danger btn-sm deleteBtn"
                       data-id="<?= $rowmarket['id'] ?>">Delete</button>
+                    <?php else: ?>
+                    <span class="text-danger">Not authorized</span>
+                    <?php endif ?>
                   </td>
                 </tr>
 
@@ -391,19 +401,15 @@
                   <table class="table table-bordered text-nowrap">
                     <thead>
                       <tr>
-                        <?php 
-                          $stmt = $db->conn->prepare('SELECT * FROM market WHERE agent_id = :agent_id ');
-                          $stmt->execute(['agent_id' => $_SESSION['userID'], ]);
-                          $market = $stmt->fetch(PDO::FETCH_ASSOC);
-                          if($market && $market['agent_id'] == $_SESSION['userID'] ||  $_SESSION['super_role'] == 'Super Admin'): ?>
-                          
+                        <?php if ($isSecondAgent || $isSuperAdmin): ?>                         
                           <button class="btn btn-primary" type="button" data-target="#modalUser"
-                            data-toggle="modal"><strong>Expenses</strong></button>
+                            data-toggle="modal"><strong>Second Agent: Expenses</strong></button>
                           <button class="btn btn-dark no-print" onclick="expenses('expenses')">Print</button>
                         <?php else: ?>
                           <span class="text-danger">You are not authorized to add expenses.</span>
                         <?php endif ?>                        
                       </tr>
+                     
                       <tr>
                         <th>#</th>
                         <th>Reason</th>
@@ -438,14 +444,14 @@
                           <?php
                               if ($row_exp['pstatus'] == 'approved') {
                                   echo "<button class='btn btn-sm btn-success' disabled>Approved</button>";
-                              } elseif ($row_exp['pstatus'] == 'pending' && ($superRole == 'Super Admin' || $_SESSION['userID'] == $sagent)) {
+                              } elseif ($row_exp['pstatus'] == 'pending' && ($isSuperAdmin || $isFirstAgent)) {
                                   echo '<a href="/approved-exp?id=' . $row_exp['id'] . '&tid=' . $_GET['marketId'] . '" class="btn btn-sm btn-warning" onclick="return confirm(\'Mark this expense as paid?\')">Click to Approve</a>';
                               } else {
                                   echo '<span class="badge badge-secondary">Pending Approval</span>';
                               }
                           ?>
                                                     
-                          <?php  if($market && $market['agent_id'] == $_SESSION['userID'] ||  $_SESSION['super_role'] == 'Super Admin'):  ?>
+                          <?php  if($isSuperAdmin || $isSecondAgent):  ?>
                             <?php if($row_exp['pstatus'] == 'pending') : ?>
                             <a href="/delete-only-exp?id=<?= $row_exp['id'] ?>&tid=<?= $_GET['marketId'] ?>" class="btn btn-sm btn-danger" onclick="return confirm('Delete this record?')">Delete</a>
                             <button class="btn btn-info editExpenseBtn" data-toggle="modal" data-target="#modalUser" data-id="<?= $row_exp['id'] ?>" data-amount="<?= $row_exp['amount'] ?>" data-reason="<?= htmlspecialchars($row_exp['reason']) ?>">Edit</button>                          <?php endif ?>
@@ -484,25 +490,9 @@
                   <table class="table table-bordered text-nowrap">
                     <thead>                      
                       <tr>
-                        <?php 
-                          // 1. Get the current Market ID from the URL (adjust 'marketId' if your URL parameter uses 'id')
-                          $currentMarketId = $_GET['marketId'] ?? $_GET['id'] ?? null;
-
-                          // 2. Target the specific market AND the logged-in second agent
-                          $stmt = $db->conn->prepare("SELECT * FROM market WHERE id = :market_id AND secondagent = :secondagent");
-                          $stmt->execute([
-                              'market_id'   => $currentMarketId,
-                              'secondagent' => $_SESSION['userID']
-                          ]);
-                          $market = $stmt->fetch(PDO::FETCH_ASSOC);
-
-                          // 3. Check roles and permissions
-                          $superRole = $_SESSION['super_role'] ?? null;
-                          if (($market && $market['secondagent'] == $_SESSION['userID']) || $superRole == 'Super Admin'): 
-                        ?>
-    
+                        <?php if ($isFirstAgent || $isSuperAdmin): ?>
                           <button type="button" data-target="#modelOtherExpenses" data-toggle="modal" class="btn btn-primary">
-                            <strong>Other Expenses</strong>
+                            <strong>First Agent: Other Expenses</strong>
                           </button>
                           <button class="btn btn-dark no-print" onclick="other_expenses('other_expenses')">Print</button>
                           
@@ -542,22 +532,22 @@
                         <td><?= $row_exp['daterecorded'] ?></td>
                         <td><?= $row_exp['timerecorded'] ?></td>
                         <td class="no-print">
-
                           <?php
                             if ($row_exp['pstatus'] == 'approved') {
                                 echo "<button class='btn btn-sm btn-success' disabled>Approved</button>";
-                            } elseif ($row_exp['pstatus'] == 'pending' && $superRole || $_SESSION['userID'] == $fagent) {
+                            } elseif ($row_exp['pstatus'] == 'pending' && $isSuperAdmin || $isSecondAgent) {
                                 echo '<a href="/approved-exp?id=' . $row_exp['id'] . '&tid=' . $_GET['marketId'] . '" class="btn btn-sm btn-warning" onclick="return confirm(\'Mark this expense as paid?\')">Click to Approve</a>';
                             } else {
                                 echo '<span class="badge badge-secondary">Pending Approval</span>';
                             }
                           ?>
 
-                          <?php if($row_exp['pstatus'] == 'pending'): ?>
+                          <?php if($isSuperAdmin || $isFirstAgent): ?>
                             <a href="/delete-other-expenses?id=<?= $row_exp['id'] ?>&tid=<?= $_GET['marketId'] ?>"
                               class="btn btn-sm btn-danger no-print"
                               onclick="return confirm('Delete this record?')">Delete</a>
-                          <button class="btn btn-info editOtherExpenseBtn" data-toggle="modal" data-target="#modelOtherExpenses" data-id="<?= $row_exp['id'] ?>" data-amount="<?= $row_exp['amount'] ?>" data-reason="<?= htmlspecialchars($row_exp['reason']) ?>">Edit</button>                          <?php endif ?>
+                            <button class="btn btn-info editOtherExpenseBtn" data-toggle="modal" data-target="#modelOtherExpenses" data-id="<?= $row_exp['id'] ?>" data-amount="<?= $row_exp['amount'] ?>" data-reason="<?= htmlspecialchars($row_exp['reason']) ?>">Edit</button>          
+                          <?php endif ?>
                         
                         </td>
                       </tr>
@@ -595,8 +585,8 @@
                     <table class="table table-bordered text-nowrap">
                       <thead>
                         <tr>
-                          <?php if ($superRole == 'Super Admin' || $_SESSION['userID'] == $fagent): ?>
-                          <button type="button" data-target="#modelComment" data-toggle="modal" class="btn btn-primary"><strong>Comments</strong></button>
+                          <?php if ($isSuperAdmin || $isSecondAgent): ?>
+                          <button type="button" data-target="#modelComment" data-toggle="modal" class="btn btn-primary"><strong>Second Agent: Comments</strong></button>
                           <button class="btn btn-dark no-print" onclick="comments('comments')">Print</button>
                           <?php else: ?>
                             <span class="text-danger">You are not authorized</span>
@@ -627,8 +617,12 @@
                           <td><?= date('d M Y', strtotime($row_comment['daterecorded'])) ?></td>
                           <td><?= date('h:i A', strtotime($row_comment['timerecorded'])) ?></td>
                           <td class="no-print">
+                            <?php if($isSecondAgent || $isSuperAdmin): ?>
                             <a href="/delete-comment?id=<?= $row_comment['id'] ?>&tid=<?= $_GET['marketId'] ?>" class="btn btn-sm btn-danger" onclick="return confirm('Delete this record?')">Delete</a>
                             <button class="btn btn-info btn-edit-comment" data-id="<?= $row_comment['id'] ?>" data-comment="<?= htmlspecialchars($row_comment['reason']) ?>" data-amount="<?= $row_comment['amount'] ?>">Edit</button>
+                            <?php else: ?>
+                              <span class="text-danger">Not authorized</span>
+                            <?php endif ?>
                           </td>
                         </tr>
                         <?php endforeach ?>
@@ -649,8 +643,8 @@
                     <table class="table table-bordered text-nowrap">
                       <thead>
                         <tr>
-                          <?php if ($superRole == 'Super Admin' || $_SESSION['userID'] == $sagent): ?>
-                          <button type="button" data-target="#modelotherComment" data-toggle="modal" class="btn btn-primary"><strong>Other Comments</strong></button>
+                          <?php if ($isFirstAgent || $isSuperAdmin): ?>
+                          <button type="button" data-target="#modelotherComment" data-toggle="modal" class="btn btn-primary"><strong>First Agent: Other Comments</strong></button>
                           <button class="btn btn-dark no-print" onclick="other_comments('other_comments')">Print</button>
                           <?php else: ?>
                             <span class="text-danger">You are not authorized</span>
@@ -678,9 +672,11 @@
                           <td><?= date('d M Y', strtotime($row_comment['daterecorded'])) ?></td>
                           <td><?= date('h:i A', strtotime($row_comment['timerecorded'])) ?></td>
                           <td class="no-print">
-                            <?php if ($_SESSION['role'] == 'Admin'): ?>
+                            <?php if ($isFirstAgent || $isSuperAdmin): ?>
                             <a href="/delete-comment?id=<?= $row_comment['id'] ?>&tid=<?= $_GET['marketId'] ?>" class="btn btn-sm btn-danger" onclick="return confirm('Delete this record?')">Delete</a>
                             <button class="btn btn-info btn-edit-othercomment" data-id="<?= $row_comment['id'] ?>" data-comment="<?= htmlspecialchars($row_comment['reason']) ?>">Edit</button>
+                            <?php else: ?>
+                              <span class="text-danger">Not authorized</span>
                             <?php endif ?>
                           </td>
                         </tr>
@@ -691,7 +687,6 @@
                 </div>
               </div>
 
-              <?php if ($_SESSION['role'] == 'Admin'): ?>
               <div class="row">
                 <div class="col-sm-12" id="diary">
                   <div class="table table-responsive">
@@ -731,7 +726,6 @@
                   </div>
                 </div>
               </div>
-              <?php endif ?>
 
             </div>
           </div>
