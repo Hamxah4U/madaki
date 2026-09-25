@@ -188,7 +188,7 @@
                             <tbody id="tableBody">
                                 <tr>
                                     <td>
-                                        <input required type="number" name="number[]" class="form-control form-control-alternative" placeholder="E.g. 1">
+                                        <input required type="number" name="number[]" class="form-control form-control-alternative">
                                     </td>
                                     <td>
                                         <select name="animal[]" class="form-control animal-select w-100">
@@ -205,10 +205,8 @@
                                     </td>
                                     <td>
                                         <div class="input-group">
-                                            <div class="input-group-prepend">
-                                                <span class="input-group-text bg-white border-right-0">₦</span>
-                                            </div>
-                                            <input type="number" name="amount[]" value="<?= $editData['total'] ?? '' ?>" class="form-control pl-1" placeholder="0.00">
+                                            
+                                            <input type="number" name="amount[]" value="<?= $editData['total'] ?? '' ?>" class="form-control pl-1">
                                         </div>
                                     </td>
                                     <td class="text-center">
@@ -238,7 +236,7 @@
                         </div>
                         <div class="col-md-5">
                             <div class="input-group">
-                                
+                               
                                 <select name="market_id[]" class="form-control market-select" required>
                                     <option value="">-- select market target --</option>
                                     <?php foreach($rowMarket3 as $rowMarket3_1): ?>
@@ -303,7 +301,7 @@
                       // Close previous group with subtotal
                       if($currentMarketGroup != ''):
                 ?>
-                <tr style="background:#ffeeba; font-weight:bold;">
+                <tr class="text-danger" style="background:#ffeeba; font-weight:bold;">
                   <td colspan="1">Subtotal</td>
                   <td>₦<?= number_format($groupTotal, 2) ?></td>
                   <td colspan="2"></td>
@@ -339,7 +337,7 @@
                 ?>
                 <tr id="row<?= $rowmarket['id'] ?>">
                   <td><?= $rowmarket['sn_number'] ?></td>
-                  <td><?= number_format($rowmarket['amount'], 2) ?></td>
+                  <td class="text-danger"><?= number_format($rowmarket['amount'], 2) ?></td>
                   <td><?= $rowmarket['animal_name'] ?></td>
                   <td class="no-print">
                     <?php if($isFirstAgent || $isSuperAdmin): ?>
@@ -389,9 +387,7 @@
                     ?>
                   </td>
                 </tr>
-
               </tbody>
-
             </table>
 
             <div class="">
@@ -437,7 +433,7 @@
                       <tr>
                         <td><?= $index + 1 ?></td>
                         <td><?= $row_exp['reason'] ?></td>
-                        <td><?= number_format($row_exp['amount']) ?></td>
+                        <td class="text-danger"><?= number_format($row_exp['amount']) ?></td>
                         <td><?= $row_exp['daterecorded'] ?></td>
                         <td><?= $row_exp['timerecorded'] ?></td>
                         <td class="no-print">
@@ -476,8 +472,8 @@
 
                       <!-- Grand Total (Combined) Row -->
                       <tr style="background: #e9ecef; font-size: 1.1rem; border-top: 1px solid #ccc; border-bottom: 2px double #6c757d;">
-                        <td colspan="2" class="text-right text-dark"><strong>Grand Total:</strong></td>
-                        <td colspan="4" class="text-dark"><strong>₦<?= number_format($exponly + $pending_total) ?></strong></td>
+                        <td colspan="2" class="text-right text-danger"><strong>Grand Total:</strong></td>
+                        <td colspan="4" class="text-danger"><strong>₦<?= number_format($exponly + $pending_total) ?></strong></td>
                       </tr>
                     </tfoot>
                     
@@ -528,7 +524,7 @@
                       <tr>
                         <td><?= $index + 1 ?></td>
                         <td><?= $row_exp['reason'] ?></td>
-                        <td><?= number_format($row_exp['amount']) ?></td>
+                        <td class="text-danger"><?= number_format($row_exp['amount']) ?></td>
                         <td><?= $row_exp['daterecorded'] ?></td>
                         <td><?= $row_exp['timerecorded'] ?></td>
                         <td class="no-print">
@@ -568,8 +564,8 @@
 
                       <!-- Grand Total (Combined) Row -->
                       <tr style="background: #e9ecef; font-size: 1.1rem; border-top: 1px solid #ccc; border-bottom: 2px double #6c757d;">
-                        <td colspan="2" class="text-right text-dark"><strong>Grand Total:</strong></td>
-                        <td colspan="4" class="text-dark"><strong>₦<?= number_format($exponlyOtherEx + $pendingExpTotal) ?></strong></td>
+                        <td colspan="2" class="text-right text-danger"><strong>Grand Total:</strong></td>
+                        <td colspan="4" class="text-danger"><strong>₦<?= number_format($exponlyOtherEx + $pendingExpTotal) ?></strong></td>
                       </tr>
                     </tfoot>
                   </table>
@@ -627,7 +623,7 @@
                         </tr>
                         <?php endforeach ?>
                         <tfoot>
-                          <tr style="background:#f1f1f1; font-weight:bold;">
+                          <tr style="background:#f1f1f1; font-weight:bold;" class="text-danger">
                             <td colspan="2">Total</td>
                             <td colspan="4">₦<?= number_format($totalAmountForComment) ?></td>
                           </tr>
@@ -2088,7 +2084,7 @@
     initSelect2('.market-select, .animal-select');
 
     // Function to renumber rows
-    function renumberRows() {
+    /* function renumberRows() {
       let count = existingRows + 1;
 
       $("#tableBody tr").each(function() {
@@ -2097,7 +2093,7 @@
       });
 
       rowCount = count - 1;
-    }
+    } */
 
     // Add Row
     $("#addRow").click(function() {
