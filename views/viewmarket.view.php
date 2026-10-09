@@ -9,7 +9,7 @@
     }
     $code = (int)$_GET['marketId'];
 
-    $stmtmarket = $db->conn->prepare("
+    /* $stmtmarket = $db->conn->prepare("
         SELECT 
             d.Department AS animal_name,
             m3.name AS currentMarketName,
@@ -22,6 +22,22 @@
         WHERE mt.market_code = :market_code
         ORDER BY m3.name ASC, mt.date_create DESC, mt.sn_number ASC
     ");
+ */
+  $stmtmarket = $db->conn->prepare("
+    SELECT 
+        d.Department AS animal_name,
+        m3.name AS currentMarketName,
+        m.market_name AS oldmarket,
+        mt.*
+    FROM market_transaction mt
+    LEFT JOIN market m ON m.id = mt.market_code 
+    LEFT JOIN market_3 m3 ON m3.id = mt.market_id
+    LEFT JOIN department_tbl d ON d.deptID = mt.animal_id
+    WHERE mt.market_code = :market_code
+    ORDER BY mt.date_create DESC, m3.name ASC, mt.sn_number ASC
+");
+
+
 
     $stmtmarket->execute([
         ':market_code' => $code

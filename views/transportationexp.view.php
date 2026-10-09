@@ -622,7 +622,7 @@ $next = $nextStmt->fetch(PDO::FETCH_ASSOC);
                   </tr>
                   <?php endforeach; ?>
 
-                  <tr style="background:#e2e3e5; font-weight:bold;" data-duplicate-group="<?= htmlspecialchars($name, ENT_QUOTES) ?>">
+                  <tr style="background:#e2e3e5; font-weight:bold; color:red" data-duplicate-group="<?= htmlspecialchars($name, ENT_QUOTES) ?>">
                     <td colspan="2">Total (<?= $name ?>)</td>
                     <td><?= $tAnimal ?></td>
                     <td><?= $tDeath ?></td>
@@ -698,7 +698,7 @@ $next = $nextStmt->fetch(PDO::FETCH_ASSOC);
                       <?php endforeach ?>
                     </tbody>
                     <tfoot>
-                      <tr style="background:#f1f1f1; font-weight:bold;">
+                      <tr style="background:#f1f1f1; font-weight:bold; color:red">
                         <td colspan="2">Total</td>
                         <th colspan="5">₦<?= number_format($exponly) ?></th>
                       </tr>
@@ -750,7 +750,7 @@ $next = $nextStmt->fetch(PDO::FETCH_ASSOC);
                       <?php endforeach ?>
                     </tbody>
                     <tfoot>
-                      <tr style="background:#f1f1f1; font-weight:bold;">
+                      <tr style="background:#f1f1f1; font-weight:bold; color:red">
                         <td colspan="2">Total</td>
                         <th colspan="4">₦<?= number_format($exponly) ?></th>
                       </tr>
@@ -800,7 +800,7 @@ $next = $nextStmt->fetch(PDO::FETCH_ASSOC);
                       </tr>
                       <?php endforeach ?>
                       <tfoot>
-                        <tr style="background:#f1f1f1; font-weight:bold;">
+                        <tr style="background:#f1f1f1; font-weight:bold; color:red">
                           <td colspan="2">Total</td>
                           <td colspan="4">₦<?= number_format($totalAmountForComment) ?></td>
                         </tr>
