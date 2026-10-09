@@ -426,6 +426,7 @@
                         <th>#</th>
                         <th>Reason</th>
                         <th>Amount</th>
+                        <th>Receipt</th>
                         <th>Date</th>
                         <th>Time</th>
                         <th class="no-print">Action</th>
@@ -450,6 +451,23 @@
                         <td><?= $index + 1 ?></td>
                         <td><?= $row_exp['reason'] ?></td>
                         <td class="text-danger"><?= number_format($row_exp['amount']) ?></td>
+                        <td>
+                            <?php if (!empty($row_exp['receipt'])): ?>
+                              
+                              <button type="button" 
+                                      class="btn btn-sm btn-outline-info viewReceiptBtn" 
+                                      data-receipt="model/<?= htmlspecialchars($row_exp['receipt']) ?>"
+                                      data-reason="<?= htmlspecialchars($row_exp['reason']) ?>"
+                                      data-amount="<?= number_format($row_exp['amount']) ?>"
+                                      title="View Receipt">
+                                <!-- <i class="fas fa-eye"></i> -->
+                                <img src="model/<?= htmlspecialchars($row_exp['receipt']) ?>" alt="Receipt" class="img-thumbnail" style="max-width: 30px; max-height: 30px;">
+
+                              </button>
+                            <?php else: ?>
+                              <span class="badge badge-light text-muted">No Receipt</span>
+                            <?php endif; ?>
+                          </td>
                         <td><?= $row_exp['daterecorded'] ?></td>
                         <td><?= $row_exp['timerecorded'] ?></td>
                         <td class="no-print">
@@ -476,19 +494,19 @@
                     <tfoot>
                       <!-- Approved Sum Row -->
                       <tr class="text-success" style="font-size: 1.05rem;">
-                        <td colspan="2" class="text-right"><strong>Total Approved:</strong></td>
+                        <td colspan="3" class="text-right"><strong>Total Approved:</strong></td>
                         <td colspan="4"><strong>₦<?= number_format($exponly) ?></strong></td>
                       </tr>
 
                       <!-- Pending Sum Row -->
                       <tr class="text-warning" style="font-size: 1.05rem;">
-                        <td colspan="2" class="text-right"><strong>Total Pending:</strong></td>
+                        <td colspan="3" class="text-right"><strong>Total Pending:</strong></td>
                         <td colspan="4"><strong>₦<?= number_format($pending_total) ?></strong></td>
                       </tr>
 
                       <!-- Grand Total (Combined) Row -->
                       <tr style="background: #e9ecef; font-size: 1.1rem; border-top: 1px solid #ccc; border-bottom: 2px double #6c757d;">
-                        <td colspan="2" class="text-right text-danger"><strong>Grand Total:</strong></td>
+                        <td colspan="3" class="text-right text-danger"><strong>Grand Total:</strong></td>
                         <td colspan="4" class="text-danger"><strong>₦<?= number_format($exponly + $pending_total) ?></strong></td>
                       </tr>
                     </tfoot>
@@ -908,7 +926,7 @@
             </button>
           </div>
           <div class="modal-body">
-            <form id="userForm">
+            <form id="userForm" enctype="multipart/form-data">
               <input type="text" name="id" id="edit_id" hidden>
               <input type="text" name="userID" id="userID" value="<?= $_GET['marketId'] ?>" hidden>
               <input type="text" name="fstatus" id="fstatus" value="market" hidden>
@@ -926,6 +944,17 @@
               </div>
 
               <div class="form-group">
+                <label>Upload Receipt (only: png, jpg, jpeg)</label>
+                <input type="file" name="receipt" id="receipt" class="form-control" accept="image/png, image/jpeg, image/jpg">
+                <small class="text-danger" id="errorReceipt"></small>
+
+                <div class="mt-2 text-center" id="receiptPreviewContainer" style="display: none;">
+                  <img id="receiptPreview" src="model/<?= $row_exp['receipt'] ?? '#' ?>" alt="Receipt Preview" class="img-thumbnail" style="max-height: 200px;">
+                </div>
+
+              </div>
+
+              <div class="form-group">
                 <label for="my-input">Reason</label>
                 <textarea name="reason" id="reason" class="form-control" rows="3"></textarea>
                 <small class="text-danger" id="errorReason"></small>
@@ -937,7 +966,6 @@
         </div>
       </div>
     </div>
-
 
     <div class="modal fade" id="modelOtherExpenses" tabindex="-1" role="dialog" aria-labelledby="modelTitleId"
       aria-hidden="true">
@@ -983,9 +1011,73 @@
       </div>
     </div>
 
+    <!-- Modal for Viewing Receipt -->
+    <div class="modal fade" id="modalViewReceipt" tabindex="-1" role="dialog" aria-labelledby="receiptModalTitle" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content shadow-lg border-0">
+          <div class="modal-header text-primary">
+            <h5 class="modal-title" id="receiptModalTitle">
+              <i class="fas fa-file-invoice-dollar mr-2"></i>Receipt Viewer
+            </h5>
+            <button type="button" class="close text-danger" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body text-center p-4 bg-light">
+            <!-- <div class="mb-3 border-bottom pb-2">
+              <span class="badge badge-primary px-3 py-2 font-weight-normal" style="font-size: 0.95rem;">
+                Amount: ₦<strong id="viewReceiptAmount">0</strong>
+              </span>
+              <p class="text-muted mt-2 mb-0" style="font-size: 0.9rem;">
+                <strong>Reason:</strong> <span id="viewReceiptReason">N/A</span>
+              </p>
+            </div> -->
+            
+            <!-- Image Container -->
+            <div class="position-relative d-inline-block shadow-sm rounded overflow-hidden bg-white p-2 border">
+              <img id="receiptModalImg" src="#" class="img-fluid rounded" alt="Receipt Image" style="max-height: 70vh; object-fit: contain;">
+            </div>
+          </div>
+          <div class="modal-footer bg-white justify-content-between">
+            <a id="downloadReceiptBtn" href="#" download class="btn btn-outline-secondary btn-sm">
+              <i class="fas fa-download mr-1"></i> Download
+            </a>
+            <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
 
 <?php require 'partials/footer.php'; ?>
+<script>
+  $(document).ready(function() {
 
+  $(document).on('click', '.viewReceiptBtn', function(e) {
+    e.preventDefault();
+    
+    let receiptUrl = $(this).data('receipt');
+    
+    // Ensure the model/ path prefix is included
+    if (receiptUrl && !receiptUrl.startsWith('model/')) {
+        receiptUrl = 'model/' + receiptUrl;
+    }
+
+    const reason = $(this).data('reason') || 'N/A';
+    const amount = $(this).data('amount') || '0';
+
+    // Populate modal elements
+    $('#receiptModalImg').attr('src', receiptUrl);
+    $('#viewReceiptReason').text(reason);
+    $('#viewReceiptAmount').text(amount);
+    $('#downloadReceiptBtn').attr('href', receiptUrl);
+
+    // Open modal
+    $('#modalViewReceipt').modal('show');
+  });
+
+});
+</script>
 <script>
   function comments() {
       var content = document.getElementById('comments').innerHTML;
@@ -2029,6 +2121,62 @@
 
   $(document).ready(function() {
     $('#userForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        const mode = $('#action-btn').data('mode');
+        
+        // Use FormData to construct file uploads and input data
+        let formData = new FormData(this);
+        formData.append('mode', mode);
+
+        $.ajax({
+            url: 'model/expenses.form.php',
+            type: 'POST',
+            data: formData,
+            dataType: 'JSON',
+            processData: false, // Required for FormData
+            contentType: false, // Required for FormData
+            success: function(response) {
+                if (response.status === false) {
+                    $('#errorAmount').text(response.errors.amount || '');
+                    $('#errorReason').text(response.errors.reason || '');
+                    $('#errorReceipt').text(response.errors.receipt || '');
+                } else {
+                    const Toast = Swal.mixin({
+                        toast: true,
+                        position: "top-end",
+                        showConfirmButton: false,
+                        timer: 2000,
+                        timerProgressBar: true,
+                        didOpen: (toast) => {
+                            toast.onmouseenter = Swal.stopTimer;
+                            toast.onmouseleave = Swal.resumeTimer;
+                        }
+                    });
+                    Toast.fire({
+                        icon: "success",
+                        title: response.success.message
+                    }).then(() => {
+                        location.reload();
+                    });
+
+                    $('#modalUser').modal('hide');
+                    resetForm();
+                }
+            },
+            error: function(xhr, status, error) {
+                alert('Error: ' + xhr.status + ' - ' + error);
+            }
+        });
+    });
+
+    $('#modalUser').on('hidden.bs.modal', function() {
+        resetForm();
+    });
+  });
+
+  /* $(document).ready(function() {
+    $('#userForm').on('submit', function(e) {
       e.preventDefault();
       const mode = $('#action-btn').data('mode');
       // const mode = $('#action-btn').data('mode');
@@ -2075,7 +2223,7 @@
     $('#modalUser').on('hidden.bs.modal', function() {
       resetForm();
     });
-  });
+  }); */
 </script>
 
 <script>
@@ -2515,3 +2663,56 @@
         win.print();
       }
     </script>
+
+    <script>
+      $(document).ready(function() {
+
+        // Preview image on file select
+        $('#receipt').on('change', function() {
+            const file = this.files[0];
+
+            if (file) {
+                // Check if file is an image
+                const validTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+                if (validTypes.includes(file.type)) {
+                    const reader = new FileReader();
+
+                    reader.onload = function(e) {
+                        $('#receiptPreview').attr('src', e.target.result);
+                        $('#receiptPreviewContainer').fadeIn();
+                    };
+
+                    reader.readAsDataURL(file);
+                    $('#errorReceipt').text('');
+                } else {
+                    $('#errorReceipt').text('Invalid file format. Please select an image (png, jpg, jpeg).');
+                    resetReceiptPreview();
+                }
+            } else {
+                resetReceiptPreview();
+            }
+        });
+
+        // Helper function to reset preview
+        function resetReceiptPreview() {
+            $('#receipt').val('');
+            $('#receiptPreview').attr('src', '#');
+            $('#receiptPreviewContainer').hide();
+        }
+
+        // Existing resetForm function updated
+        function resetForm() {
+            $('#userForm')[0].reset();
+            $('#errorAmount').text('');
+            $('#errorReason').text('');
+            $('#errorReceipt').text('');
+            resetReceiptPreview();
+        }
+
+        // Modal hidden event
+        $('#modalUser').on('hidden.bs.modal', function() {
+            resetForm();
+        });
+
+      });
+  </script>
