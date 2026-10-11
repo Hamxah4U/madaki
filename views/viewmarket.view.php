@@ -730,7 +730,7 @@
                     <table class="table table-bordered text-nowrap">
                       <thead>
                         <tr>
-                          <th colspan="7">
+                          <th colspan="8">
                             <button type="button" data-target="#creditors" data-toggle="modal" class="btn btn-primary"><strong>Add Creditor</strong></button>
                           </th>
                         </tr>
@@ -741,6 +741,7 @@
                           <th>Credit Amount</th>
                           <th>Payments Made</th>
                           <th>Total Paid</th>
+                          <th>Remaining Balance</th>
                           <th class="no-print">Action</th>
                         </tr>
                       </thead>
@@ -754,37 +755,64 @@
                             $grandTotalCredit +=$cr['amount'];
 
                             // Fetch payments for this specific creditor
-                            $stmtPay =$db->conn->prepare("SELECT * FROM creditor_payments WHERE creditor_id = :creditor_id");
-                            $stmtPay->execute(['creditor_id' =>$cr['id']]);
+                            $stmtPay =$db->conn->prepare("SELECT * FROM creditor_payments WHERE `market_id` = :marketId AND `creditor_id` = :creditor_id");
+                            $stmtPay->execute([
+                                'marketId' => $_GET['marketId'],
+                                'creditor_id' => $cr['id']
+                            ]);
                             $payments =$stmtPay->fetchAll();
 
                             $totalPaidForCreditor = 0;
+                            foreach($payments as$payment) {
+                                $totalPaidForCreditor +=$payment['amount'];
+                            }
+
+                            // Calculate remaining balance (Credit Amount - Total Paid)
+                            $creditAmount = $cr['amount'];$balance = $creditAmount -$totalPaidForCreditor;
+
+                            // Determine status, color representation, and remaining balance display
+                            if ($totalPaidForCreditor ==$creditAmount) {
+                                $statusColor = 'text-success';$statusBadge = '<span class="badge badge-success ml-1">Cleared</span>';
+                                $remainingDisplay = '<span class="text-success font-weight-bold">₦0</span>';
+                            } elseif ($totalPaidForCreditor >$creditAmount) {
+                                $statusColor = 'text-primary';$statusBadge = '<span class="badge badge-primary ml-1">Overpaid</span>';
+                                $excess = $totalPaidForCreditor -$creditAmount;
+                                $remainingDisplay = '<span class="text-primary font-weight-bold">₦0</span> <small class="text-primary">(+₦' . number_format($excess) . ' excess)</small>';
+                            } else {
+                                $statusColor = 'text-danger';$statusBadge = '<span class="badge badge-danger ml-1">Balance Due</span>';
+                                $remainingDisplay = '<span class="text-danger font-weight-bold">₦' . number_format($balance) . '</span>';
+                            }
+
+                            $grandTotalPaid +=$totalPaidForCreditor;
                         ?>
                         <tr>
                           <td><?= $index + 1 ?></td>
                           <td><?= htmlspecialchars($cr['creditor_name']) ?></td>
                           <td><?= htmlspecialchars($cr['creditor_phone']) ?></td>
-                          <td class="text-danger"><?= number_format($cr['amount']) ?></td>
+                          <td class="text-dark font-weight-bold">₦<?= number_format($creditAmount) ?></td>
                           <td>
                             <!-- Display installment badges/list -->
                             <?php if (!empty($payments)): ?>
                               <ul class="list-unstyled mb-0" style="font-size: 0.85rem;">
-                                <?php foreach($payments as $pIndex =>$payment): 
-                                        $totalPaidForCreditor +=$payment['amount'];
-                                ?>
+                                <?php foreach($payments as $pIndex =>$payment): ?>
                                   <li>
-                                    <span class="badge badge-success">#<?= $pIndex + 1 ?>__: ₦<?= number_format($payment['amount']) ?></span>
+                                    <span class="badge badge-secondary">#<?= $pIndex + 1 ?>: ₦<?= number_format($payment['amount']) ?></span>
                                     <small class="text-muted">(<?= $payment['daterecorded'] ?> <?=$payment['timerecorded'] ?>)</small>
                                   </li>
                                 <?php endforeach; ?>
                               </ul>
                             <?php else: ?>
-                              <span class="badge badge-secondary">No payments yet</span>
+                              <span class="badge badge-light text-muted">No payments yet</span>
                             <?php endif; ?>
                           </td>
-                          <td class="text-success font-weight-bold">
-                            ₦<?= number_format($totalPaidForCreditor) ?>
-                            <?php $grandTotalPaid +=$totalPaidForCreditor; ?>
+                          <td>
+                            <span class="<?= $statusColor ?> font-weight-bold">
+                              ₦<?= number_format($totalPaidForCreditor) ?>
+                            </span>
+                            <?= $statusBadge ?>
+                          </td>
+                          <td>
+                            <?= $remainingDisplay ?>
                           </td>
                           <td class="no-print">
                             <button class="btn btn-sm btn-info addPaymentBtn" 
@@ -792,20 +820,39 @@
                                     data-target="#modalAddPayment" 
                                     data-creditor-id="<?= $cr['id'] ?>"
                                     data-creditor-name="<?= htmlspecialchars($cr['creditor_name']) ?>">
-                              Add Payment
+                      Add Payment
                             </button>
                           </td>
                         </tr>
-                        <?php endforeach ?>
+                        <?php endforeach; ?>
                       </tbody>
                       <tfoot>
+                        <?php
+                          // Determine overall grand total status, difference, and color
+                          if ($grandTotalPaid ==$grandTotalCredit) {
+                              $footerColor = 'text-success';$footerLabel = 'Total Difference (Fully Balanced)';
+                              $diffAmount = 0;             } elseif ($grandTotalPaid > $grandTotalCredit) {$footerColor = 'text-primary';
+                              $footerLabel = 'Total Difference (Excess / Overpaid)';$diffAmount = $grandTotalPaid -$grandTotalCredit;
+                          } else {
+                              $footerColor = 'text-danger';
+                              $footerLabel = 'Total Difference (Balance Due)';$diffAmount = $grandTotalCredit -$grandTotalPaid;
+                          }
+                        ?>
                         <tr style="background: #e9ecef; font-weight: bold;">
                           <td colspan="3" class="text-right">Total Credit:</td>
-                          <td colspan="4" class="text-danger">₦<?= number_format($grandTotalCredit) ?></td>
+                          <td colspan="5" class="text-dark">₦<?= number_format($grandTotalCredit) ?></td>
                         </tr>
                         <tr style="background: #e9ecef; font-weight: bold;">
                           <td colspan="3" class="text-right">Total Paid Back:</td>
-                          <td colspan="4" class="text-success">₦<?= number_format($grandTotalPaid) ?></td>
+                          <td colspan="5" class="text-success">₦<?= number_format($grandTotalPaid) ?></td>
+                        </tr>
+                        <tr style="background: #e9ecef; font-weight: bold;">
+                          <td colspan="3" class="text-right"><?= $footerLabel ?>:</td>
+                          <td colspan="5">
+                            <span class="<?= $footerColor ?>">
+                              ₦<?= number_format($diffAmount) ?>
+                            </span>
+                          </td>
                         </tr>
                       </tfoot>
                     </table>
