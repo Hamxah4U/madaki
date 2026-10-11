@@ -413,13 +413,15 @@
                   <table class="table table-bordered text-nowrap">
                     <thead>
                       <tr>
+                        <th colspan="7">
                         <?php if ($isSecondAgent || $isSuperAdmin): ?>                         
                           <button class="btn btn-primary" type="button" data-target="#modalUser"
                             data-toggle="modal"><strong>Second Agent: Expenses</strong></button>
                           <button class="btn btn-dark no-print" onclick="expenses('expenses')">Print</button>
                         <?php else: ?>
                           <span class="text-danger">You are not authorized to add expenses.</span>
-                        <?php endif ?>                        
+                        <?php endif ?> 
+                        </th>                       
                       </tr>
                      
                       <tr>
@@ -520,6 +522,7 @@
                   <table class="table table-bordered text-nowrap">
                     <thead>                      
                       <tr>
+                        <th colspan="6">
                         <?php if ($isFirstAgent || $isSuperAdmin): ?>
                           <button type="button" data-target="#modelOtherExpenses" data-toggle="modal" class="btn btn-primary">
                             <strong>First Agent: Other Expenses</strong>
@@ -529,6 +532,7 @@
                         <?php else: ?>
                           <span class="text-danger">You are not authorized to add other expenses.</span>                                                    
                         <?php endif ?>
+                        </th>
                       </tr>    
                       <tr>
                         <th>#</th>
@@ -615,12 +619,14 @@
                     <table class="table table-bordered text-nowrap">
                       <thead>
                         <tr>
+                          <th colspan="6">
                           <?php if ($isSuperAdmin || $isSecondAgent): ?>
                           <button type="button" data-target="#modelComment" data-toggle="modal" class="btn btn-primary"><strong>Second Agent: Comments</strong></button>
                           <button class="btn btn-dark no-print" onclick="comments('comments')">Print</button>
                           <?php else: ?>
                             <span class="text-danger">You are not authorized</span>
                           <?php endif ?>
+                          </th>
                         </tr>
                         <tr>
                           <th>#</th>
@@ -673,13 +679,14 @@
                     <table class="table table-bordered text-nowrap">
                       <thead>
                         <tr>
+                          <th colspan="6">
                           <?php if ($isFirstAgent || $isSuperAdmin): ?>
                           <button type="button" data-target="#modelotherComment" data-toggle="modal" class="btn btn-primary"><strong>First Agent: Other Comments</strong></button>
                           <button class="btn btn-dark no-print" onclick="other_comments('other_comments')">Print</button>
                           <?php else: ?>
                             <span class="text-danger">You are not authorized</span>
                           <?php endif ?>
-                          
+                          </th>
                         </tr>
                         <tr>
                           <th>#</th>
@@ -717,13 +724,105 @@
                 </div>
               </div>
 
+              <div class="row"> 
+                <div class="col-sm-12">
+                  <div class="table-responsive">
+                    <table class="table table-bordered text-nowrap">
+                      <thead>
+                        <tr>
+                          <th colspan="7">
+                            <button type="button" data-target="#creditors" data-toggle="modal" class="btn btn-primary"><strong>Add Creditor</strong></button>
+                          </th>
+                        </tr>
+                        <tr>
+                          <th>#</th>
+                          <th>Creditor Name</th>
+                          <th>Phone</th>
+                          <th>Credit Amount</th>
+                          <th>Payments Made</th>
+                          <th>Total Paid</th>
+                          <th class="no-print">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <?php
+                          $stmtCreditors =$db->conn->prepare("SELECT * FROM creditors WHERE `market_id` = :marketId");
+                          $stmtCreditors->execute(['marketId' => $_GET['marketId']]);$rowCreditors = $stmtCreditors->fetchAll();$grandTotalCredit = 0;
+                          $grandTotalPaid = 0;
+
+                          foreach($rowCreditors as $index =>$cr):
+                            $grandTotalCredit +=$cr['amount'];
+
+                            // Fetch payments for this specific creditor
+                            $stmtPay =$db->conn->prepare("SELECT * FROM creditor_payments WHERE creditor_id = :creditor_id");
+                            $stmtPay->execute(['creditor_id' =>$cr['id']]);
+                            $payments =$stmtPay->fetchAll();
+
+                            $totalPaidForCreditor = 0;
+                        ?>
+                        <tr>
+                          <td><?= $index + 1 ?></td>
+                          <td><?= htmlspecialchars($cr['creditor_name']) ?></td>
+                          <td><?= htmlspecialchars($cr['creditor_phone']) ?></td>
+                          <td class="text-danger"><?= number_format($cr['amount']) ?></td>
+                          <td>
+                            <!-- Display installment badges/list -->
+                            <?php if (!empty($payments)): ?>
+                              <ul class="list-unstyled mb-0" style="font-size: 0.85rem;">
+                                <?php foreach($payments as $pIndex =>$payment): 
+                                        $totalPaidForCreditor +=$payment['amount'];
+                                ?>
+                                  <li>
+                                    <span class="badge badge-success">#<?= $pIndex + 1 ?>__: ₦<?= number_format($payment['amount']) ?></span>
+                                    <small class="text-muted">(<?= $payment['daterecorded'] ?> <?=$payment['timerecorded'] ?>)</small>
+                                  </li>
+                                <?php endforeach; ?>
+                              </ul>
+                            <?php else: ?>
+                              <span class="badge badge-secondary">No payments yet</span>
+                            <?php endif; ?>
+                          </td>
+                          <td class="text-success font-weight-bold">
+                            ₦<?= number_format($totalPaidForCreditor) ?>
+                            <?php $grandTotalPaid +=$totalPaidForCreditor; ?>
+                          </td>
+                          <td class="no-print">
+                            <button class="btn btn-sm btn-info addPaymentBtn" 
+                                    data-toggle="modal" 
+                                    data-target="#modalAddPayment" 
+                                    data-creditor-id="<?= $cr['id'] ?>"
+                                    data-creditor-name="<?= htmlspecialchars($cr['creditor_name']) ?>">
+                              Add Payment
+                            </button>
+                          </td>
+                        </tr>
+                        <?php endforeach ?>
+                      </tbody>
+                      <tfoot>
+                        <tr style="background: #e9ecef; font-weight: bold;">
+                          <td colspan="3" class="text-right">Total Credit:</td>
+                          <td colspan="4" class="text-danger">₦<?= number_format($grandTotalCredit) ?></td>
+                        </tr>
+                        <tr style="background: #e9ecef; font-weight: bold;">
+                          <td colspan="3" class="text-right">Total Paid Back:</td>
+                          <td colspan="4" class="text-success">₦<?= number_format($grandTotalPaid) ?></td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                </div>
+              </div>
+
               <div class="row">
                 <div class="col-sm-12" id="diary">
                   <div class="table table-responsive">
                     <table class="table table-bordered text-nowrap">
                       <thead>
-                        <tr><button type="button" data-target="#modeldiary" data-toggle="modal" class="btn btn-primary"><strong>Diary</strong></button>
+                        <tr>
+                          <th colspan="5">
+                          <button type="button" data-target="#modeldiary" data-toggle="modal" class="btn btn-primary"><strong>Diary</strong></button>
                           <button class="btn btn-dark no-print" onclick="diary('diary')">Print</button>
+                          </th>
                         </tr>
                         <tr>
                           <th>#</th>
@@ -1048,8 +1147,169 @@
       </div>
     </div>
 
+    <!-- creditors -->
+    <div class="modal fade" id="creditors" tabindex="-1" role="dialog" aria-labelledby="modelTitleId" aria-hidden="true">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title text-primary"><strong>Creditors Window</strong></h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true" class="text-danger">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <form id="creditorsForm">
+              <!-- Hidden inputs moved inside the form -->
+              <input type="text" name="id" id="edit_id" hidden>
+              <input type="hidden" name="userID" id="userID" value="<?= $_GET['marketId'] ?? '' ?>">
+
+              <div class="form-group">
+                <label for="creditor_name_field">Creditor Name</label>
+                <input id="creditor_name_field" class="form-control" type="text" name="creditor_name">
+                <small class="text-danger" id="errorCreditorName"></small>
+              </div>
+              <div class="form-group">
+                <label for="creditor_phone_field">Creditor Phone</label>
+                <input id="creditor_phone_field" class="form-control" type="text" name="creditor_phone">
+                <small class="text-danger" id="errorCreditorPhone"></small>
+              </div>
+              <div class="form-group">
+                <label for="creditor_amount_field">Amount</label>
+                <input id="creditor_amount_field" class="form-control" type="number" name="amount">
+                <small class="text-danger" id="errorCreditorAmount"></small>
+              </div>
+              <button type="submit" class="btn btn-primary" id="creditors-action-btn" data-mode='add'><strong>Save</strong></button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- received from creditors -->
+    <div class="modal fade" id="modalAddPayment" tabindex="-1" role="dialog" aria-hidden="true">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header bg-primary text-white">
+            <h5 class="modal-title">Record Payment for: <span id="paymentCreditorName"></span></h5>
+            <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <form id="paymentForm">
+              <input type="hidden" name="creditor_id" id="paymentCreditorId">
+              <!-- Pass receiver/agent ID securely from session -->
+              <input type="hidden" name="receiver_id" value="<?= $_SESSION['userID'] ?? 1 ?>">
+              <input type="hidden" name="market_id" value="<?= $_GET['marketId'] ?>">
+
+              <div class="form-group">
+                <label>Payment Amount</label>
+                <input type="number" name="amount" class="form-control">
+                <small class="text-danger" id="errorPaymentAmount"></small>
+              </div>
+              <button type="submit" class="btn btn-primary">Save Payment</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
 
 <?php require 'partials/footer.php'; ?>
+
+<script>
+  $(document).ready(function() {
+    // Pass creditor details to payment modal
+    $(document).on('click', '.addPaymentBtn', function() {
+        const creditorId = $(this).data('creditor-id');
+        const creditorName = $(this).data('creditor-name');
+
+        $('#paymentCreditorId').val(creditorId);
+        $('#paymentCreditorName').text(creditorName);
+    });
+
+    // Handle payment form submission
+    $('#paymentForm').on('submit', function(e) {
+        e.preventDefault();
+
+        $.ajax({
+            url: 'model/creditor_payment.form.php',
+            type: 'POST',
+            dataType: 'JSON',
+            data: $(this).serialize(),
+            success: function(response) {
+                if (response.status === false) {
+                    $('#errorPaymentAmount').text(response.error || 'Invalid amount');
+                } else {
+                    location.reload(); // Reload table to show new payment
+                }
+            },
+            error: function(xhr, status, error) {
+                alert('Error: ' + xhr.status + ' - ' + error);
+            }
+        });
+    });
+  });
+</script>
+
+<script>
+  $(document).ready(function() {
+    $('#creditorsForm').on('submit', function(e) {
+        e.preventDefault();
+        const mode = $('#creditors-action-btn').data('mode');
+
+        $.ajax({
+            url: 'model/creditors.form.php',
+            type: 'POST',
+            dataType: 'JSON',
+            data: $(this).serialize() + '&mode=' + mode,
+            success: function(response) {
+                if (response.status === false) {
+                    // Display validation errors
+                    $('#errorCreditorName').text(response.errors.creditor_name || '');
+                    $('#errorCreditorPhone').text(response.errors.creditor_phone || '');
+                    $('#errorCreditorAmount').text(response.errors.amount || '');
+                } else {
+                    // Success Toast
+                    const Toast = Swal.mixin({
+                        toast: true,
+                        position: "top-end",
+                        showConfirmButton: false,
+                        timer: 2000,
+                        timerProgressBar: true,
+                        didOpen: (toast) => {
+                            toast.onmouseenter = Swal.stopTimer;
+                            toast.onmouseleave = Swal.resumeTimer;
+                        }
+                    });
+                    Toast.fire({
+                        icon: "success",
+                        title: response.success.message
+                    }).then(() => {
+                        location.reload(); // Refresh page to show new record
+                    });
+
+                    $('#creditors').modal('hide');
+                    $('#creditorsForm')[0].reset();
+                }
+            },
+            error: function(xhr, status, error) {
+                alert('Error: ' + xhr.status + ' - ' + error);
+            }
+        });
+    });
+
+    // Reset form and errors when modal closes
+    $('#creditors').on('hidden.bs.modal', function() {
+        $('#creditorsForm')[0].reset();
+        $('#errorCreditorName').text('');
+        $('#errorCreditorPhone').text('');
+        $('#errorCreditorAmount').text('');
+        $('#creditors-action-btn').data('mode', 'add');
+    });
+});
+</script>
+
 <script>
   $(document).ready(function() {
 
