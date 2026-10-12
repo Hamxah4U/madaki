@@ -292,7 +292,7 @@
                 $('#addmoney').modal('hide');
 
                 // Reload only DataTable
-                $('#departmentTable').DataTable().ajax.reload(null, false);
+                $('#departmentTable').DataTable({pageLength: 100}).ajax.reload(null, false);
 
               } else {
 
@@ -331,6 +331,7 @@
     <script>
       $(document).ready(function() {
         $('#departmentTable').DataTable({
+          pageLength: 100,
           ajax: {
             url: 'model/market.table.php',
             dataSrc: '',

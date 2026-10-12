@@ -263,19 +263,25 @@
                         </div>
                     </div>
 
-                    <hr class="my-4">
-
+                    <hr class="my-4">          
+                    
                     <div class="d-flex justify-content-end align-items-center flex-wrap" style="gap: 12px;">
-                        <button type="button" class="btn btn-dark-alt px-4 no-print shadow-sm" onclick="printDiv('printArea')">
-                            <i class="fas fa-print mr-2"></i> Print Complete Statement
-                        </button>
-                        
-                        <?php if($isSuperAdmin || $isFirstAgent): ?>
-                        <button type="submit" name="save" class="btn btn-primary px-5 shadow-sm font-weight-bold" id="saveBtn">
-                                <i class="fas fa-check-circle mr-2"></i> Submit Record
-                        </button>
-                        <?php endif ?>
-                    </div>              
+                      <button type="button" class="btn btn-dark-alt px-4 no-print shadow-sm" onclick="printDiv('printArea')">
+                          <i class="fas fa-print mr-2"></i> Print Complete Statement
+                      </button>
+                      
+                      <?php if($isSuperAdmin || $isSecondAgent): ?>
+                      <button type="button" class="btn btn-success px-4 shadow-sm font-weight-bold no-print" id="approveAllBtn" data-tid="<?= $_GET['marketId'] ?>">
+                        <i class="fas fa-check-double mr-2"></i> Approve All Pending 
+                      </button>
+                      <?php endif ?>
+                      
+                      <?php if($isSuperAdmin || $isFirstAgent): ?>
+                      <button type="submit" name="save" class="btn btn-primary px-5 shadow-sm font-weight-bold" id="saveBtn">
+                              <i class="fas fa-check-circle mr-2"></i> Submit Record
+                      </button>
+                      <?php endif ?>
+                  </div>
                 </form>
             </div>
         </div>
@@ -356,7 +362,16 @@
                   <td class="text-danger"><?= number_format($rowmarket['amount'], 2) ?></td>
                   <td><?= $rowmarket['animal_name'] ?></td>
                   <td class="no-print">
-                    <?php if($isFirstAgent || $isSuperAdmin): ?>
+                    
+                    <?php if ($rowmarket['status'] == 'approved'): ?>
+                        <button class='btn btn-sm btn-success' disabled>Approved</button>
+                    <?php elseif ($rowmarket['status'] == 'pending' && ($isSuperAdmin || $isSecondAgent)): ?>
+                      <button type="button" class="btn btn-sm btn-warning approveBtn" data-id="<?= $rowmarket['id'] ?>" data-tid="<?= $_GET['marketId'] ?>">Click to Approve</button>
+                    <?php else: ?>
+                        <span class="badge badge-secondary">Pending Approval</span>
+                    <?php endif; ?>
+
+                    <?php if($isFirstAgent || $isSuperAdmin AND $rowmarket['status'] == 'pending'): ?>
                     <button type="button" class="btn btn-info btn-sm editBtn" data-id="<?= $rowmarket['id'] ?>"
                       data-animal="<?= $rowmarket['animal_id'] ?>" data-amount="<?= $rowmarket['amount'] ?>"
                       data-date="<?= date('Y-m-d', strtotime($rowmarket['date_create'])) ?>"
@@ -366,8 +381,9 @@
                     <button type="button" class="btn btn-danger btn-sm deleteBtn"
                       data-id="<?= $rowmarket['id'] ?>">Delete</button>
                     <?php else: ?>
-                    <span class="text-danger">Not authorized</span>
+                    <span class="text-danger">&nbsp;</span>
                     <?php endif ?>
+
                   </td>
                 </tr>
 
@@ -620,12 +636,12 @@
                       <thead>
                         <tr>
                           <th colspan="6">
-                          <?php if ($isSuperAdmin || $isSecondAgent): ?>
-                          <button type="button" data-target="#modelComment" data-toggle="modal" class="btn btn-primary"><strong>Second Agent: Comments</strong></button>
-                          <button class="btn btn-dark no-print" onclick="comments('comments')">Print</button>
-                          <?php else: ?>
-                            <span class="text-danger">You are not authorized</span>
-                          <?php endif ?>
+                            <?php if ($isSuperAdmin || $isSecondAgent): ?>
+                            <button type="button" data-target="#modelComment" data-toggle="modal" class="btn btn-primary"><strong>Second Agent: Comments</strong></button>
+                            <button class="btn btn-dark no-print" onclick="comments('comments')">Print</button>
+                            <?php else: ?>
+                              <span class="text-danger">You are not authorized</span>
+                            <?php endif ?>
                           </th>
                         </tr>
                         <tr>
@@ -731,7 +747,11 @@
                       <thead>
                         <tr>
                           <th colspan="8">
-                            <button type="button" data-target="#creditors" data-toggle="modal" class="btn btn-primary"><strong>Add Creditor</strong></button>
+                            <?php if ($isSuperAdmin || $isSecondAgent): ?>
+                              <button type="button" data-target="#creditors" data-toggle="modal" class="btn btn-primary"><strong>Add Creditor</strong></button>
+                            <?php else: ?>
+                              <span class="text-danger">You are not authorized</span>
+                            <?php endif ?>
                           </th>
                         </tr>
                         <tr>
@@ -815,13 +835,17 @@
                             <?= $remainingDisplay ?>
                           </td>
                           <td class="no-print">
+                            <?php if ($isSuperAdmin || $isSecondAgent): ?>
                             <button class="btn btn-sm btn-info addPaymentBtn" 
                                     data-toggle="modal" 
                                     data-target="#modalAddPayment" 
                                     data-creditor-id="<?= $cr['id'] ?>"
                                     data-creditor-name="<?= htmlspecialchars($cr['creditor_name']) ?>">
-                      Add Payment
+                                Add Payment
                             </button>
+                            <?php else: ?>
+                              <strong class="text-danger">No Action</strong>
+                            <?php endif ?>
                           </td>
                         </tr>
                         <?php endforeach; ?>
@@ -1263,6 +1287,115 @@
 
 
 <?php require 'partials/footer.php'; ?>
+
+<script>
+    $(document).ready(function() {
+        // Individual Approval
+        $(document).on('click', '.approveBtn', function(e) {
+            e.preventDefault();
+            
+            const btn = $(this);
+            const recordId = btn.data('id');
+            const marketId = "<?= $_GET['marketId'] ?? '' ?>";
+
+            if (!confirm('Mark this as approved?')) {
+                return;
+            }
+
+            $.ajax({
+                url: 'model/approved_animal.php',
+                type: 'GET',
+                dataType: 'JSON',
+                data: { id: recordId, tid: marketId },
+                success: function(response) {
+                    if (response && response.status === true) {
+                        btn.removeClass('btn-warning approveBtn')
+                          .addClass('btn-success')
+                          .prop('disabled', true)
+                          .text('Approved');
+                    } else {
+                        alert('Backend Error: ' + (response.message || 'Unknown error'));
+                    }
+                },
+                error: function(xhr, status, error) {
+                    alert('Server Error:\n' + xhr.responseText);
+                }
+            });
+        });
+
+        // Bulk Approve All Pending Records
+        $(document).on('click', '#approveAllBtn', function(e) {
+            e.preventDefault();
+            
+            const btn = $(this);
+            const marketId = btn.data('tid');
+
+            if (!confirm('Are you sure you want to approve ALL pending records for this market?')) {
+                return;
+            }
+
+            $.ajax({
+                url: 'model/approve_all_animal.php',
+                type: 'GET',
+                dataType: 'JSON',
+                data: { tid: marketId },
+                success: function(response) {
+                    if (response && response.status === true) {
+                        Swal.fire({
+                            toast: true,
+                            position: 'top-end',
+                            icon: 'success',
+                            title: 'All pending records approved successfully',
+                            timer: 2000,
+                            showConfirmButton: false
+                        }).then(() => location.reload());
+                    } else {
+                        alert('Backend Error: ' + (response.message || 'Unknown error'));
+                    }
+                },
+                error: function(xhr, status, error) {
+                    alert('Server Error:\n' + xhr.responseText);
+                }
+            });
+        });
+    });
+</script>
+
+<script>
+  $(document).ready(function() {
+      $(document).on('click', '.approveBtn', function(e) {
+          e.preventDefault();
+          
+          const btn = $(this);
+          const recordId = btn.data('id');
+          const marketId = "<?= $_GET['marketId'] ?? '' ?>";
+
+          if (!confirm('Mark this as approved?')) {
+              return;
+          }
+
+          $.ajax({
+              url: 'model/approved_animal.php', // <--- Updated path
+              type: 'GET',
+              dataType: 'JSON',
+              data: { id: recordId, tid: marketId },
+              success: function(response) {
+                  if (response && response.status === true) {
+                      btn.removeClass('btn-warning approveBtn')
+                        .addClass('btn-success')
+                        .prop('disabled', true)
+                        .text('Approved');
+                  } else {
+                      alert('Backend Error: ' + (response.message || 'Unknown error'));
+                  }
+              },
+              error: function(xhr, status, error) {
+                  alert('Server Error:\n' + xhr.responseText);
+              }
+          });
+      });
+  });
+</script>
 
 <script>
   $(document).ready(function() {

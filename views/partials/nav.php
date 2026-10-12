@@ -7,13 +7,7 @@
 		
 	?>
 
-	<!-- <?php //if($_SESSION['role'] == 'Admin'):?>  
-		<button type="button" class="btn btn-primary"><strong><?php // $storeName.' ' ?>=>&nbsp; CURRENT CAPITAL <strong class="text-warning"><?= '&#8358;'.number_format($totalCapital, 2, '.', ',') ?></strong> </strong></button>
-		<?php // else:?>
-
-    <strong><?php //$storeName ?></strong>
-
-	<?php // endif; ?> -->
+	
 	<!-- Topbar Navbar -->
 	<ul class="navbar-nav ml-auto">
 			<li class="nav-item dropdown no-arrow d-sm-none">

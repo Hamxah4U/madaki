@@ -73,7 +73,7 @@ $routes = [
     '/view-agent' => 'controllers/view-agent2.php',
 
     '/approved-exp' => 'controllers/approved-exp.php',
-
+    '/approved-animal' => 'controllers/approved-animal.php',
 
   '/unit' => 'controllers/unit.php',
   '/product' => 'controllers/product.php',
