@@ -1,0 +1,1 @@
+<?php require 'views/creditorsreport.view.php' ?>

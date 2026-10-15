@@ -75,6 +75,13 @@ $routes = [
     '/approved-exp' => 'controllers/approved-exp.php',
     '/approved-animal' => 'controllers/approved-animal.php',
 
+    '/creditors_report' => 'controllers/creditorsreport.php',
+
+
+
+
+
+
   '/unit' => 'controllers/unit.php',
   '/product' => 'controllers/product.php',
   '/report' => 'controllers/report.php',
