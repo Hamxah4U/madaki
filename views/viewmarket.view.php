@@ -744,142 +744,196 @@
                 <div class="col-sm-12">
                   <div class="table-responsive">
                     <table class="table table-bordered text-nowrap">
-                      <thead>
-                        <tr>
-                          <th colspan="8">
-                            <?php if ($isSuperAdmin || $isSecondAgent): ?>
-                              <button type="button" data-target="#creditors" data-toggle="modal" class="btn btn-primary"><strong>Add Creditor</strong></button>
-                            <?php else: ?>
-                              <span class="text-danger">You are not authorized</span>
-                            <?php endif ?>
-                          </th>
-                        </tr>
-                        <tr>
-                          <th>#</th>
-                          <th>Creditor Name</th>
-                          <th>Phone</th>
-                          <th>Credit Amount</th>
-                          <th>Payments Made</th>
-                          <th>Total Paid</th>
-                          <th>Remaining Balance</th>
-                          <th class="no-print">Action</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <?php
-                          $stmtCreditors =$db->conn->prepare("SELECT * FROM creditors WHERE `market_id` = :marketId");
-                          $stmtCreditors->execute(['marketId' => $_GET['marketId']]);$rowCreditors = $stmtCreditors->fetchAll();$grandTotalCredit = 0;
-                          $grandTotalPaid = 0;
+  <thead>
+    <tr>
+      <th colspan="8">
+        <?php if ($isSuperAdmin || $isSecondAgent): ?>
+          <button type="button" data-target="#creditors" data-toggle="modal" class="btn btn-primary"><strong>Add Creditor</strong></button>
+        <?php else: ?>
+          <span class="text-danger">You are not authorized</span>
+        <?php endif ?>
+      </th>
+    </tr>
+    <tr>
+      <th>#</th>
+      <th>Creditor Name</th>
+      <th>Phone</th>
+      <th>Credit Amount</th>
+      <th>Payments Made</th>
+      <th>Total Paid</th>
+      <th>Remaining Balance</th>
+      <th class="no-print">Action</th>
+    </tr>
+  </thead>
+  <tbody>
+    <?php
+      // 1. Fetch all creditors for the market, ordered by creation date/time
+      $stmtCreditors =$db->conn->prepare("SELECT * FROM creditors WHERE `market_id` = :marketId ORDER BY daterecorded DESC, timerecorded DESC");
+      $stmtCreditors->execute(['marketId' =>$_GET['marketId']]);
+      $rowCreditors =$stmtCreditors->fetchAll(PDO::FETCH_ASSOC);
 
-                          foreach($rowCreditors as $index =>$cr):
-                            $grandTotalCredit +=$cr['amount'];
+      $grandTotalCredit = 0;
+      $grandTotalPaid = 0;
 
-                            // Fetch payments for this specific creditor
-                            $stmtPay =$db->conn->prepare("SELECT * FROM creditor_payments WHERE `market_id` = :marketId AND `creditor_id` = :creditor_id");
-                            $stmtPay->execute([
-                                'marketId' => $_GET['marketId'],
-                                'creditor_id' => $cr['id']
-                            ]);
-                            $payments =$stmtPay->fetchAll();
+      // 2. Group creditors by creditors.daterecorded
+      $groupedByCreditorDate = [];
 
-                            $totalPaidForCreditor = 0;
-                            foreach($payments as$payment) {
-                                $totalPaidForCreditor +=$payment['amount'];
-                            }
+      foreach ($rowCreditors as$cr) {
+          $grandTotalCredit +=$cr['amount'];
+          
+          // Use creditors.daterecorded as the grouping key (default to 'Unassigned' if null)
+          $dateKey =$cr['daterecorded'] ?: 'Unassigned';
+          
+          // Fetch payments for this specific creditor
+          $stmtPay =$db->conn->prepare("SELECT * FROM creditor_payments WHERE `market_id` = :marketId AND `creditor_id` = :creditor_id ORDER BY daterecorded DESC, timerecorded DESC");
+          $stmtPay->execute([
+              'marketId' => $_GET['marketId'],
+              'creditor_id' => $cr['id']
+          ]);
+          $payments =$stmtPay->fetchAll(PDO::FETCH_ASSOC);
 
-                            // Calculate remaining balance (Credit Amount - Total Paid)
-                            $creditAmount = $cr['amount'];$balance = $creditAmount -$totalPaidForCreditor;
+          $groupedByCreditorDate[$dateKey][] = [
+              'creditor' => $cr,
+              'payments' => $payments
+          ];
+      }
 
-                            // Determine status, color representation, and remaining balance display
-                            if ($totalPaidForCreditor ==$creditAmount) {
-                                $statusColor = 'text-success';$statusBadge = '<span class="badge badge-success ml-1">Cleared</span>';
-                                $remainingDisplay = '<span class="text-success font-weight-bold">₦0</span>';
-                            } elseif ($totalPaidForCreditor >$creditAmount) {
-                                $statusColor = 'text-primary';$statusBadge = '<span class="badge badge-primary ml-1">Overpaid</span>';
-                                $excess = $totalPaidForCreditor -$creditAmount;
-                                $remainingDisplay = '<span class="text-primary font-weight-bold">₦0</span> <small class="text-primary">(+₦' . number_format($excess) . ' excess)</small>';
-                            } else {
-                                $statusColor = 'text-danger';$statusBadge = '<span class="badge badge-danger ml-1">Balance Due</span>';
-                                $remainingDisplay = '<span class="text-danger font-weight-bold">₦' . number_format($balance) . '</span>';
-                            }
+      // Sort group dates descending (newest dates first)
+      uksort($groupedByCreditorDate, function($a,$b) {
+          if ($a === 'Unassigned') return 1;
+          if ($b === 'Unassigned') return -1;
+          return strtotime($b) - strtotime($a);
+      });
 
-                            $grandTotalPaid +=$totalPaidForCreditor;
-                        ?>
-                        <tr>
-                          <td><?= $index + 1 ?></td>
-                          <td><?= htmlspecialchars($cr['creditor_name']) ?></td>
-                          <td><?= htmlspecialchars($cr['creditor_phone']) ?></td>
-                          <td class="text-dark font-weight-bold">₦<?= number_format($creditAmount) ?></td>
-                          <td>
-                            <!-- Display installment badges/list -->
-                            <?php if (!empty($payments)): ?>
-                              <ul class="list-unstyled mb-0" style="font-size: 0.85rem;">
-                                <?php foreach($payments as $pIndex =>$payment): ?>
-                                  <li>
-                                    <span class="badge badge-secondary">#<?= $pIndex + 1 ?>: ₦<?= number_format($payment['amount']) ?></span>
-                                    <small class="text-muted">(<?= $payment['daterecorded'] ?> <?=$payment['timerecorded'] ?>)</small>
-                                  </li>
-                                <?php endforeach; ?>
-                              </ul>
-                            <?php else: ?>
-                              <span class="badge badge-light text-muted">No payments yet</span>
-                            <?php endif; ?>
-                          </td>
-                          <td>
-                            <span class="<?= $statusColor ?> font-weight-bold">
-                              ₦<?= number_format($totalPaidForCreditor) ?>
-                            </span>
-                            <?= $statusBadge ?>
-                          </td>
-                          <td>
-                            <?= $remainingDisplay ?>
-                          </td>
-                          <td class="no-print">
-                            <?php if ($isSuperAdmin || $isSecondAgent): ?>
-                            <button class="btn btn-sm btn-info addPaymentBtn" 
-                                    data-toggle="modal" 
-                                    data-target="#modalAddPayment" 
-                                    data-creditor-id="<?= $cr['id'] ?>"
-                                    data-creditor-name="<?= htmlspecialchars($cr['creditor_name']) ?>">
-                                Add Payment
-                            </button>
-                            <?php else: ?>
-                              <strong class="text-danger">No Action</strong>
-                            <?php endif ?>
-                          </td>
-                        </tr>
-                        <?php endforeach; ?>
-                      </tbody>
-                      <tfoot>
-                        <?php
-                          // Determine overall grand total status, difference, and color
-                          if ($grandTotalPaid ==$grandTotalCredit) {
-                              $footerColor = 'text-success';$footerLabel = 'Total Difference (Fully Balanced)';
-                              $diffAmount = 0;             } elseif ($grandTotalPaid > $grandTotalCredit) {$footerColor = 'text-primary';
-                              $footerLabel = 'Total Difference (Excess / Overpaid)';$diffAmount = $grandTotalPaid -$grandTotalCredit;
-                          } else {
-                              $footerColor = 'text-danger';
-                              $footerLabel = 'Total Difference (Balance Due)';$diffAmount = $grandTotalCredit -$grandTotalPaid;
-                          }
-                        ?>
-                        <tr style="background: #e9ecef; font-weight: bold;">
-                          <td colspan="3" class="text-right">Total Credit:</td>
-                          <td colspan="5" class="text-dark">₦<?= number_format($grandTotalCredit) ?></td>
-                        </tr>
-                        <tr style="background: #e9ecef; font-weight: bold;">
-                          <td colspan="3" class="text-right">Total Paid Back:</td>
-                          <td colspan="5" class="text-success">₦<?= number_format($grandTotalPaid) ?></td>
-                        </tr>
-                        <tr style="background: #e9ecef; font-weight: bold;">
-                          <td colspan="3" class="text-right"><?= $footerLabel ?>:</td>
-                          <td colspan="5">
-                            <span class="<?= $footerColor ?>">
-                              ₦<?= number_format($diffAmount) ?>
-                            </span>
-                          </td>
-                        </tr>
-                      </tfoot>
-                    </table>
+      $globalIndex = 1;
+
+      // 3. Render grouped by Creditor Record Date
+      foreach ($groupedByCreditorDate as$date => $items):$dateCreditSubtotal = 0;
+          $datePaidSubtotal = 0;
+
+          // First pass to calculate subtotals for this date group
+          foreach ($items as$item) {
+              $dateCreditSubtotal +=$item['creditor']['amount'];
+              foreach ($item['payments'] as$p) {
+                  $datePaidSubtotal +=$p['amount'];
+              }
+          }
+    ?>
+        <!-- Date Subheading Row -->
+        <tr class="table-secondary">
+          <td colspan="8"><strong>Creditor Record Date: <?= htmlspecialchars($date) ?></strong></td>
+        </tr>
+
+        <?php foreach ($items as $item):$cr = $item['creditor'];$payments = $item['payments'];$totalPaidForCreditor = 0;
+            foreach ($payments as$p) {
+                $totalPaidForCreditor +=$p['amount'];
+            }
+
+            $creditAmount = $cr['amount'];$balance = $creditAmount -$totalPaidForCreditor;
+
+            // Status styling
+            if ($totalPaidForCreditor ==$creditAmount) {
+                $statusColor = 'text-success';$statusBadge = '<span class="badge badge-success ml-1">Cleared</span>';
+                $remainingDisplay = '<span class="text-success font-weight-bold">₦0</span>';
+            } elseif ($totalPaidForCreditor >$creditAmount) {
+                $statusColor = 'text-primary';$statusBadge = '<span class="badge badge-primary ml-1">Overpaid</span>';
+                $excess = $totalPaidForCreditor -$creditAmount;
+                $remainingDisplay = '<span class="text-primary font-weight-bold">₦0</span> <small class="text-primary">(+₦' . number_format($excess) . ' excess)</small>';
+            } else {
+                $statusColor = 'text-danger';$statusBadge = '<span class="badge badge-danger ml-1">Balance Due</span>';
+                $remainingDisplay = '<span class="text-danger font-weight-bold">₦' . number_format($balance) . '</span>';
+            }
+        ?>
+          <tr>
+            <td><?= $globalIndex++ ?></td>
+            <td><?= htmlspecialchars($cr['creditor_name']) ?></td>
+            <td><?= htmlspecialchars($cr['creditor_phone']) ?></td>
+            <td class="text-dark font-weight-bold">₦<?= number_format($creditAmount) ?></td>
+            <td>
+              <?php if (empty($payments)): ?>
+                <span class="badge badge-light text-muted">No payments yet</span>
+              <?php else: ?>
+                <ul class="list-unstyled mb-0" style="font-size: 0.85rem;">
+                  <?php foreach($payments as $pIndex =>$payment): ?>
+                    <li>
+                      <span class="badge badge-secondary">#<?= $pIndex + 1 ?>: ₦<?= number_format($payment['amount']) ?></span>
+                      <small class="text-muted">(<?= htmlspecialchars($payment['daterecorded']) ?> <?= htmlspecialchars($payment['timerecorded']) ?>)</small>
+                    </li>
+                  <?php endforeach; ?>
+                </ul>
+              <?php endif; ?>
+            </td>
+            <td>
+              <span class="<?= $statusColor ?> font-weight-bold">
+                ₦<?= number_format($totalPaidForCreditor) ?>
+              </span>
+              <?= $statusBadge ?>
+            </td>
+            <td><?= $remainingDisplay ?></td>
+            <td class="no-print">
+              <?php if ($isSuperAdmin || $isSecondAgent): ?>
+              <button class="btn btn-sm btn-info addPaymentBtn" 
+                      data-toggle="modal" 
+                      data-target="#modalAddPayment" 
+                      data-creditor-id="<?= $cr['id'] ?>"
+                      data-creditor-name="<?= htmlspecialchars($cr['creditor_name']) ?>">
+                  Add Payment
+              </button>
+              <?php else: ?>
+                <strong class="text-danger">No Action</strong>
+              <?php endif ?>
+            </td>
+          </tr>
+        <?php endforeach; ?>
+
+        <!-- Date Subtotal Row (Credit Amount & Paid Back) -->
+        <tr class="font-italic" style="background: #f8f9fa;">
+          <td colspan="3" class="text-right">Subtotals for <?= htmlspecialchars($date) ?>:</td>
+          <td class="text-dark font-weight-bold">₦<?= number_format($dateCreditSubtotal) ?></td>
+          <td colspan="1" class="text-right">Paid:</td>
+          <td colspan="3" class="text-success font-weight-bold">₦<?= number_format($datePaidSubtotal) ?></td>
+        </tr>
+
+      <?php endforeach; ?>
+
+  </tbody>
+  <tfoot>
+    <?php
+      $totalPaidAll = 0;
+      foreach ($rowCreditors as$cr) {
+          $stmtPay =$db->conn->prepare("SELECT SUM(amount) as total FROM creditor_payments WHERE `market_id` = :marketId AND `creditor_id` = :creditor_id");
+          $stmtPay->execute(['marketId' => $_GET['marketId'], 'creditor_id' =>$cr['id']]);
+          $res =$stmtPay->fetch(PDO::FETCH_ASSOC);
+          $totalPaidAll += ($res['total'] ?? 0);
+      }
+
+      if ($totalPaidAll ==$grandTotalCredit) {
+          $footerColor = 'text-success';$footerLabel = 'Total Difference (Fully Balanced)';
+          $diffAmount = 0; } elseif ($totalPaidAll > $grandTotalCredit) {$footerColor = 'text-primary';
+          $footerLabel = 'Total Difference (Excess / Overpaid)';$diffAmount = $totalPaidAll -$grandTotalCredit;
+      } else {
+          $footerColor = 'text-danger';
+          $footerLabel = 'Total Difference (Balance Due)';$diffAmount = $grandTotalCredit -$totalPaidAll;
+      }
+    ?>
+    <tr style="background: #e9ecef; font-weight: bold;">
+      <td colspan="4" class="text-right">Grand Total Credit:</td>
+      <td colspan="4" class="text-dark">₦<?= number_format($grandTotalCredit) ?></td>
+    </tr>
+    <tr style="background: #e9ecef; font-weight: bold;">
+      <td colspan="4" class="text-right">Grand Total Paid Back:</td>
+      <td colspan="4" class="text-success">₦<?= number_format($totalPaidAll) ?></td>
+    </tr>
+    <tr style="background: #e9ecef; font-weight: bold;">
+      <td colspan="4" class="text-right"><?= $footerLabel ?>:</td>
+      <td colspan="4">
+        <span class="<?= $footerColor ?>">
+          ₦<?= number_format($diffAmount) ?>
+        </span>
+      </td>
+    </tr>
+  </tfoot>
+</table>
                   </div>
                 </div>
               </div>
@@ -2559,8 +2613,7 @@
     $('#errorReason').text('');
   }
 
-  $(document).ready(function() {
-    $('#userForm').on('submit', function(e) {
+  $(document).ready(function() {$('#userForm').on('submit', function(e) {
         e.preventDefault();
         
         const mode = $('#action-btn').data('mode');
@@ -2615,8 +2668,7 @@
     });
   });
 
-  /* $(document).ready(function() {
-    $('#userForm').on('submit', function(e) {
+  /* $(document).ready(function() {$('#userForm').on('submit', function(e) {
       e.preventDefault();
       const mode = $('#action-btn').data('mode');
       // const mode = $('#action-btn').data('mode');
@@ -2702,7 +2754,7 @@
     // Add Row
     $("#addRow").click(function() {
       // Build row as an un-appended jQuery selector node structure
-      let $row = $(`
+      let $row =$(`
           <tr>
               <td>
                 <input required type="number" name="number[]" class="form-control form-control-alternative">
@@ -2761,7 +2813,7 @@
         return;
       }
 
-      let $submitBtn = $("#saveBtn");
+      let $submitBtn =$("#saveBtn");
       $submitBtn.prop("disabled", true).text("Saving...");
 
       // If validation passed → AJAX submit
@@ -2810,8 +2862,7 @@
         $('#errorAmount').text('');
         $('#errorReason').text('');
       }
-      $(document).ready(function() {
-        $('#formUnit').on('submit', function(e) {
+      $(document).ready(function() {$('#formUnit').on('submit', function(e) {
           e.preventDefault();
           $.ajax({
             url: 'model/other_exp.form.php',
@@ -3001,7 +3052,7 @@
         let clearToPrint = false;
 
         $('#printArea tbody tr').each(function() {
-          let $row = $(this);
+          let $row =$(this);
 
           // Check if we hit a group header row
           if ($row.hasClass('groupHeader')) {

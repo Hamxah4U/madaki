@@ -78,10 +78,7 @@ $routes = [
     '/creditors_report' => 'controllers/creditorsreport.php',
 
 
-
-
-
-
+    
   '/unit' => 'controllers/unit.php',
   '/product' => 'controllers/product.php',
   '/report' => 'controllers/report.php',
