@@ -76,6 +76,7 @@ $routes = [
     '/approved-animal' => 'controllers/approved-animal.php',
 
     '/creditors_report' => 'controllers/creditorsreport.php',
+    '/manage-market' => 'controllers/managemarket.php',
 
 
     

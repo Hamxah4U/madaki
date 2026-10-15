@@ -28,23 +28,23 @@
     </li>
    
     <!-- Nav Item - Pages Collapse Menu -->
-     <?php  if($_SESSION['role'] == 'Admin'):?>        
-                <li class="nav-item active">
-                    <a class="nav-link" href="/users">
-                        <i class="fas fa-fw fa-user"></i>
-                        <strong>Manage Users </strong></a>
-                </li>
-
-                <li class="nav-item active">
-                    <a class="nav-link" href="/manage-drivers">
-                       <i class="fas fa-fw fa-id-card"></i>
-                        <strong>Manage Driver </strong></a>
-                </li>
-
-                <li class="nav-item active">
-                    <a class="nav-link" href="/manage-agent">
-                       <i class="fas fa-users"></i>
-                        <strong>Manage Agent </strong></a>
+     <?php  if($_SESSION['role'] == 'Admin'):?>   
+        
+                <li class="nav-item">
+                    <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseAdmin"
+                        aria-expanded="true" aria-controls="collapseAdmin">
+                        <i class="fas fa-user-shield"></i>
+                        <span></i> <strong>Admin</strong></span>
+                    </a>
+                    <div id="collapseAdmin" class="collapse" aria-labelledby="headingAdmin" data-parent="#accordionSidebar">
+                        <div class="bg-white py-2 collapse-inner rounded">
+                            <a class="collapse-item" href="/users"><strong>Manage Users</strong></a>
+                            <a class="collapse-item" href="/manage-drivers"><strong>Manage Driver</strong></a>
+                            <a class="collapse-item" href="/manage-agent"><strong>Manage Agent</strong></a>
+                            <a class="collapse-item" href="/manage-market"><strong>Manage Market</strong></a>
+                            <a class="collapse-item" href="/customers"><strong>Customers</strong></a>
+                        </div>
+                    </div>
                 </li>
               
                 <?php if($_SESSION['role'] == 'Viewer 2'):?>
@@ -77,20 +77,6 @@
                         </div>
                     </div>
                 </li>
-
-                <!-- <li class="nav-item active">
-                    <a class="nav-link" href="/onview">
-                        <i class="fas fa-truck"></i>
-                       <strong>On View Motor</strong>
-                    </a>
-                </li>   
-
-                <li class="nav-item active">
-                    <a class="nav-link" href="/completed">
-                        <i class="fas fa-truck"></i>
-                       <strong>Completed Motor</strong>
-                    </a>
-                </li>   -->
                 
                 <li class="nav-item active">
                     <a class="nav-link" href="/market">
