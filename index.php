@@ -77,6 +77,7 @@ $routes = [
 
     '/creditors_report' => 'controllers/creditorsreport.php',
     '/manage-market' => 'controllers/managemarket.php',
+    '/manage-customers' => 'controllers/managecustomers.php',
 
 
     

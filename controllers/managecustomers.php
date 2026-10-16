@@ -1,0 +1,1 @@
+<?php require 'views/customers.view.php' ?>
