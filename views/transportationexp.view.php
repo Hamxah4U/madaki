@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../model/receipt_helper.php';
   require_once 'model/Database.php';    
   require 'partials/security.php'; 
   require 'partials/header.php';
@@ -10,7 +11,12 @@ if (!isset($_GET['id']) || empty($_GET['id'])) {
 
 $transport_id = (int)$_GET['id'];
 
-$stmt = $db->conn->prepare("SELECT te.*, m.name, status_id, t.amount_per_animal FROM transportation_expenses te JOIN transportation t ON t.id = te.transportation_id LEFT JOIN market_2 m ON m.id = te.market WHERE transportation_id = :id ORDER BY market");
+$stmt = $db->conn->prepare("SELECT te.*, m.name, status_id, t.amount_per_animal, c.fullname AS customer_name, c.phone AS customer_phone, c.phone
+  FROM transportation_expenses te
+  JOIN transportation t ON t.id = te.transportation_id
+  LEFT JOIN customers_tbl c ON c.id = te.customer_id
+  LEFT JOIN market_2 m ON m.id = te.market
+  WHERE transportation_id = :id ORDER BY market");
 $stmt->execute(['id' => $transport_id]);
 $records = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -68,6 +74,7 @@ if (isset($_POST['save'])) {
 
         $stmt = $db->conn->prepare(" UPDATE transportation_expenses SET
                 fullname = :fullname,
+                customer_id = :customer_id,
                 total_animal = :total_animal,
                 death_animal = :death_animal,
                 first_payment = :first_payment,
@@ -79,6 +86,7 @@ if (isset($_POST['save'])) {
 
         $stmt->execute([
             'fullname' => $_POST['fullname'][0],
+            'customer_id' => $_POST['fullname'][0], // Assuming the customer ID is the same as the fullname for this example
             'total_animal' => $_POST['total_animal'][0],
             'death_animal' => $_POST['death_animal'][0],
             'first_payment' => $_POST['first_payment'][0],
@@ -92,9 +100,9 @@ if (isset($_POST['save'])) {
     } else {
         $stmt = $db->conn->prepare("
                 INSERT INTO transportation_expenses 
-                (total_animal, transportation_id, fullname, death_animal, first_payment, second_payment, third_payment, market)
+                (total_animal, transportation_id, fullname, death_animal, first_payment, second_payment, third_payment, market, customer_id)
                 VALUES 
-                (:total_animal, :tid, :fullname, :death, :first, :second, :third, :market)
+                (:total_animal, :tid, :fullname, :death, :first, :second, :third, :market, :customer_id)
             ");
 
         foreach ($_POST['fullname'] as $key => $name) {
@@ -117,6 +125,7 @@ if (isset($_POST['save'])) {
                 'second'       => $_POST['second_payment'][$key] ?? null,
                 'third'        => $_POST['third_payment'][$key] ?? null,
                 'market'       => $_POST['market'][$key] ?? null,
+                'customer_id'  => $_POST['fullname'][$key] ?? null,
             ]);
 
             logUserActivity('CREATE', 'transportation_expenses table', "New customer: $name.");
@@ -158,6 +167,20 @@ $nextStmt->execute([$currentId]);
 $next = $nextStmt->fetch(PDO::FETCH_ASSOC);
 ?>
 
+<style>
+/* Make every report table fit the screen (no sideways scrolling).
+   #peopleTable (the entry form at the top) is intentionally NOT touched. */
+#printArea .table-responsive{ overflow-x:visible; }
+#printArea table.table{ width:100%; table-layout:auto; font-size:.8rem; }
+#printArea table.table th,
+#printArea table.table td{ white-space:normal!important; word-break:break-word; padding:.35rem .4rem; vertical-align:middle; }
+#printArea table.table td strong{ font-size:inherit; }
+#printArea table.table .btn{ font-size:.7rem; padding:.15rem .4rem; margin:1px 0; }
+#printArea table.table td.no-print{ min-width:0; }
+#printArea .print-header h3{ font-size:1.2rem; }
+#printArea tfoot tr{ font-size:.9rem!important; }
+</style>
+
 <div id="wrapper">
   <?php require 'partials/sidebar.php' ?>
 
@@ -166,8 +189,8 @@ $next = $nextStmt->fetch(PDO::FETCH_ASSOC);
       <?php require 'partials/nav.php'; ?>
       
       <div class="container-fluid">
-        <div class="table-responsive">
-          <div class="form-area no-print">
+        <div>
+          <div class="form-area no-print table-responsive">
             <form action="" method="POST">
               <input type="hidden" name="edit_id" value="<?= $editData['id'] ?? '' ?>">
               <table class="table table-striped text-nowrap" id="peopleTable">
@@ -189,7 +212,21 @@ $next = $nextStmt->fetch(PDO::FETCH_ASSOC);
                 <tbody id="tableBody">
                   <tr>
                     <td>1</td>
-                    <td><input type="text" name="fullname[]" class="form-control" value="<?= $editData['fullname'] ?? '' ?>" <?= $ro ?> required></td>
+                    <td>
+                      <!-- <input type="text" name="fullname[]" class="form-control" value="<?php // $editData['fullname'] ?? '' ?>" <?php // $ro ?> required> -->
+                      <input type="text" class="form-control" hidden>
+                      <select name="fullname[]" class="form-control select-customers" required <?= $ro ?> >
+                         <option value="">--select--</option>
+                         <?php
+                          $stmtc = $db->query("SELECT * FROM `customers_tbl` WHERE `status` = 'active' ORDER BY `fullname` ");
+                          $rowCs = $stmtc->fetchAll();
+                          foreach($rowCs as $rowC) : ?>
+                            <option value="<?= $rowC['id'] ?>" <?= ($editData['fullname'] ?? '') == $rowC['id'] ? 'selected' : '' ?>>
+                              <?= htmlspecialchars($rowC['fullname']) ?>
+                            </option>
+                          <?php endforeach ?>
+                      </select>
+                    </td>
                     <td>
                       <select name="market[]" class="form-control select-market" required>
                         <option value="">--select--</option>
@@ -246,6 +283,12 @@ $next = $nextStmt->fetch(PDO::FETCH_ASSOC);
             <br>
             <button class="btn btn-secondary" onclick="printDiv('printArea')">Print all</button> |
             <button class="btn btn-dark" onclick="printHead('headArea')">Print head</button>
+            <button class="btn btn-success" onclick="sendAllReceiptsViaAPI(<?= $transport_id ?>)">
+                <i class="fab fa-whatsapp"></i> Send All Receipts on WhatsApp
+            </button>
+            <!-- <button class="btn btn-success" onclick="sendAllReceiptsOnWhatsApp()">
+                <i class="fab fa-whatsapp"></i> Send All Receipts to WhatsApp
+            </button> -->
           </div>
 
           <?php
@@ -282,8 +325,10 @@ $next = $nextStmt->fetch(PDO::FETCH_ASSOC);
                 <small><?= date('d M Y') ?></small>
               </div>
 
-              <a href="/edittransportation?id=<?= $_GET['id'] ?>" class="btn btn-info no-print">Edit Driver Info.</a><br />
               <table class="table table-bordered text-nowrap mb-3" width="100%">
+                <tr></tr>
+                  <th colspan="6"><a href="/edittransportation?id=<?= $_GET['id'] ?>" class="btn btn-info no-print">Edit Driver Info.</a></th>
+                </tr>
                 <tr>
                   <th>Driver</th>
                   <td><?= !empty($driverInfo['driver_name']) ? $driverInfo['driver_name'] : '' ?></td>
@@ -354,7 +399,8 @@ $next = $nextStmt->fetch(PDO::FETCH_ASSOC);
                 </tr>
               </table>
             </div>
-
+            
+            <div id="printGroupMarket" class="table-responsive">
             <table class="table table-bordered text-nowrap">
               <div id="printGroupMarket">
                 <thead>
@@ -489,7 +535,7 @@ $next = $nextStmt->fetch(PDO::FETCH_ASSOC);
 
                   <tr class="<?= $rowClass ?>" data-market-group="<?= htmlspecialchars($row['name'] ?? 'No Market', ENT_QUOTES) ?>">
                     <td><?= $i + 1 ?></td>
-                    <td><?= $row['fullname'] ?></td>
+                    <td><?= $row['customer_name'] ?></td>
                     <td><?= $row['total_animal'] ?></td>
                     <td><?= $row['death_animal'] ?></td>
                     <td><?= $row['surviving_animal'] ?></td>
@@ -517,6 +563,10 @@ $next = $nextStmt->fetch(PDO::FETCH_ASSOC);
                         data-target="#receiptModal">
                         Receipt
                       </button>
+                      <button class="btn btn-sm btn-success" onclick="shareOnWhatsApp('<?= $row['id'] ?>', '<?= $transport_id ?>', '<?= htmlspecialchars($row['customer_phone'] ?? $row['phone']) ?>', '<?= htmlspecialchars($row['customer_name'] ?? $row['fullname']) ?>', '<?= receipt_token((int)$row['id'], (int)$transport_id) ?>')">
+                          <i class="fab fa-whatsapp"></i> WhatsApp_
+                      </button>
+
                       <?php if($row['status_id'] == 1 && $_SESSION['role'] == 'Agent') : ?>
                       <a href="?id=<?= $transport_id ?>&edit=<?= $row['id'] ?>" class="btn btn-sm btn-primary">Receive Money</a>
                       <?php elseif($_SESSION['role'] == 'Admin') : ?>
@@ -653,6 +703,8 @@ $next = $nextStmt->fetch(PDO::FETCH_ASSOC);
                 </tfoot>
               </div>
             </table>
+            </div>
+            
 
             <div class="row">
               <div class="col-sm-6" id="expenses">
@@ -920,10 +972,6 @@ $next = $nextStmt->fetch(PDO::FETCH_ASSOC);
 
           <div class="modal-footer">
             <button onclick="printReceipt()" class="btn btn-primary">Print and share receipt</button>
-            <!-- <button onclick="shareWhatsApp()" class="btn btn-success">WhatsApp</button> -->
-            <!-- <button class="btn btn-success" id="whatsappPdfBtn">
-                            WhatsApp PDF <span id="phoneLabel"></span>
-                        </button> -->
           </div>
         </div>
       </div>
@@ -1147,6 +1195,7 @@ $next = $nextStmt->fetch(PDO::FETCH_ASSOC);
       });
     }
     initSelect2('.market-select, .select-market');
+    initSelect2('.market-select, .select-customers');
 </script>
 
 <!-- model receipt -->
@@ -1210,6 +1259,168 @@ $next = $nextStmt->fetch(PDO::FETCH_ASSOC);
 	            `);
 	      win.document.close();
 	    }
+
+      function shareOnWhatsApp(id, tid, phone, customerName, key) {
+          if (!phone || phone.trim() === "") {
+              alert("Customer phone number is missing.");
+              return;
+          }
+
+          // Clean up the phone number for international format (e.g., Nigeria +234)
+          let formattedPhone = phone.trim();
+          if (formattedPhone.startsWith('0')) {
+              formattedPhone = '234' + formattedPhone.substring(1);
+          }
+
+          let name = customerName ? customerName : "Valued Customer";
+
+          // Generate a direct URL link to your existing receipt controller route
+          let receiptLink = window.location.origin + `/receipt?id=${id}&tid=${tid}&k=${key}&format=pdf`;
+
+          // Craft a clean, professional message
+          let message = `Hello *${name}*,\n\nYour transportation and payment receipt from *Bashir Madaki Transport* is ready.\n\n📄 View or download your receipt here:\n${receiptLink}\n\nThank you for your patronage!`;
+          
+          let whatsappUrl = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`;
+          window.open(whatsappUrl, '_blank');
+      }
+
+      function sendAllReceiptsViaAPI(transportId) {
+          const post = (extra) => {
+              const fd = new FormData();
+              fd.append('transport_id', transportId);
+              Object.keys(extra || {}).forEach(k => fd.append(k, extra[k]));
+              return fetch('/send-bulk-whatsapp', { method: 'POST', body: fd }).then(r => r.json());
+          };
+          const esc = (t) => String(t == null ? '' : t).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+          Swal.fire({ title: 'Checking customers...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+          // Step 1: preview who can receive a receipt (nothing is sent yet)
+          post({ dry: 1 }).then(pre => {
+              if (!pre.status) { Swal.fire({ icon: 'error', title: 'Failed', text: pre.message }); return; }
+              if (pre.results.filter(x => x.status === 'ready').length === 0) {
+                  Swal.fire({ icon: 'warning', title: 'No phone numbers', text: 'None of the customers on this motor have a valid phone number. Add numbers in Manage Customers first.' });
+                  return;
+              }
+              const missing = pre.results.filter(x => x.status === 'skipped').map(x => esc(x.name)).join(', ');
+              Swal.fire({
+                  icon: 'question',
+                  title: 'Send receipts on WhatsApp?',
+                  html: '<b>' + esc(pre.message) + '</b>' + (missing ? '<div style="margin-top:10px;font-size:12px;color:#666;text-align:left">Will be skipped: ' + missing + '</div>' : ''),
+                  showCancelButton: true,
+                  confirmButtonText: 'Send now'
+              }).then(c => {
+                  if (!c.isConfirmed) return;
+                  Swal.fire({ title: 'Sending receipts...', text: 'Please keep this page open. This can take a minute.', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+                  // Step 2: send
+                  post({}).then(showResult).catch(netError);
+              });
+          }).catch(netError);
+
+          function showResult(data) {
+              if (!data.status) { Swal.fire({ icon: 'error', title: 'Failed', text: data.message }); return; }
+              const rows = data.results.map(x => {
+                  const colour = x.status === 'sent' ? '#0f7b4b' : (x.status === 'failed' ? '#c0392b' : '#b45309');
+                  const link = x.wa_link ? ' <a href="' + esc(x.wa_link) + '" target="wa_manual">send manually</a>' : '';
+                  return '<tr><td>' + esc(x.name) + '</td><td style="color:' + colour + ';font-weight:600">' + esc(x.status) + '</td><td style="font-size:11px">' + esc(x.detail) + link + '</td></tr>';
+              }).join('');
+              Swal.fire({
+                  icon: data.failed ? 'warning' : 'success',
+                  title: data.message,
+                  width: 720,
+                  html: '<div style="max-height:320px;overflow:auto;text-align:left"><table class="table table-sm"><thead><tr><th>Customer</th><th>Result</th><th>Note</th></tr></thead><tbody>' + rows + '</tbody></table></div>'
+              });
+          }
+          function netError(err) {
+              console.error(err);
+              Swal.fire({ icon: 'error', title: 'Error', text: 'A network or server error occurred. Check the receipts already sent before trying again.' });
+          }
+      }
+
+     /*  function sendAllReceiptsOnWhatsApp() {
+        // Collect all unique rows that contain customer data
+        let rows = document.querySelectorAll('#printGroupMarket tbody tr[data-market-group]');
+        
+        // Filter rows that have action buttons containing valid data-phone and data-id
+        let recipients = [];
+        document.querySelectorAll('.receiptBtn').forEach(btn => {
+            let phone = btn.getAttribute('data-phone');
+            let id = btn.getAttribute('data-id');
+            let tid = btn.getAttribute('data-tid');
+            
+            // Find customer name from the table row
+            let row = btn.closest('tr');
+            let nameCell = row ? row.cells[1] : null;
+            let customerName = nameCell ? nameCell.innerText.trim() : 'Valued Customer';
+
+            if (phone && phone.trim() !== "") {
+                recipients.push({ id, tid, phone, customerName });
+            }
+        });
+
+          if (recipients.length === 0) {
+              alert("No valid customer phone numbers found on this sheet.");
+              return;
+          }
+
+          if (!confirm(`This will prepare WhatsApp messages for ${recipients.length} customers sequentially. Do you want to proceed?`)) {
+              return;
+          }
+
+          // Loop through recipients with a small delay so browser popup blockers don't block them
+          recipients.forEach((recipient, index) => {
+              setTimeout(() => {
+                  let formattedPhone = recipient.phone.trim();
+                  if (formattedPhone.startsWith('0')) {
+                      formattedPhone = '234' + formattedPhone.substring(1);
+                  }
+
+                  let receiptLink = window.location.origin + `/receipt?id=${recipient.id}&tid=${recipient.tid}`;
+                  let message = `Hello *${recipient.customerName}*,\n\nYour transportation and payment receipt from *Bashir Madaki Transport* is ready.\n\n📄 View or download your receipt here:\n${receiptLink}\n\nThank you for your patronage!`;
+                  
+                  let whatsappUrl = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`;
+                  window.open(whatsappUrl, '_blank');
+              }, index * 1000); // 1-second interval between tabs/windows to prevent browser blocking
+          });
+      } */
+
+      // share text receipt
+      /* function shareOnWhatsApp(id, tid, phone, customerName) {
+        if (!phone || phone.trim() === "") {
+            alert("Customer phone number is missing.");
+            return;
+        }
+
+        // Clean up the phone number for international format (e.g., Nigeria +234)
+        let formattedPhone = phone.trim();
+        if (formattedPhone.startsWith('0')) {
+            formattedPhone = '234' + formattedPhone.substring(1);
+        }
+
+        let name = customerName ? customerName : "Valued Customer";
+
+        // Fetch the receipt modal content
+        fetch(`/receipt-modal?id=${id}&tid=${tid}`)
+            .then(res => res.text())
+            .then(html => {
+                // Convert the HTML receipt content into clean plain text
+                let parser = new DOMParser();
+                let doc = parser.parseFromString(html, 'text/html');
+                let receiptText = doc.body.innerText.trim();
+
+                // Build the WhatsApp message payload
+                let message = `Hello *${name}*,\n\nHere is your transportation payment receipt summary:\n\n-------------------\n${receiptText}\n-------------------\n\nThank you for your patronage!`;
+                
+                let whatsappUrl = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`;
+                window.open(whatsappUrl, '_blank');
+            })
+            .catch(err => {
+                console.error(err);
+                alert("Could not load receipt details for WhatsApp sharing.");
+            });
+      }
+    */
+
 </script>
 <!-- model receipt -->
 
@@ -1252,7 +1463,7 @@ $next = $nextStmt->fetch(PDO::FETCH_ASSOC);
           let formData = $(this).serialize() + '&mode=' + currentMode;
 
           $.ajax({
-              url: 'model/add_diary.php', // *** Make sure this path matches your file structure ***
+              url: 'model/add_diary.php', 
               type: 'POST',
               dataType: 'JSON',
               data: formData,
@@ -1325,16 +1536,29 @@ $next = $nextStmt->fetch(PDO::FETCH_ASSOC);
           rowCount++;
           
           // 1. Create the new row as a jQuery object
+          // <td><input type="text" name="fullname[]" class="form-control" required></td>
           let $newRow = $(`
           <tr>
               <td>${rowCount}</td>
-              <td><input type="text" name="fullname[]" class="form-control" required></td>
+              
+              <td> <select name="fullname[]" class="form-control select-customers" required <?= $ro ?> >
+                <option value="">--select--</option>
+                <?php
+                $stmtc = $db->query("SELECT * FROM `customers_tbl` WHERE `status` = 'active' ORDER BY `fullname` ");
+                $rowCs = $stmtc->fetchAll();
+                foreach($rowCs as $rowC) : ?>
+                  <option value="<?= $rowC['id'] ?>" <?= ($editData['fullname'] ?? '') == $rowC['id'] ? 'selected' : '' ?>>
+                    <?= htmlspecialchars($rowC['fullname']) ?>
+                  </option>
+                <?php endforeach ?>
+              </select>
+              </td>
               <td>
                   <select name="market[]" class="form-control select-market" required>
-                      <option value="">--select--</option>
-                      <?php foreach ($markets2 as $market2): ?>
-                      <option value="<?= $market2['id'] ?>"><?= htmlspecialchars($market2['name']) ?></option>
-                      <?php endforeach; ?>
+                    <option value="">--select--</option>
+                    <?php foreach ($markets2 as $market2): ?>
+                    <option value="<?= $market2['id'] ?>"><?= htmlspecialchars($market2['name']) ?></option>
+                    <?php endforeach; ?>
                   </select>
               </td>
               <td><input type="number" name="total_animal[]" style="width: 66px;" class="form-control"></td>
@@ -1351,7 +1575,9 @@ $next = $nextStmt->fetch(PDO::FETCH_ASSOC);
           $('#tableBody').append($newRow);
           
           // 3. Find ONLY the select element in this specific new row and initialize Select2 on it
-          initSelect2($newRow.find('.select-market'));
+          initSelect2($newRow.find('.select-market')); 
+          initSelect2($newRow.find('.select-customers')); 
+
       });
 
       $(document).on('click', '.removeRow', function() {
@@ -2349,4 +2575,3 @@ $next = $nextStmt->fetch(PDO::FETCH_ASSOC);
         });
         // });
 </script>
-

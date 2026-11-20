@@ -9,7 +9,7 @@ if (isset($_POST['action'])) {
     // --- FETCH CUSTOMERS (For DataTable) ---
     if ($action === 'fetch') {
         try {
-            $stmt =$db->conn->prepare("SELECT * FROM `customers_tbl` ORDER BY `id` DESC");
+            $stmt =$db->conn->prepare("SELECT * FROM `customers_tbl` ORDER BY `fullname`");
             $stmt->execute();
             $customers =$stmt->fetchAll(PDO::FETCH_ASSOC);
             echo json_encode(['status' => 'success', 'data' => $customers]);

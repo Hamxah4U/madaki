@@ -53,8 +53,6 @@
 
     <script src="js/chart.js"></script>
 
-    
-
     <script>
         const idleLimit = 20 * 60 * 1000; // 20 minutes in milliseconds
         let idleTimer;
@@ -96,7 +94,7 @@
             window.location.reload(); 
         });
     </script>
-    
+
 
 </body>
 </html>

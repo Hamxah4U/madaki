@@ -1,0 +1,16 @@
+-- 1. Insert any missing unique names from expenses into customers_tbl
+INSERT INTO customers_tbl (fullname, phone, email, password, address, created_by, status)
+SELECT DISTINCT te.fullname, '', '', '', 'Imported', '1', 'active'
+FROM transportation_expenses te
+WHERE te.customer_id IS NULL 
+  AND te.fullname IS NOT NULL 
+  AND TRIM(te.fullname) != ''
+  AND NOT EXISTS (
+      SELECT 1 FROM customers_tbl c WHERE TRIM(LOWER(c.fullname)) = TRIM(LOWER(te.fullname))
+  );
+
+-- 2. Link existing transportation_expenses records to the correct customer ID
+UPDATE transportation_expenses te
+JOIN customers_tbl c ON TRIM(LOWER(te.fullname)) = TRIM(LOWER(c.fullname))
+SET te.customer_id = c.id
+WHERE te.customer_id IS NULL;

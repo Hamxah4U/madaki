@@ -32,7 +32,8 @@ if(!isset($_SESSION['userID']) &&
   $uri != '/over' &&
   $uri != '/short' &&
   $uri != '/money-history' &&
-  $uri != '/closed-market'
+  $uri != '/closed-market' &&
+  $uri != '/receipt'
   ) {
   header('Location: /');
   exit();
@@ -51,6 +52,7 @@ $routes = [
     '/export-excel' => 'controllers/export_excel.php',
     '/receipt' => 'controllers/receipt.php',
     '/receipt-modal' => 'controllers/receipt_modal.php',
+    '/send-bulk-whatsapp' => 'controllers/send_bulk_whatsapp.php',
     // '/receipt-pdf' => 'controllers/receipt_pdf.php',
     '/manage-drivers' => 'controllers/managedrivers.php',
     '/edittransportation' => 'controllers/edittransportation.php',
