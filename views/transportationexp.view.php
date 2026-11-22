@@ -1237,7 +1237,6 @@ $next = $nextStmt->fetch(PDO::FETCH_ASSOC);
 	          });
 	      });
 	    });
-
       function printReceipt() {
 	      let content = document.getElementById('receiptPrintArea').innerHTML;
 
