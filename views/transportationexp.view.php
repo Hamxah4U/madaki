@@ -1129,7 +1129,17 @@ $next = $nextStmt->fetch(PDO::FETCH_ASSOC);
 
               <div class="form-group">
                 <label for="my-input">Reason</label>
-                <textarea name="reason" id="reason" class="form-control" rows="3"></textarea>
+                <!-- <textarea name="reason" id="reason" class="form-control" rows="3"></textarea> -->
+                 <select name="reason" id="reason" class="form-control" required>
+                  <option value="">--Select Reason--</option>
+                  <?php
+                    $stmt = $db->conn->prepare('SELECT * FROM exp_list WHERE `status` = \'active\' ORDER BY name ASC');
+                    $stmt->execute();
+                    $row_expList = $stmt->fetchALL();
+                    foreach($row_expList AS $rowExp): ?>
+                    <option value="<?= $rowExp['id'] ?>"><?= $rowExp['name'] ?></option>
+                  <?php endforeach ?>
+                </select>
                 <small class="text-danger" id="errorReason"></small>
               </div>
               <button type="submit" class="btn btn-primary" id="action-btn"
