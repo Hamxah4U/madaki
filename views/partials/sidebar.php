@@ -43,6 +43,7 @@
                             <a class="collapse-item" href="/manage-agent"><strong>Manage Agent</strong></a>
                             <a class="collapse-item" href="/manage-market"><strong>Manage Market</strong></a>
                             <a class="collapse-item" href="/manage-customers"><strong>Customers</strong></a>
+                            <a class="collapse-item" href="/manage-expenses"><strong>Manage Expenses</strong></a>
                         </div>
                     </div>
                 </li>
