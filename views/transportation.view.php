@@ -47,8 +47,7 @@
                             $stmt = $db->query('SELECT * FROM transportation
                                 LEFT JOIN users_tbl u ON `agent` = u.userID WHERE `tstatus` = \'new\' ORDER BY `id` DESC');
                             $drivers = $stmt->fetchAll(PDO::FETCH_ASSOC);
-                            foreach($drivers as $index => $driver):
-                            
+                            foreach($drivers as $index => $driver):  
                         ?>
 
                         <tr class="clickable-row" data-href="/transportationexp?id=<?= $driver['id'] ?>">
