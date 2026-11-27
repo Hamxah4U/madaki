@@ -9,10 +9,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $amount   = trim($_POST['amount'] ?? '');
     $reason   = trim($_POST['reason'] ?? '');
     $userID   = trim($_POST['userID'] ?? '');
-    $agent_id = trim($_POST['agent_id'] ?? null);
+    // $agent_id = trim($_POST['agent_id'] ?? null);
+    $agent_id = trim($_POST['agent_id'] ?? '');
     $mode     = $_POST['mode'] ?? 'add'; 
     $id       = $_POST['id'] ?? null;
     $fstatus  = $_POST['fstatus'] ?? null;
+
 
     $receiptPath = null;
 
@@ -28,7 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     // Handle File Upload
     if (isset($_FILES['receipt']) && $_FILES['receipt']['error'] === UPLOAD_ERR_OK) {
         $fileTmpPath   = $_FILES['receipt']['tmp_name'];
-        $fileName      = $_FILES['receipt']['name'];
+        $fileName      = $_FILES['receipt']['name'] ?? 'receipt.png';
         $fileExtension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
 
         $allowedExtensions = ['jpg', 'jpeg', 'png'];
@@ -65,6 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         // ✅ ADD MODE (INSERT)
         // =========================
         if ($mode === 'add') {
+            $receiptPath = null; 
 
             $stmt = $db->conn->prepare('
                 INSERT INTO expenses 
@@ -76,7 +79,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 ':driver_id' => $userID,
                 ':amount'    => $amount,
                 ':reason'    => $reason,
-                ':receipt'   => $receiptPath,
+                ':receipt'   => $receiptPath ?? 'receipt.png',
                 ':agent_id'  => $agent_id,
                 ':fstatus'   => $fstatus
             ]);

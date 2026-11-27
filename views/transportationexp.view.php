@@ -1118,9 +1118,8 @@ $next = $nextStmt->fetch(PDO::FETCH_ASSOC);
             <form id="userForm">
               <input type="text" name="id" id="edit_id" hidden>
               <input type="text" name="userID" id="userID" value="<?= $transport_id ?>" hidden>
-              <input type="text" name="agent_id" id="" hidden>
+              <input type="text" name="agent_id" id="" value="8080" hidden>
               <input type="text" name="fstatus" id="fstatus" value="transp" hidden>
-
 
               <div class="form-group">
                 <label for="my-input">Amount</label>
@@ -2369,7 +2368,6 @@ $next = $nextStmt->fetch(PDO::FETCH_ASSOC);
   $('#errorReason').text('');
   }
 
-
   $(document).ready(function() {
   $('#userForm').on('submit', function(e) {
       e.preventDefault();
@@ -2385,6 +2383,7 @@ $next = $nextStmt->fetch(PDO::FETCH_ASSOC);
           if (response.status === false) {
           $('#errorAmount').text(response.errors.amount || '');
           $('#errorReason').text(response.errors.reason || '');
+          if (response.errors.general) alert(response.errors.general);
           } else {
           const Toast = Swal.mixin({
               toast: true,
